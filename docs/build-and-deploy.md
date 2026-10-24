@@ -206,6 +206,14 @@ pushes the tag. It refuses rather than create a merge commit. With Workers Build
 connected, pushing `main` is the deploy. The version goes into every recorded video
 (`app_version`), so a release also marks which code made which file.
 
+⚠️ **Workers Builds must run `npm run deploy`**, as Hoops does: in the Worker's Settings →
+Build, the build command empty and the deploy command `npm run deploy`. Its default,
+`npx wrangler deploy` after `npm run build`, puts the new code live without applying the
+migrations, and code that reads a column the database does not have yet fails: the Videos page
+could not load its list until 0007 and 0008 were applied by hand. The build's API token needs D1
+edit for the migrations step; check that step in the build's log after a release with a
+migration. Missed once, `npm run db:migrate:remote` applies what is pending.
+
 It needs a GitHub remote named `origin` with `develop` and `main`.
 
 ## Limits
@@ -231,3 +239,4 @@ Workers Free plan:
 - 2026-10-21 - `/gallery/*` (the home page's videos) cached for a week; Workers Assets' whole-file answer to a Range request, and why the home page plays its media from blob URLs.
 - 2026-10-23 - `.nvmrc` pins Node 24.22.1, the Active LTS release with the October 2026 security fixes (a Brotli decoder RCE, TLS hostname checks) that 22.23.2 does not have.
 - 2026-10-24 - the site goes on `bouncereel.vukcvetkovic.com` for now, kept out of search, mail from `bouncereel@vukcvetkovic.com` (verified in Resend for Hoops); the cut-over without Access (nothing was deployed before); the later move to the site's own domain in its own steps; `.gitignore` keeps the gallery's videos and drops `.DS_Store`.
+- 2026-10-24 - Workers Builds runs `npm run deploy` (build command empty), so a release applies its migrations before the code goes live.
