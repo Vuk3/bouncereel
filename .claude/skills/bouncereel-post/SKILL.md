@@ -1,51 +1,172 @@
 ---
 name: bouncereel-post
-description: Writes the posts for one BounceReel video on YouTube Shorts, TikTok and Instagram Reels (title, description, tags, captions, pinned comments) as one JSON block to paste on the Videos page, from the "BounceReel ball race:" text the studio gives a superadmin after a recording (Copy on the sheet after a take, or the copy icon on the Videos page). Use when the user pastes that text or asks for titles, captions or tags for a BounceReel video.
+description: Writes the posts for one BounceReel video on YouTube Shorts, TikTok and Instagram Reels (title, description, tags, captions, pinned comments) as one JSON block to paste on the Videos page, from the "BounceReel ball race:" text the studio gives a superadmin after a recording (Copy on the sheet after a take, or "Copy what it is about" in the video's drawer on the Videos page). Use when the user pastes that text, asks for titles, captions or tags for a BounceReel video, or asks to redo or change them.
 ---
 
 # Posts for a BounceReel video
 
-The user pastes a block that starts with `BounceReel ball race:`. It says what the video is: the two
-balls and what each does, the winner and by how much, the lead changes, the length, the look and
-the sound, the question on the first frame, the file and the library id. Write the three posts
-from it and answer with **one JSON block and nothing else**: the user copies it whole and pastes
-it on the Videos page (**Paste texts**, or the texts icon on the video's row), which keeps it with
-the video. If no block was pasted, ask for it (in the studio: **Copy** on the sheet after a take;
-on the Videos page: the copy icon on the video's row).
+The user pastes a block that starts with `BounceReel ball race:`. Write the three posts from it
+and answer with **one JSON block in a ```json fence and nothing else**: no greeting, no notes, no
+alternatives. The user copies the answer whole and pastes it on the Videos page (**Paste texts**,
+or the box at the foot of the video's drawer), which strips the fence, checks every field and
+keeps the texts with the video.
+
+- No block pasted: ask for it, in the language the user writes in. It is on the sheet after a
+  take (**Copy**) and in the video's drawer on the Videos page (**Copy what it is about**).
+- A change to one text afterwards ("shorter title", "another Instagram caption"): answer with
+  the whole JSON again, only that text changed. The page takes whole answers, never pieces.
+
+## Reading the block
+
+| Line | What it is for |
+| --- | --- |
+| `BounceReel ball race: A vs B` | the two names, as written |
+| `Top ball: Name (#hex). Label numbers, what it does (1, 1, 2…)` | the ball's name, its colour, its sequence, what it does in plain words and its first numbers |
+| `…; power: it speeds up` (or `slows down`, `grows`, `splits`) | the ball has a power: every floor hit it makes, it gets faster, slower, bigger, or adds a ball |
+| `Bottom ball: …` | the same, for the other ball |
+| `Winner: …` | **for you only**: the story, never told (see *No spoilers*) |
+| `Lead changes: N` | a fact you may use, within the spoiler rules |
+| `Video: 45 s, paper look, narrator and music` | the length is a fact you may use; the look and the sound are not for viewers |
+| `First frame: the two names, VS and "…"` | the question the video opens on, which the narrator asks too: the posts pose the same choice |
+| `Last line on the winner card: "…"` | what the video ends on: the posts' call to comment agrees with it, without copying it |
+| `Seed`, `File`, `Library id` | for the JSON only (`file`, `video`), never in a text |
+
+A block can lack lines. A video saved before configs were kept has no colours, look, first frame
+or last line; a recording not in the library yet has no `Library id`. Do without them: no
+colours means names only (never guess a colour), no first frame means you word the choice
+yourself, no library id means the `video` key is left out.
 
 ## Rules
 
-- **No spoilers.** The winner and the margin are there so you know the story, never to tell it:
-  they appear in no title, description, tag, caption or comment. Viewers watch to the end to
-  find out, and that is what the format lives on. You may say how close it is ("down to the
-  last hit") when the margin is under half a second, or that the lead changes hands when there
-  are lead changes, without saying who.
-- **Only facts from the block.** No invented numbers, records or claims ("the fastest race
-  ever"). Ball names as the block writes them.
-- **Make people pick a side.** The hook is the contrast between the two balls (one adds its last
-  two hits, the other multiplies; huge hits slowly against small hits fast; a power that speeds
-  one up) and the question on the first frame. Name the balls by colour too when it helps
-  ("purple or blue?"): read the colour from its hex code, in plain words.
+### No spoilers
+
+The format lives on people watching to the end to find out. The winner and the margin are in the
+block so you know the story; they appear in no title, description, tag, caption or comment, and
+nothing points at them.
+
+- **No leaning.** No "underdog", "comeback", "never stood a chance", "can X catch up?", no
+  question worded in one ball's favour. The two balls get equal billing: if one is named, so is
+  the other.
+- **How close**, only when it is close: a margin under 0.5 s, or `a photo finish` on the
+  `Winner:` line, may be told ("down to the last hit", "a photo finish"). At 0.5 s or more, or
+  `far ahead`, say nothing about the gap. On `nobody reached the line in time`, promise no
+  finish either ("who crosses first?"): ask who wins.
+- **Lead changes**, only when there are enough that they give nothing away. With 0–2 do not
+  mention the lead: a viewer who sees who leads in the first seconds would know the winner. With
+  3–9 say that the lead keeps changing, without the number: an exact small number gives away
+  whether the first leader wins (odd: no, even: yes). From 10 the exact number is fine, and a
+  good hook: nobody follows the parity of 31 swaps.
+- **No maths that predicts the result** ("doubling grows faster", "tribonacci always catches
+  up"). The balancer makes every race close whatever the sequences, so it misleads, and it hints.
+
+### One angle, all three platforms
+
+Choose one angle for the video and carry it through the YouTube title and description, the
+TikTok caption and the Instagram caption: the same idea, cut to each platform's length. The
+owner reads the three side by side on the Videos page, and texts that each tell a different
+story read as random. Only the pinned comments are worded differently on purpose.
+
+Choose the angle from what this block has most of:
+
+- **The duel**: the two behaviours side by side ("adds up its last three hits vs doubles every
+  hit"). It always works and is the default.
+- **The power**: when a ball has one, it is the hook ("one doubles, the other speeds up with
+  every hit").
+- **The lead changes**: from 10, the number is the hook.
+- **The finish**: only when it is close (above).
+- **The numbers**: each ball's first numbers side by side, always with what they are and whose
+  they are. A bare row of numbers ("1, 1, 2, 4, 7…") says nothing to someone scrolling.
+- **The question**: the choice itself, in colours ("green or purple?").
+
+Vary the angle and the title's shape from video to video. When earlier answers are in this
+conversation, take a different angle and title shape from the last one; otherwise take the angle
+that suits this block best.
+
+### Hook first
+
+TikTok and Instagram show a caption's first line or so before "more" (Instagram about 125
+characters). That line makes sense on its own and poses the choice: both balls, by name or
+colour, and what each does. No lead-ins ("Watch this", "Wait for it", "You won't believe"), no
+promises the video does not keep.
+
+### Make people pick a side
+
+Every text ends on a choice between the two, made concrete with the colours when they can be
+told apart: "green or purple?" rather than "who will win?". The pinned comments ask for a pick;
+Instagram's call to comment names the two choices.
+
+### Only facts from the block
+
+No invented numbers, records or superlatives ("the fastest race ever", "99% get this wrong"),
+and no arithmetic on the block's numbers ("a lead change every 1.5 s"). The usual name of the
+same numbers is fine: doubling is powers of two.
+
+### Names and colours
+
+- **Ball names exactly as the block writes them**, capitals included: they are names, so a
+  sentence-case title keeps them. When both full names do not fit, refer to the balls by colour
+  or by sequence ("tribonacci vs doubling"), never by a shortened name.
+- **A colour in one plain word from its hex**, by hue: red, orange, yellow, green, teal, blue,
+  purple, pink. Light or dark shades take the plain word too (`#0ea5e9` is blue, `#65a30d` is
+  green, `#7c4dff` is purple). When both balls read as the same colour, use names only.
+- **A coloured circle can stand for a ball** in a pinned comment or a title (🔴 🟠 🟡 🟢 🔵
+  🟣 🟤 ⚫ ⚪). There is none for pink or teal: write the word.
+
+### Everything else
+
 - **English**, all of it.
-- **Not AI-generated.** It is a simulation recorded in the browser: no AI hashtags, labels or
+- **Not AI-generated**: it is a simulation recorded in the browser. No AI hashtags, labels or
   claims.
-- **Vary the wording** from video to video: a new angle each time (the numbers, the duel, the
-  question, the comeback), never the same title pattern twice in a row.
 
-Lengths: a YouTube title up to 60 characters, sentence case, at most one emoji; a YouTube
-description of one or two lines, then a line of 3–6 hashtags, `#shorts` first; 10–15 YouTube
-tags, lowercase; a TikTok caption under 150 characters with 3–5 hashtags; an Instagram caption of
-one or two lines, a call to comment, and 3–5 hashtags. Each pinned comment is a question that
-makes people pick, no spoiler, worded differently on each platform.
+## Each platform
 
-Hashtags: from the matchup (the sequences: `#fibonacci`, `#factorial`, `#primenumbers`,
-`#squarenumbers`…; a power: `#powerup`), plus a few of `#ballrace`, `#marblerace`,
-`#satisfying`, `#math`, `#numbers`, `#simulation`. Tags: the sequences, "ball race", "marble
-race", "number race", "who will win", "satisfying", "math", "simulation", and the ball names.
+**YouTube Shorts**
+
+- `title`: up to 60 characters, sentence case, at most one emoji, no hashtags. It carries the
+  angle alone, since outside the Shorts feed the title is all people see.
+- `description`: one or two lines (the hook, then the question), then one line of 3–6 hashtags
+  with `#shorts` first.
+- `tags`: 10–15, lowercase, no `#`, under 500 characters together: the sequences and their usual
+  names, the ball names, "ball race", "marble race", "number race", "who will win",
+  "satisfying", "math", "simulation".
+
+**TikTok**
+
+- `caption`: under 150 characters including the 3–5 hashtags at its end; the hook in one go.
+
+**Instagram Reels**
+
+- `caption`: three lines: the hook (within 125 characters, so it shows before "more"), a call
+  to comment that names the choice ("Comment green or purple below."), then 3–5 hashtags.
+
+**Pinned comments** (one per platform): a short question that asks for a pick, no spoiler. The
+three are three different questions, not one sentence with a word swapped. They may lean on the
+first frame's question without copying it.
+
+## Hashtags and tags
+
+| Sequence | Hashtag | Tags |
+| --- | --- | --- |
+| Fibonacci | `#fibonacci` | fibonacci, fibonacci sequence |
+| Factorial | `#factorial` | factorial |
+| Doubling | `#powersoftwo` | doubling numbers, powers of two |
+| Tripling | `#powersofthree` | tripling numbers, powers of three |
+| Squares | `#squarenumbers` | square numbers |
+| Cubes | `#cubenumbers` | cube numbers |
+| Primes | `#primenumbers` | prime numbers |
+| Triangular | `#triangularnumbers` | triangular numbers |
+| Tribonacci | `#tribonacci` | tribonacci, tribonacci numbers |
+| Counting | none | counting numbers |
+| Always 1 | none | none |
+
+A ball with a power adds `#powerup`. Each text's hashtags: the matchup's first, then a few of
+`#ballrace`, `#marblerace`, `#satisfying`, `#math`, `#numbers`, `#simulation`. Nothing outside
+these lists.
 
 ## Format
 
-Exactly these keys, valid JSON (escape quotes; a line break inside a text is `\n`):
+Exactly these keys, valid JSON: double quotes, a line break inside a text is `\n`, a quote inside
+a text is `\"`, no trailing commas.
 
 ```json
 {
@@ -68,12 +189,43 @@ Exactly these keys, valid JSON (escape quotes; a line break inside a text is `\n
 }
 ```
 
-- `video`: the number on the block's `Library id:` line. Leave the key out when the block has no
-  such line (the recording was not in the library yet); the page then finds the video by `file`.
+- `video`: the number on the block's `Library id:` line, as a number. Leave the key out when
+  there is no such line; the page then finds the video by `file`.
 - `file`: the block's `File:` line, as written.
 
 The settings that are the same for every video (the cover and thumbnail, the audience, altered
-content, the category, the sound) are written on the Videos page beside the texts, so they are not
-in the JSON. Every cover is the first frame (0:00): a BounceReel video opens on a title (both
-names large, a big VS, the question) made to be the frame people decide on, and it loops back to
-it at the end.
+content, the category, the sound) are shown on the Videos page beside the texts, so they are not
+in the JSON. Every cover is the first frame (0:00): the video opens on a title (both names large,
+a big VS, the question) made to be the frame people decide on, and loops back to it at the end.
+
+## Before answering
+
+Run the draft through this; it counts what is easy to miscount (the JSON goes between the `EOF`
+lines as it is):
+
+```sh
+node -e '
+const t = JSON.parse(require("fs").readFileSync(0, "utf8"));
+const n = (s) => [...s].length;
+const h = (s) => (s.match(/#\w+/g) || []).length;
+const check = (name, ok, got) => console.log(ok ? "ok  " : "FIX ", name, got);
+check("title <= 60", n(t.youtube.title) <= 60, n(t.youtube.title));
+check("youtube hashtags 3-6", h(t.youtube.description) >= 3 && h(t.youtube.description) <= 6, h(t.youtube.description));
+check("#shorts first", (t.youtube.description.match(/#\w+/) || [])[0] === "#shorts", "");
+check("tags 10-15", t.youtube.tags.length >= 10 && t.youtube.tags.length <= 15, t.youtube.tags.length);
+check("tags lowercase, < 500", t.youtube.tags.every((x) => x === x.toLowerCase()) && t.youtube.tags.join(",").length < 500, t.youtube.tags.join(",").length);
+check("tiktok < 150", n(t.tiktok.caption) < 150, n(t.tiktok.caption));
+check("tiktok hashtags 3-5", h(t.tiktok.caption) >= 3 && h(t.tiktok.caption) <= 5, h(t.tiktok.caption));
+check("instagram line 1 <= 125", n(t.instagram.caption.split("\n")[0]) <= 125, n(t.instagram.caption.split("\n")[0]));
+check("instagram hashtags 3-5", h(t.instagram.caption) >= 3 && h(t.instagram.caption) <= 5, h(t.instagram.caption));
+' <<'EOF'
+{ … }
+EOF
+```
+
+Then read it once more for what no script sees:
+
+- the winner and the margin are nowhere, and no wording leans to one ball;
+- the title and the three captions tell the same angle, and it is not the last video's;
+- every fact is in the block;
+- the three pinned comments are three different questions.
