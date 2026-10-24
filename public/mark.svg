@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs><linearGradient id="t" x1="4" y1="2.6" x2="18.4" y2="12.4" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7c4dff" stop-opacity="0"/><stop offset="1" stop-color="#7c4dff" stop-opacity=".55"/></linearGradient></defs>
+  <path d="M4.00 2.60 L15.09 17.27 L21.71 7.53Z" fill="url(#t)"/>
+  <circle cx="18.4" cy="12.4" r="6.4" fill="#7c4dff"/>
+  <ellipse cx="16.2" cy="10.3" rx="2.1" ry="1.35" transform="rotate(-38 16.2 10.3)" fill="#fff" opacity=".6"/>
+  <rect x="3" y="21.2" width="14.6" height="4.2" rx="2.1" fill="#0ea5e9"/>
+  <rect x="20.6" y="21.2" width="8.4" height="4.2" rx="2.1" fill="#0ea5e9" opacity=".4"/>
+  <rect x="3" y="27.2" width="26" height="4.2" rx="2.1" fill="#0ea5e9" opacity=".72"/>
+</svg>

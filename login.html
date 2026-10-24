@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- site:head /login -->
+    <title>Sign in · BounceReel</title>
+    <meta name="description" content="Sign in to BounceReel, the studio for ball race videos." />
+  </head>
+  <body>
+    <!-- site:header -->
+
+    <main id="main" class="auth">
+      <section class="auth-box" aria-labelledby="auth-title">
+        <h1 id="auth-title">Sign in</h1>
+
+        <p class="form-error" id="error" role="alert" hidden></p>
+        <p class="form-ok" id="ok" role="status" hidden></p>
+        <form class="form" id="form" data-action="login" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
+          </div>
+          <button class="btn btn-primary btn-wide" type="submit">Sign in</button>
+          <p class="form-links"><a href="/forgot">Forgot your password?</a></p>
+        </form>
+        <p class="auth-alt">New here? <a href="/signup" data-keep-next>Start free</a></p>
+      </section>
+    </main>
+
+    <!-- site:footer -->
+    <script type="module" src="/src/site/auth.ts"></script>
+  </body>
+</html>

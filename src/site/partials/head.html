@@ -1,0 +1,30 @@
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    %ROBOTS%
+    <link rel="canonical" href="%URL%" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BounceReel" />
+    <meta property="og:title" content="%TITLE%" />
+    <meta property="og:description" content="%DESCRIPTION%" />
+    <meta property="og:url" content="%URL%" />
+    <meta property="og:image" content="%SITE_URL%/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Two BounceReel race videos side by side: balls breaking layers of big numbers." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="%TITLE%" />
+    <meta name="twitter:description" content="%DESCRIPTION%" />
+    <meta name="twitter:image" content="%SITE_URL%/og.png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/fonts/rubik-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <script>
+      // Before first paint: a saved dark theme (src/ui/theme.ts; light is the default), and
+      // whether this browser has a session, from the hint cookie the Worker sets beside the
+      // session (worker/auth/session.ts). A hint only: it swaps "Sign in" for "Open studio".
+      try {
+        if (localStorage.getItem('bouncereel:theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+      } catch {}
+      if (/(?:^|;\s*)br_hint=1/.test(document.cookie)) document.documentElement.dataset.member = '';
+    </script>
+    <link rel="stylesheet" href="/src/site/site.css" />

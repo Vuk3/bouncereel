@@ -1,0 +1,22 @@
+{
+  // The Worker runs on workerd, not in a page: its globals come from
+  // worker-configuration.d.ts (`npm run cf-typegen`), and there is no DOM. The root
+  // tsconfig.json checks the pages; `npm run check` runs both.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": ["../worker-configuration.d.ts"],
+    "strict": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true
+  },
+  "include": [".", "../shared"]
+}

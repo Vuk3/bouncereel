@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- site:head / -->
+    <title>BounceReel: ball race videos for Shorts, TikTok and Reels</title>
+    <meta name="description" content="Ball race videos for Shorts, TikTok and Reels: every race balanced to end close at the length you pick, ready to post as a 1080×1920 MP4. Free to start." />
+  </head>
+  <body>
+    <!-- site:header -->
+
+    <main id="main">
+      <!-- The hero: a dark stage with the live race. The still frame is the first paint; src/site/hero.ts draws the race over it. -->
+      <section class="shell hero" aria-labelledby="hero-title">
+        <div class="stage hero-stage">
+          <div class="hero-copy">
+            <h1 id="hero-title">Ball race videos, ready to post.</h1>
+            <p class="lede">
+              Two balls race through layers of ever bigger numbers, Fibonacci against factorial, primes against squares. Every race is balanced to
+              end close at the length you pick, and BounceReel records it as a vertical MP4 for Shorts, TikTok and Reels: a new matchup every roll,
+              nothing to edit.
+            </p>
+            <div class="actions">
+              <a class="btn btn-primary" href="/signup" data-guest>Start free</a>
+              <a class="btn btn-primary" href="/app" data-member>Open studio</a>
+              <a class="btn btn-ghost" href="#how">See how it works</a>
+            </div>
+            <p class="hero-browser">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2.5" /><path d="M8 21h8M12 17v4" /></svg>
+              <span>Records in <strong>Chrome or Edge on a computer</strong>. <a href="#browser-title">Why</a></span>
+            </p>
+          </div>
+          <ul class="specs" aria-label="What a video is">
+            <li>1080×1920, 60 fps</li>
+            <li>MP4, ready to post</li>
+            <li>Free to start</li>
+          </ul>
+
+          <div class="hero-demo">
+            <div class="phone" id="phone">
+              <img
+                src="/hero/first-frame-2.webp"
+                width="540"
+                height="960"
+                fetchpriority="high"
+                alt="The first frame of a BounceReel video in the night look: Fibonacci Ball in the top card, Slow Factorial Ball in the bottom one, each above three layers of numbers to break."
+              />
+              <canvas aria-hidden="true"></canvas>
+            </div>
+            <span class="float-chip chip-length" aria-hidden="true"><i></i>30.0 s video</span>
+            <span class="float-chip chip-finish" aria-hidden="true"><i></i>Photo finish</span>
+            <div class="demo-bar">
+              <div class="matchup" aria-live="polite">
+                <p class="matchup-names" id="matchup-names">
+                  <span><i class="ball" style="--c: #7c4dff"></i>Fibonacci Ball</span>
+                  <span class="vs">vs</span>
+                  <span><i class="ball" style="--c: #0ea5e9"></i>Slow Factorial Ball</span>
+                </p>
+                <p class="matchup-note" id="matchup-note">Night look, Fibonacci against Factorial</p>
+              </div>
+              <button class="btn btn-ghost btn-small" id="roll" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                  <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" />
+                </svg>
+                Roll a new matchup
+              </button>
+            </div>
+          </div>
+        </div>
+        <aside class="browser-note" aria-labelledby="browser-title">
+          <span class="browser-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2.5" /><path d="M8 21h8M12 17v4" /></svg>
+          </span>
+          <div>
+            <h2 id="browser-title">Record in Chrome or Edge, on a computer</h2>
+            <p>
+              They write the MP4 (H.264 and AAC) that Shorts, TikTok and Reels take as it is. Firefox writes WebM, which TikTok and Instagram want
+              converted first. Safari is not tested yet, and phones and tablets cannot record yet.
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="shell section" id="how" aria-labelledby="how-title">
+        <header class="section-head">
+          <h2 id="how-title">From a dice roll to a finished video</h2>
+          <p>Three steps, all in your browser. The race is worked out before it plays, so what you see is what gets recorded.</p>
+        </header>
+        <!-- A small working studio: the steps set a matchup, the phone beside them plays it (src/site/home.ts). Two lists, so the phone can come between them on a narrow screen. -->
+        <div class="how-grid">
+          <ol class="steps">
+            <li class="tile step">
+              <div class="step-text">
+                <span class="step-num">1</span>
+                <h3>Roll a matchup</h3>
+                <p>The dice picks two of ten number sequences and balances the race at once: it ends close, and on time for your video.</p>
+              </div>
+              <div class="piece piece-roll">
+                <button class="btn btn-primary btn-small" id="how-roll" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="2.2" />
+                    <circle cx="8.5" cy="8.5" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+                    <circle cx="15.5" cy="15.5" r="1.6" fill="currentColor" />
+                  </svg>
+                  Roll the dice
+                </button>
+                <ul class="piece-rows" id="how-balls" aria-label="This matchup">
+                  <li class="piece-row"><i class="ball" style="--c: #7c4dff"></i><b>Fibonacci Ball</b><em>1, 1, 2, 3, 5, 8, 13…</em></li>
+                  <li class="piece-row"><i class="ball" style="--c: #0ea5e9"></i><b>Slow Factorial Ball</b><em>1, 2, 6, 24, 120, 720…</em></li>
+                </ul>
+                <p class="piece-verdict" id="how-verdict" aria-live="polite"><strong>Slow Factorial Ball</strong> wins by 0.3 s</p>
+              </div>
+            </li>
+            <li class="tile step">
+              <div class="step-text">
+                <span class="step-num">2</span>
+                <h3>Choose length, look, sound and narrator</h3>
+                <p>From 20 to 90 seconds in the studio, a photo finish or a gap you pick, three looks, and a narrator, the music alone or silence.</p>
+              </div>
+              <div class="piece piece-settings">
+                <div class="control">
+                  <!-- The value is for the eye: the slider says it itself (aria-valuetext), and an output would say it twice. -->
+                  <div class="control-label"><label for="how-length">Length</label><output id="how-length-out" for="how-length" aria-hidden="true">30 s</output></div>
+                  <input class="range" type="range" id="how-length" min="30" max="90" step="5" value="30" aria-valuetext="30 seconds" />
+                </div>
+                <div class="control">
+                  <div class="control-label"><label for="how-gap">Finish gap</label><output id="how-gap-out" for="how-gap" aria-hidden="true">photo finish</output></div>
+                  <input class="range" type="range" id="how-gap" min="0" max="10" step="1" value="0" aria-valuetext="photo finish" />
+                </div>
+                <fieldset class="choice">
+                  <legend>Look</legend>
+                  <div class="choice-options">
+                    <label><input type="radio" name="how-look" value="paper" /><span>Paper</span></label>
+                    <label><input type="radio" name="how-look" value="cards" /><span>Cards</span></label>
+                    <label><input type="radio" name="how-look" value="night" checked /><span>Night</span></label>
+                  </div>
+                </fieldset>
+                <fieldset class="choice">
+                  <legend>Sound</legend>
+                  <div class="choice-options segments">
+                    <label><input type="radio" name="how-sound" value="narrator" /><span>Narrator and music</span></label>
+                    <label><input type="radio" name="how-sound" value="music" checked /><span>Music only</span></label>
+                    <label><input type="radio" name="how-sound" value="silent" /><span>Silent</span></label>
+                  </div>
+                  <p class="piece-hint" id="how-sound-hint">Notes, cracks and the fanfare; no narrator.</p>
+                </fieldset>
+                <p class="piece-note" id="how-free">The free plan makes up to 30 s in the paper look, with music or silence; the paid plans make all of this.</p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="how-demo">
+            <div class="phone" id="how-phone">
+              <img
+                src="/hero/first-frame-2.webp"
+                width="540"
+                height="960"
+                loading="lazy"
+                alt="The race the steps set, in a phone: Fibonacci Ball in the top card, Slow Factorial Ball in the bottom one, in the night look."
+              />
+              <canvas aria-hidden="true"></canvas>
+            </div>
+            <p class="how-caption" id="how-caption">Fibonacci Ball vs Slow Factorial Ball, 30 s, night look, muted</p>
+          </div>
+
+          <ol class="steps" start="3">
+            <li class="tile step">
+              <div class="step-text">
+                <span class="step-num">3</span>
+                <h3>Post it as it is</h3>
+                <p>Record writes an MP4 at the length you set that ends on its first frame, so the replay has no cut. Upload it to Shorts, TikTok or Reels as it is.</p>
+              </div>
+              <div class="piece piece-post">
+                <div class="post-phone" id="how-post">
+                  <img src="/hero/first-frame-2.webp" width="540" height="960" loading="lazy" alt="The video's first frame under a platform's buttons: the names, the question and the top race clear of them." />
+                  <canvas aria-hidden="true"></canvas>
+                  <!-- Where the apps put their own buttons, drawn generically (no logos): the zones of the studio's #safe-zones (src/style.css .zone). -->
+                  <span class="post-ui" aria-hidden="true">
+                    <span class="post-top">
+                      <i class="post-tabs only-tiktok"><b></b><b></b></i>
+                      <i class="post-title only-reels"></i>
+                      <svg class="only-shorts only-tiktok" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.4-4.4" /></svg>
+                      <svg class="only-reels" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="3" /><circle cx="12" cy="13.5" r="3.5" /><path d="M8.5 7 10 4h4l1.5 3" /></svg>
+                    </span>
+                    <span class="post-side">
+                      <i class="post-avatar only-tiktok"></i>
+                      <svg class="only-tiktok only-reels" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.6c0 5.4-7.5 10-7.5 10Z" /></svg>
+                      <svg class="only-shorts" viewBox="0 0 24 24"><path d="M7 10.5V20M7 10.5 10.8 4c1.5 0 2.4 1.1 2.1 2.6l-.6 2.9H18a2 2 0 0 1 2 2.3l-1 6.3a2 2 0 0 1-2 1.9H7" /></svg>
+                      <svg class="only-shorts" viewBox="0 0 24 24"><path d="M17 13.5V4M17 13.5 13.2 20c-1.5 0-2.4-1.1-2.1-2.6l.6-2.9H6a2 2 0 0 1-2-2.3l1-6.3a2 2 0 0 1 2-1.9h10" /></svg>
+                      <svg viewBox="0 0 24 24"><path d="M20 12a7.5 7.5 0 0 1-10.9 6.7L4 20l1.4-4.6A7.5 7.5 0 1 1 20 12Z" /></svg>
+                      <svg class="only-tiktok" viewBox="0 0 24 24"><path d="M6.5 4h11v16l-5.5-4-5.5 4Z" /></svg>
+                      <svg class="only-shorts only-tiktok" viewBox="0 0 24 24"><path d="M13.5 5.5 20 12l-6.5 6.5M20 12H10a6 6 0 0 0-6 6" /></svg>
+                      <svg class="only-reels" viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 3 3 7.5Z" /><path d="M10 13.5 21 3" /></svg>
+                    </span>
+                    <span class="post-bottom">
+                      <span class="post-who"><i class="post-avatar"></i><i class="post-line post-name"></i><i class="post-pill only-shorts only-reels"></i></span>
+                      <i class="post-line"></i>
+                      <i class="post-line post-short"></i>
+                      <span class="post-who"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" /><circle cx="6.5" cy="18" r="2.5" /><circle cx="17.5" cy="16" r="2.5" /></svg><i class="post-line post-name"></i></span>
+                    </span>
+                  </span>
+                </div>
+                <div class="post-info">
+                  <fieldset class="choice">
+                    <legend>Shown on</legend>
+                    <div class="choice-options">
+                      <label><input type="radio" name="how-app" value="shorts" checked /><span>Shorts</span></label>
+                      <label><input type="radio" name="how-app" value="tiktok" /><span>TikTok</span></label>
+                      <label><input type="radio" name="how-app" value="reels" /><span>Reels</span></label>
+                    </div>
+                  </fieldset>
+                  <ul class="post-facts">
+                    <li><b id="how-length-fact">30.0 s</b><span>the length you set</span></li>
+                    <li><b>A loop</b><span>it ends on its first frame</span></li>
+                    <li><b>MP4</b><span>1080×1920 at 60 fps</span></li>
+                  </ul>
+                </div>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Real recordings, scaled to 540×960 without their sound (public/gallery/, made as docs/website.md §5 says); each plays only while it is on screen (src/site/home.ts). -->
+      <section class="shell section" aria-labelledby="gallery-title">
+        <header class="section-head">
+          <h2 id="gallery-title">Made in the studio</h2>
+          <p>Three recordings from the studio, one in each look, 30 seconds each, shown here smaller and muted.</p>
+        </header>
+        <ul class="gallery">
+          <li>
+            <figure>
+              <div class="gallery-phone">
+                <video src="/gallery/primes-vs-squares-2.mp4" poster="/gallery/primes-vs-squares-2.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Prime Ball vs Square Ball" hidden>
+                  <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                </button>
+              </div>
+              <figcaption><b>Prime Ball vs Square Ball</b><span>Paper look, 30 s</span></figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="gallery-phone">
+                <video src="/gallery/doubling-vs-fibonacci-2.mp4" poster="/gallery/doubling-vs-fibonacci-2.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Doubling Ball vs Fibonacci Ball" hidden>
+                  <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                </button>
+              </div>
+              <figcaption><b>Doubling Ball vs Fibonacci Ball</b><span>Cards look, 30 s</span></figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="gallery-phone">
+                <video src="/gallery/tribonacci-vs-tripling-2.mp4" poster="/gallery/tribonacci-vs-tripling-2.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Tribonacci Ball vs Tripling Ball" hidden>
+                  <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                </button>
+              </div>
+              <figcaption><b>Tribonacci Ball vs Tripling Ball</b><span>Night look, 30 s</span></figcaption>
+            </figure>
+          </li>
+        </ul>
+      </section>
+
+      <section class="shell section" aria-labelledby="why-title">
+        <div class="stage features">
+          <header class="section-head">
+            <h2 id="why-title">Built for short video</h2>
+            <p>What keeps people watching, done for every race, so you only pick and post.</p>
+          </header>
+
+          <section class="fgroup" aria-labelledby="group-watch">
+            <header class="fgroup-head">
+              <h3 id="group-watch">Watched to the end</h3>
+              <p>A race that stays close, a question for the comments, and a replay with no cut.</p>
+            </header>
+            <div class="fbento">
+              <article class="fcard fcard-big" data-story>
+                <h4>Close to the very end</h4>
+                <p>Speeds are set so every race ends close, a photo finish or a gap of 1 to 10&nbsp;s that you pick, and the video comes out at the length you set.</p>
+                <!-- The steps' matchup as a race to the line (src/site/home.ts): its controls are the steps' Length and Finish gap, in step. -->
+                <div class="fviz viz-race">
+                  <div class="race-board">
+                    <p class="race-top"><span>Race</span><b id="board-race">22.9 s of a 30 s video</b></p>
+                    <div class="lanes" id="board-lanes">
+                      <span class="lane" style="--c: #0ea5e9; --w: 100%"><i></i><b>Slow Factorial Ball</b><em>wins</em></span>
+                      <span class="lane" style="--c: #7c4dff; --w: 95%"><i></i><b>Fibonacci Ball</b><em>0.3 s behind</em></span>
+                      <span class="finish-line"></span>
+                    </div>
+                    <p class="ruler" id="board-ruler" aria-hidden="true"><i>0 s</i><i>8 s</i><i>15 s</i><i>22.9 s</i></p>
+                  </div>
+                  <div class="race-controls">
+                    <div class="control">
+                      <div class="control-label"><label for="board-length">Length</label><output id="board-length-out" for="board-length" aria-hidden="true">30 s</output></div>
+                      <input class="range" type="range" id="board-length" min="30" max="90" step="5" value="30" aria-valuetext="30 seconds" />
+                    </div>
+                    <div class="control">
+                      <div class="control-label"><label for="board-gap">Finish gap</label><output id="board-gap-out" for="board-gap" aria-hidden="true">photo finish</output></div>
+                      <input class="range" type="range" id="board-gap" min="0" max="10" step="1" value="0" aria-valuetext="photo finish" />
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>A narrator who asks for a pick</h4>
+                <p>It names both balls, gives each a line and ends by asking viewers to pick a winner: the answer goes in the comments. The narrator comes with the paid plans; every plan records music only or silence.</p>
+                <!-- The classic's real opening (src/audio/narration.ts autoScript), and Kokoro saying it in Heart, loaded only on a press. -->
+                <div class="fviz viz-voice" id="voice">
+                  <p class="quote">“Fibonacci Ball versus Slow Factorial Ball! Fibonacci adds up its last two hits. Slow Factorial multiplies by the next number. By its twentieth hit, Factorial deals over two quintillion. Which one are you betting on?”</p>
+                  <div class="player">
+                    <button class="play" id="voice-play" type="button" aria-pressed="false" aria-label="Hear the opening, in the Heart voice">
+                      <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                      <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                    </button>
+                    <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                    <span class="voice-name">Heart</span>
+                  </div>
+                  <audio id="voice-audio" preload="none" data-src="/voice/opening-heart.m4a"></audio>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>A loop with no cut</h4>
+                <p>The last half second fades into the first frame, so when the app plays it again there is no cut.</p>
+                <div class="fviz viz-loop" aria-hidden="true">
+                  <span class="loop-frame"><img src="/hero/first-frame-2.webp" width="540" height="960" loading="lazy" alt="" /><em>0.0 s</em></span>
+                  <svg class="loop-arrow" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1M19.5 12a7.5 7.5 0 0 1-13 5.1M17.5 3v4h-4M6.5 21v-4h4" /></svg>
+                  <span class="loop-frame"><img src="/hero/first-frame-2.webp" width="540" height="960" loading="lazy" alt="" /><em>30.0 s</em></span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="fgroup" aria-labelledby="group-new">
+            <header class="fgroup-head">
+              <h3 id="group-new">A new video every day</h3>
+              <p>One roll makes a new matchup, balanced and ready, with nothing to edit: posting every day takes minutes.</p>
+            </header>
+            <div class="fbento">
+              <article class="fcard fcard-big">
+                <h4>Three looks, one race</h4>
+                <p>Paper, as the format's biggest channels draw it, and BounceReel's cards, by day or at night. Only the drawing changes: press one to see it play.</p>
+                <ul class="fviz viz-looks" aria-label="The three looks">
+                  <li>
+                    <button class="look-tile" type="button" data-look="paper" aria-label="See the paper look play">
+                      <img src="/looks/paper.webp" width="480" height="416" loading="lazy" alt="" />
+                      <span>Paper</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="look-tile" type="button" data-look="cards" aria-label="See the cards look play">
+                      <img src="/looks/cards.webp" width="480" height="416" loading="lazy" alt="" />
+                      <span>Cards</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="look-tile" type="button" data-look="night" aria-label="See the night look play">
+                      <img src="/looks/night.webp" width="480" height="416" loading="lazy" alt="" />
+                      <span>Night</span>
+                    </button>
+                  </li>
+                </ul>
+              </article>
+              <article class="fcard">
+                <h4>Ten sequences, 33 pairings</h4>
+                <p>The dice pairs two number sequences that make a race, and balances it at once.</p>
+                <ul class="fviz viz-seqs" aria-label="The sequences the dice picks from">
+                  <li><b>Fibonacci</b><em>1, 1, 2, 3, 5…</em></li>
+                  <li><b>Factorial</b><em>1, 2, 6, 24, 120…</em></li>
+                  <li><b>Doubling</b><em>1, 2, 4, 8, 16…</em></li>
+                  <li><b>Tripling</b><em>1, 3, 9, 27, 81…</em></li>
+                  <li><b>Squares</b><em>1, 4, 9, 16, 25…</em></li>
+                  <li><b>Cubes</b><em>1, 8, 27, 64, 125…</em></li>
+                  <li><b>Primes</b><em>2, 3, 5, 7, 11…</em></li>
+                  <li><b>Triangular</b><em>1, 3, 6, 10, 15…</em></li>
+                  <li><b>Tribonacci</b><em>1, 1, 2, 4, 7…</em></li>
+                  <li><b>Counting</b><em>1, 2, 3, 4, 5…</em></li>
+                </ul>
+              </article>
+              <article class="fcard">
+                <h4>Powers, for a twist</h4>
+                <p>A ball can speed up, slow down, grow or split, and a gold tag beside its name tells viewers which. On the paid plans.</p>
+                <!-- Each tag shows what its power does to a ball on a floor (src/site/home.ts powerDemo): a sketch, not the engine. -->
+                <div class="fviz viz-power">
+                  <canvas class="power-demo" id="power-demo" width="480" height="240" aria-hidden="true"></canvas>
+                  <fieldset class="power-choice">
+                    <legend class="sr-only">See what a power does</legend>
+                    <label><input type="radio" name="power" value="faster" checked /><span class="power-tag"><svg viewBox="0 0 10 16" aria-hidden="true"><path d="M6.2 0 .4 9.3h4.2L3 16l6.6-9.9H5.4L7.6 0Z" /></svg>SPEEDS UP</span></label>
+                    <label><input type="radio" name="power" value="slower" /><span class="power-tag"><svg viewBox="0 0 10 16" aria-hidden="true"><path d="M6.2 0 .4 9.3h4.2L3 16l6.6-9.9H5.4L7.6 0Z" /></svg>SLOWS DOWN</span></label>
+                    <label><input type="radio" name="power" value="grow" /><span class="power-tag"><svg viewBox="0 0 10 16" aria-hidden="true"><path d="M6.2 0 .4 9.3h4.2L3 16l6.6-9.9H5.4L7.6 0Z" /></svg>GROWS</span></label>
+                    <label><input type="radio" name="power" value="split" /><span class="power-tag"><svg viewBox="0 0 10 16" aria-hidden="true"><path d="M6.2 0 .4 9.3h4.2L3 16l6.6-9.9H5.4L7.6 0Z" /></svg>SPLITS</span></label>
+                  </fieldset>
+                  <p class="power-hint" id="power-hint">Every floor hit makes it faster.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="fgroup" aria-labelledby="group-post">
+            <header class="fgroup-head">
+              <h3 id="group-post">Ready to post</h3>
+              <p>A file the apps take as it is, laid out around their buttons, and a library that remembers how each one was made.</p>
+            </header>
+            <div class="fbento">
+              <article class="fcard fcard-big">
+                <h4>A library of your videos</h4>
+                <p>Each recording is listed with its settings and, once you paste them, its YouTube, TikTok and Instagram links. Open one in the studio and it plays out again, frame for frame.</p>
+                <div class="fviz viz-library" aria-hidden="true">
+                  <span class="lib-row">
+                    <img src="/looks/paper.webp" width="480" height="416" loading="lazy" alt="" />
+                    <span class="lib-text"><b>Prime Ball vs Square Ball</b><span class="pills"><i class="on">YouTube</i><i class="on">TikTok</i><i>Instagram</i></span></span>
+                  </span>
+                  <span class="lib-row">
+                    <img src="/looks/night.webp" width="480" height="416" loading="lazy" alt="" />
+                    <span class="lib-text"><b>Doubling Ball vs Fibonacci Ball</b><span class="pills"><i class="on">YouTube</i><i>TikTok</i><i>Instagram</i></span></span>
+                  </span>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>Clear of the buttons</h4>
+                <p>The names, the top race and the VS stay clear of the apps' top bar and side buttons; only the bottom card's last layers run under the caption, as on the format's biggest channels.</p>
+                <!-- Where TikTok, Reels and Shorts put their own buttons: the zones of the studio's #safe-zones (src/style.css .zone). -->
+                <div class="fviz viz-zones" aria-hidden="true">
+                  <span class="zones-frame">
+                    <img src="/hero/first-frame-2.webp" width="540" height="960" loading="lazy" alt="" />
+                    <i class="zone-top"></i>
+                    <i class="zone-side"></i>
+                    <i class="zone-bottom"></i>
+                  </span>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>1080×1920 at 60 fps</h4>
+                <p>An MP4 with H.264 video and AAC sound, which Shorts, TikTok and Reels take as it&nbsp;is.</p>
+                <div class="fviz viz-specs" aria-hidden="true">
+                  <span class="phone-frame">
+                    <img src="/hero/first-frame-2.webp" width="540" height="960" loading="lazy" alt="" />
+                    <span class="dim dim-w">1080</span>
+                    <span class="dim dim-h">1920</span>
+                  </span>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="shell section" id="pricing" aria-labelledby="pricing-title">
+        <header class="section-head">
+          <h2 id="pricing-title">Plans</h2>
+          <p>Start free, no card needed. The paid plans make more videos a day, longer, in every look, with the narrator and powers, and no watermark.</p>
+        </header>
+        <ul class="plans plans-loading" id="plans" aria-busy="true"></ul>
+        <p class="plans-note" id="plans-note" hidden></p>
+        <noscript><p class="plans-note">The plans load with JavaScript, which is off in this browser. Turn it on to see them; the studio needs it too.</p></noscript>
+      </section>
+
+      <section class="shell section faq-section" aria-labelledby="faq-title">
+        <header class="section-head">
+          <h2 id="faq-title">Questions</h2>
+          <p>Anything else? Write to <a href="mailto:%CONTACT_EMAIL%">%CONTACT_EMAIL%</a>.</p>
+        </header>
+        <div class="faq">
+          <div class="faq-col">
+            <details>
+              <summary>Which browsers does the studio run in?</summary>
+              <p>Chrome or Edge on a computer: they record the MP4 (H.264 video, AAC sound) that Shorts, TikTok and Reels take as it is. Firefox records WebM, which TikTok and Instagram want converted first. Safari is not tested yet. The studio shows which format your browser writes, beside Record.</p>
+            </details>
+            <details>
+              <summary>Can I make videos on my phone?</summary>
+              <p>Not yet: the studio needs a computer. The videos are made for phones, though: vertical and full size, ready to post from wherever you post.</p>
+            </details>
+            <details>
+              <summary>Do I have to edit the video?</summary>
+              <p>No. Each recording comes out at the length you set, with the race, the winner card and the fade back to the first frame. Upload the file as it is.</p>
+            </details>
+            <details>
+              <summary>How close are the races?</summary>
+              <p>As close as you ask. A photo finish puts the loser 0.15 to 1.1 seconds behind the winner; or pick a gap of 1 to 10 seconds. Either way the speeds are set so the video comes out at the length you chose.</p>
+            </details>
+            <details>
+              <summary>Is there a watermark?</summary>
+              <p>On the free plan, a small BounceReel watermark, the mark and the site's address, sits between the two cards of every video. The paid plans have none.</p>
+            </details>
+            <details>
+              <summary>Can I use my own sound?</summary>
+              <p>Yes. Record with music only or silent, then add a sound in TikTok, Instagram or YouTube when you post.</p>
+            </details>
+          </div>
+          <div class="faq-col">
+            <details>
+              <summary>What does the narrator cost?</summary>
+              <p>It comes with the paid plans, at no extra cost: the narrator is Kokoro, a free voice that runs in your browser, so what it says is made on your computer. The first time, your browser downloads the voice once.</p>
+            </details>
+            <details>
+              <summary>Can I hear the voices first?</summary>
+              <p>Yes. The studio's Voice tab plays each voice saying your matchup, on every plan.</p>
+            </details>
+            <details>
+              <summary>Can I make the same video again?</summary>
+              <p>Yes. Every race comes from a seed, and your library keeps each video's settings: open one in the studio and it plays out again, frame for frame.</p>
+            </details>
+            <details>
+              <summary>Where are my videos stored?</summary>
+              <p>The MP4 downloads to your computer. Your library keeps each video's settings and links, not the file: the settings are enough to make the same video again.</p>
+            </details>
+            <details>
+              <summary>What happens when my library is full?</summary>
+              <p>A recording still downloads; it is just not added to your library until you delete one there, or move to a plan that keeps more.</p>
+            </details>
+            <details>
+              <summary>How do I delete my account?</summary>
+              <p>On your account page. The account, its videos and their links are deleted at once.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="shell close" aria-labelledby="close-title">
+        <div class="stage close-stage">
+          <h2 id="close-title">Your first race is a dice roll away.</h2>
+          <p>Free to start, no card needed.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/signup" data-guest>Start free</a>
+            <a class="btn btn-primary" href="/app" data-member>Open studio</a>
+            <a class="btn btn-ghost" href="/pricing">Compare the plans</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- A look, larger: the steps' matchup playing in it (src/site/home.ts). Outside the sections, which are drawn only near the screen. -->
+      <dialog class="look-dialog" id="look-dialog" aria-labelledby="look-dialog-title">
+        <div class="look-dialog-head">
+          <h2 id="look-dialog-title">The paper look</h2>
+          <button class="icon-close" type="button" id="look-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+        <p id="look-dialog-text">Cream boxes in ink frames, glossy layers and glowing balls with trails, as the format's biggest channels draw it.</p>
+        <div class="phone phone-look"><canvas aria-hidden="true"></canvas></div>
+        <div class="look-dialog-nav">
+          <button class="btn btn-ghost btn-small" type="button" data-step="-1">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6" /></svg>
+            Previous look
+          </button>
+          <button class="btn btn-ghost btn-small" type="button" data-step="1">
+            Next look
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg>
+          </button>
+        </div>
+      </dialog>
+    </main>
+
+    <!-- site:footer -->
+    <script type="module" src="/src/site/home.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,54 @@
+# Workers Assets response headers for the pages and their files. They never reach a Worker's
+# own response: /api sets its own (worker/lib/http.ts), and the pages behind the sign-in, which
+# the Worker serves (worker/pages.ts), set the ones they need again.
+#
+# Cross-origin isolation (the first two): Kokoro runs ONNX on every CPU core only with
+# SharedArrayBuffer, and on one without it (minutes for an opening instead of seconds).
+# "credentialless" keeps the CORS fetch of the voice model from Hugging Face working.
+# vite.config.ts sends the same two in dev and preview. Every page has them, the public ones
+# too: a page without them could not be reached from the studio without a full reload.
+#
+# X-Robots-Tag on everything, pages, images and videos alike: nothing of the site is listed while
+# it is on the subdomain (INDEXED in shared/site.ts). Take that line out when it goes public; the
+# rules after these keep the private pages out then.
+/*
+  X-Robots-Tag: noindex, nofollow
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Once the site is listed: the public pages and nothing else; the pages behind the sign-in, the
+# API and the one-time-link pages stay out.
+/app
+  X-Robots-Tag: noindex, nofollow
+/app/*
+  X-Robots-Tag: noindex, nofollow
+/account
+  X-Robots-Tag: noindex, nofollow
+/admin
+  X-Robots-Tag: noindex, nofollow
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+/reset
+  X-Robots-Tag: noindex
+/verify
+  X-Robots-Tag: noindex
+
+# Vite puts a content hash in every file name under /assets: a changed file is a new name.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Fixed names, rarely changed: a week, and a check after that.
+/fonts/*
+  Cache-Control: public, max-age=604800
+/hero/*
+  Cache-Control: public, max-age=604800
+/looks/*
+  Cache-Control: public, max-age=604800
+/voice/*
+  Cache-Control: public, max-age=604800
+/gallery/*
+  Cache-Control: public, max-age=604800

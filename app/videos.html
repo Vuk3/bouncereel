@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Behind the sign-in: out of search results (the Worker also sends X-Robots-Tag). -->
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Videos · BounceReel</title>
+    <script>
+      // The same boot as app.html: settings saved as arcade:… move to bouncereel:… once,
+      // then a saved dark theme applies before first paint.
+      try {
+        for (const old of Object.keys(localStorage).filter((k) => k.startsWith('arcade:'))) {
+          const key = 'bouncereel:' + old.slice('arcade:'.length);
+          if (localStorage.getItem(key) === null) localStorage.setItem(key, localStorage.getItem(old));
+          localStorage.removeItem(old);
+        }
+        if (localStorage.getItem('bouncereel:theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+      } catch {}
+    </script>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="library">
+      <header class="brand library-head">
+        <a href="/app" class="logo" title="Back to the studio" aria-label="Back to the studio"></a>
+        <div>
+          <h1>Videos</h1>
+          <p>Every recording, and where it went up</p>
+        </div>
+        <a href="/app" class="button small ghost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>Studio</a>
+        <a href="/admin" id="admin-link" class="icon-button" title="Admin: users, plans, the log" aria-label="Admin" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6Z" /><path d="m9 12 2 2 4-4" /></svg>
+        </a>
+        <a href="/account" class="icon-button" title="Your account and plan" aria-label="Account">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" /></svg>
+        </a>
+        <button id="theme" type="button" class="icon-button" aria-label="Switch to the dark theme" title="Switch to the dark theme">
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" /></svg>
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+          </svg>
+        </button>
+      </header>
+
+      <p id="verify" class="verify-banner" role="status" hidden></p>
+
+      <section id="tiles" class="tiles" aria-label="Totals"></section>
+      <p id="room" class="room" hidden></p>
+
+      <div class="library-bar">
+        <input id="search" name="search" type="search" placeholder="Search names, sequences, seeds…" spellcheck="false" />
+        <select id="show" name="show" aria-label="Show">
+          <option value="all">All videos</option>
+          <option value="unposted">Not posted anywhere</option>
+          <option value="no-youtube">Not on YouTube</option>
+          <option value="no-tiktok">Not on TikTok</option>
+          <option value="no-instagram">Not on Instagram</option>
+        </select>
+        <span id="count" class="library-count"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="videos">
+          <thead>
+            <tr>
+              <th data-sort="recorded"><button type="button">Recorded</button></th>
+              <th data-sort="title"><button type="button">Video</button></th>
+              <th data-sort="length"><button type="button">Length</button></th>
+              <th data-sort="margin"><button type="button">Finish</button></th>
+              <th>YouTube</th>
+              <th>TikTok</th>
+              <th>Instagram</th>
+              <th><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p id="empty" class="library-empty" hidden></p>
+
+      <p id="toast" class="toast" hidden></p>
+    </div>
+    <script type="module" src="/src/dashboard.ts"></script>
+  </body>
+</html>

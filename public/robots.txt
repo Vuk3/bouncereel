@@ -1,0 +1,5 @@
+# Nothing here is for search engines while BounceReel is on this subdomain: no crawling at all,
+# and every page and file says noindex too (public/_headers, INDEXED in shared/site.ts). When it
+# moves to its own domain and goes public, this lists what stays out instead (docs/website.md §7).
+User-agent: *
+Disallow: /

@@ -1,0 +1,2031 @@
+/*
+ * Rubik (SIL Open Font License 1.1): the video's lettering, and the panel's, so the
+ * names in the matchup card read the way they will on screen. See public/fonts/README.md.
+ * `swap` keeps the panel readable for the moment the file takes; the canvas loads the
+ * font itself before it draws (app.ts), so the video never shows the fallback.
+ */
+@font-face {
+  font-family: 'Rubik';
+  src: url('/fonts/rubik-latin.woff2') format('woff2');
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+/*
+ * Tokens: the public site's (src/site/site.css), so the studio is the same product. Colours
+ * use light-dark(), so everything follows the active scheme: light by default, dark when the
+ * toggle has saved it (html[data-theme='dark'], applied before first paint by each page's
+ * head). The video canvas keeps its own colours in both.
+ *
+ * Colour means something here: the two balls' colours (--team-a, --team-b, set by app.ts
+ * from the matchup); violet for the one action that matters on screen (Record when the race
+ * is ready, the dice otherwise: app.ts syncPrimary) and for keyboard focus; red only while
+ * recording. A selection (the picked look, swatch, tab) is ink, and the rest is grey and
+ * white, so the eye finds the way forward.
+ */
+:root {
+  --paper: light-dark(#eff1f5, #07090e);
+  --surface: light-dark(#ffffff, #10131b);
+  --sunken: light-dark(#f4f5f8, #161a24);
+  --raised: light-dark(#ffffff, #1b2030);
+  --line: light-dark(#dde1e8, #222736);
+  --line-strong: light-dark(#c7ccd6, #31384a);
+  --ink: light-dark(#0c0f17, #edf0f5);
+  --ink-inverse: light-dark(#ffffff, #0c0f17);
+  /* 5.5:1 on the ground, 6.3:1 on a tile; in dark, 7:1 on a tile. */
+  --muted: light-dark(#586071, #9aa2b2);
+  --faint: light-dark(#8a91a0, #6b7384);
+  /* The Fibonacci ball's violet, as on the site: white on it is 5.3:1, --accent-text on white 6.5:1. */
+  --accent: #6a46ff;
+  --accent-hover: #5a35f5;
+  --accent-text: light-dark(#5b37f0, #ab98ff);
+  --accent-soft: light-dark(rgb(106 70 255 / 0.1), rgb(138 112 255 / 0.16));
+  --focus: light-dark(#6a46ff, #a894ff);
+  --focus-soft: light-dark(rgb(106 70 255 / 0.16), rgb(168 148 255 / 0.24));
+  --rec: light-dark(#c0283f, #ff7a8b);
+  /* A red button's fill, in both themes: dark's --rec is a light red for text, 2.4:1 under white. */
+  --rec-fill: #c0283f;
+  --warn: light-dark(#a35a00, #ffc861);
+  --warn-soft: light-dark(rgb(245 158 11 / 0.12), rgb(255 200 97 / 0.1));
+  --warn-line: light-dark(rgb(217 119 6 / 0.4), rgb(255 200 97 / 0.35));
+  --knob: #ffffff;
+  --shadow: 0 1px 2px light-dark(rgb(20 26 46 / 0.06), rgb(0 0 0 / 0.4)), 0 18px 40px -18px light-dark(rgb(20 26 46 / 0.3), rgb(0 0 0 / 0.75));
+  --radius: 12px;
+  --radius-lg: 22px;
+  --control: 40px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --team-a: #7c4dff;
+  --team-b: #0ea5e9;
+
+  color-scheme: light;
+  font: 14px/1.45 Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  height: 100vh;
+}
+
+/* ── Panel ─────────────────────────────────────────────────────────────── */
+
+.panel {
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  padding: 18px 20px 40px;
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.brand > div {
+  flex: 1;
+  min-width: 0;
+}
+.brand h1 {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.005em;
+}
+.brand p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+/* The mark, as on the public site (public/mark.svg): a ball falling onto the layers it breaks. */
+.logo {
+  display: block;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  background: url('/mark.svg') center / contain no-repeat;
+}
+
+/* The theme toggle shows the theme it switches to: a moon in light, a sun in dark. */
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+.icon-button:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.icon-button.small {
+  width: 32px;
+  height: 32px;
+}
+.icon-button.small svg {
+  width: 16px;
+  height: 16px;
+}
+a.icon-button {
+  text-decoration: none;
+  font-weight: 700;
+}
+.icon-button.danger:hover {
+  color: var(--rec);
+  border-color: var(--rec);
+}
+.icon-button .sun,
+:root[data-theme='dark'] .icon-button .moon {
+  display: none;
+}
+:root[data-theme='dark'] .icon-button .sun {
+  display: block;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+fieldset:disabled {
+  opacity: 0.45;
+}
+/* One spacing scale in the panel: 16 between blocks and fields, 10 inside a block, 6 from a label to its control. */
+#controls {
+  display: grid;
+  gap: 16px;
+}
+
+/*
+ * The matchup card: the two balls as the video stacks them, each with its own colour and its
+ * lane to the line, as the home page's race board draws them, and the predicted finish along the
+ * bottom on a strip of finish-line squares.
+ */
+.matchup {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.contender {
+  --team: var(--team-a);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 14px 16px;
+}
+.contender[data-team='b'] {
+  --team: var(--team-b);
+}
+.contender-ball {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--team) 45%, white) 0 12%, var(--team) 48%, color-mix(in srgb, var(--team) 62%, black));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--team) 18%, transparent),
+    0 3px 10px -2px color-mix(in srgb, var(--team) 60%, transparent);
+}
+.contender-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.contender-text strong {
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.contender-rule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 7px;
+  row-gap: 3px;
+  color: var(--faint);
+  font-size: 12px;
+}
+.contender-rule > span:first-child {
+  color: var(--muted);
+  font-weight: 600;
+}
+.contender-rule .power {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--team) 15%, transparent);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 11.5px;
+}
+.contender-speed {
+  font-weight: 700;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+/*
+ * The ball's lane under its name (showPrediction sets --w): to the checkered line on the right
+ * for the winner, as far as it had got when the winner finished for the loser, so a photo finish
+ * shows as two bars almost level. Drawn once per prediction; nothing here moves.
+ */
+.contender-lane {
+  grid-column: 2 / -1;
+  position: relative;
+  height: 6px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: var(--sunken);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.contender-lane i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--w, 0%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--team) 25%, transparent), var(--team));
+}
+.contender-lane::after {
+  content: '';
+  position: absolute;
+  inset: -3px -8px -3px auto;
+  width: 6px;
+  background: repeating-conic-gradient(var(--ink) 0 25%, transparent 0 50%) 0 0 / 6px 6px;
+  border-radius: 1px;
+  opacity: 0.55;
+}
+.timed-out .contender-lane {
+  display: none;
+}
+.versus {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+.versus::before,
+.versus::after {
+  content: '';
+  height: 1px;
+  background: var(--line);
+}
+.verdict {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 16px 16px 13px;
+  background: var(--sunken);
+}
+/* Two rows of finish-line squares: where the race the card describes ends. */
+.verdict::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  background: repeating-conic-gradient(var(--ink) 0 25%, transparent 0 50%) 0 0 / 6px 6px;
+  opacity: 0.55;
+}
+.verdict p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+.verdict p span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.verdict.warn {
+  background: var(--warn-soft);
+}
+.verdict.warn p span {
+  color: var(--warn);
+}
+/* Why Rebalance could not fit the matchup, under the card until the matchup changes (app.ts explainUnbalanced). */
+.balance-note {
+  margin: 0;
+  padding: 0 16px 14px;
+  background: var(--warn-soft);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+/* What the dice does, and the two ways to watch what it made. */
+.deal {
+  display: grid;
+  gap: 10px;
+}
+.deal-options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  padding-top: 2px;
+}
+/* Classics: a ghost pill, as the buttons around it. */
+.deal-options select {
+  width: auto;
+  min-width: 0;
+  flex: 0 1 150px;
+  height: 34px;
+  padding-left: 14px;
+  border-radius: 999px;
+  background-color: transparent;
+  font-size: 13px;
+  font-weight: 600;
+}
+/* What the powers switch does, always in view: its name alone left people guessing. */
+.deal-hint {
+  margin: -4px 0 0;
+}
+
+/* The video's own settings: length, finish gap, look. */
+.video {
+  display: grid;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+/* A section's title is a small label under its hairline: the fields are what the eye reads. */
+.video h2,
+.group h2 {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.looks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.look {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  cursor: pointer;
+}
+/* The radio stays in the page for the keyboard (arrow keys pick a look); the thumbnail is what you see. */
+.look input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.look canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 240 / 208;
+  border-radius: 9px;
+  box-shadow: 0 0 0 1px var(--line);
+  transition: box-shadow 0.15s;
+}
+.look:hover canvas {
+  box-shadow: 0 0 0 1px var(--line-strong);
+}
+.look:has(input:checked) canvas {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--ink);
+}
+.look:has(input:focus-visible) canvas {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--focus);
+}
+.look span {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+}
+.look:has(input:checked) span {
+  color: var(--ink);
+}
+
+/* What Record puts in the sound: three segments, one picked. The radio stays for the keyboard. */
+.track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--sunken);
+  border: 1px solid var(--line);
+}
+.track label {
+  position: relative;
+  cursor: pointer;
+}
+.track input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.track label > span {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 4px 6px;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+.track label:hover > span {
+  color: var(--ink);
+}
+.track input:checked + span {
+  background: var(--raised);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 1px 3px light-dark(rgb(20 26 46 / 0.08), rgb(0 0 0 / 0.4));
+}
+.track input:focus-visible + span {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/*
+ * Something the plan does not include: still there at full contrast, not clickable, with a small
+ * tag on it ("Paid plans") and under it, in the accent, what the paid plans add and a link to the
+ * pricing page (src/ui/plan.ts): an invitation, not an error. The Voice tab's fields, out of reach
+ * altogether (inert), are the one thing dimmed, under the line that says why.
+ */
+.track label.locked,
+.look.locked,
+.switch.locked {
+  cursor: not-allowed;
+}
+.paid-tag {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+/* On a look's thumbnail, in its top corner. */
+.look .paid-tag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
+}
+/* Under a sound's name, inside its segment. */
+.track .paid-tag {
+  display: block;
+  width: max-content;
+  margin: 3px auto 0;
+}
+#tabpanel-voice .field.locked {
+  opacity: 0.5;
+}
+.plan-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.plan-note.invite {
+  color: var(--accent-text);
+  font-weight: 500;
+}
+a.upgrade {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/*
+ * The account's plan in a few words, at the top of the panel (app.ts buildPlanCard): a tick for
+ * what it makes, a dash for what it leaves out, and the way to compare. A plan that holds nothing
+ * back has none.
+ */
+.plan-card {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.plan-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.plan-card h2 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.plan-card-link {
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+.plan-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.plan-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 7px;
+  border-radius: 999px;
+  background: var(--sunken);
+  font-size: 12px;
+  font-weight: 600;
+}
+.plan-chips li::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  flex: none;
+  background: var(--team-a);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.plan-chips li.no {
+  color: var(--muted);
+  font-weight: 500;
+}
+.plan-chips li.no::before {
+  background: var(--faint);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8h7' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8h7' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* Until the address is confirmed: one line under the header, with a button to mail the link again. */
+.verify-banner {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.verify-banner strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.link-button:disabled {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: default;
+}
+.link-button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ── Tabs ──────────────────────────────────────────────────────────────── */
+
+.settings {
+  display: grid;
+  gap: 4px;
+}
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--sunken);
+  border: 1px solid var(--line);
+}
+.tab {
+  height: 32px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab:hover {
+  color: var(--ink);
+}
+.tab[aria-selected='true'] {
+  background: var(--raised);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 1px 3px light-dark(rgb(20 26 46 / 0.08), rgb(0 0 0 / 0.4));
+}
+
+.group {
+  --team: transparent;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.group:last-child {
+  border-bottom: 0;
+}
+.group h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.group[data-team] h2::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--team);
+}
+.group[data-team='a'] {
+  --team: var(--team-a);
+}
+.group[data-team='b'] {
+  --team: var(--team-b);
+}
+.group-body {
+  display: grid;
+  gap: 16px;
+}
+.group-body:empty {
+  display: none;
+}
+
+/* ── Fields ────────────────────────────────────────────────────────────── */
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+.field > label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.field > label > span:first-child,
+.field > span,
+.field-label {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.field-text > label,
+.field-select > label,
+.field-textarea > label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.field output {
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.field-check > label {
+  justify-content: flex-start;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.field-check > label span {
+  color: var(--ink);
+  font-size: 13px;
+}
+.field-check input {
+  margin-top: 1px;
+}
+
+input[type='text'],
+input[type='number'],
+input[type='password'],
+input[type='search'],
+input[type='url'],
+select,
+textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font: inherit;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+input[type='text'],
+input[type='number'],
+input[type='password'],
+input[type='search'],
+input[type='url'],
+select {
+  height: var(--control);
+  padding: 0 12px;
+}
+textarea {
+  resize: vertical;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 12px;
+}
+textarea::placeholder,
+input::placeholder {
+  color: var(--faint);
+}
+
+/*
+ * Selects draw their own chevron: the native control paints its arrow (and on some
+ * systems its own rounded box) over the border. The mid grey reads on both themes.
+ */
+select {
+  appearance: none;
+  padding-right: 36px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a93ab' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 16px;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--muted);
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus-soft);
+}
+/* One focus ring, as on the site: 2 px of violet around whatever the keyboard is on; text fields keep their border and soft ring (above). */
+a:focus-visible,
+.button:focus-visible,
+.icon-button:focus-visible,
+.tab:focus-visible,
+.swatch:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Ranges, checkboxes and an on switch in the accent, as on the site; a selection stays ink. */
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 2px 0;
+}
+input[type='range']:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+input[type='checkbox'] {
+  accent-color: var(--accent);
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  flex: none;
+}
+input[type='color'] {
+  width: 48px;
+  height: 32px;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  cursor: pointer;
+}
+input[type='color']::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input[type='color']::-webkit-color-swatch {
+  border: 0;
+  border-radius: 6px;
+}
+
+/* A ball's colour: the dice's palette one click each, and a ring for any other. */
+/* Twelve swatches and the ring fit one row of the panel: 13 × 22 px plus 12 gaps of 5. */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
+  cursor: pointer;
+}
+.swatch[aria-pressed='true'] {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--ink);
+}
+input[type='color'].swatch-any {
+  width: 22px;
+  height: 22px;
+  padding: 2px;
+  border-radius: 50%;
+  border: 1px dashed var(--muted);
+}
+input[type='color'].swatch-any::-webkit-color-swatch {
+  border-radius: 50%;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* An on/off setting that is not a field of the config (the dice's powers). */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.switch input {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 20px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--line-strong);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.switch input::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--knob);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transition: translate 0.15s;
+}
+.switch input:checked {
+  background: var(--accent);
+}
+.switch input:checked::after {
+  translate: 14px 0;
+}
+.switch input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 12px;
+}
+.hint:empty {
+  display: none;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+.row > .button {
+  flex: 1;
+}
+
+.files {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.seed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.seed input[type='text'] {
+  width: 110px;
+  height: 32px;
+  padding: 0 9px;
+  font-size: 12.5px;
+}
+
+/* The narrator's voices: a row each to pick it, with ▶ to hear it (app.ts buildVoiceBlock). */
+.voice-picker {
+  display: grid;
+  gap: 8px;
+}
+.voices {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.voice-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px 5px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.voice-row:first-child {
+  border-top: 0;
+}
+.voice-row:has(input:checked) {
+  background: var(--sunken);
+}
+.voice-row label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+.voice-row input {
+  margin: 0;
+  accent-color: var(--ink);
+}
+.voice-row strong {
+  font-weight: 700;
+}
+.voice-row label span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.voice-play svg {
+  fill: currentColor;
+  stroke: none;
+}
+.voice-extra {
+  display: grid;
+  gap: 14px;
+}
+.voice-status {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--focus);
+}
+
+/* ── Buttons: pills, as on the site. Violet is the way forward; the ghost is everything else. ── */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--control);
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  padding: 0 18px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+a.button {
+  text-decoration: none;
+}
+.button:hover {
+  background: var(--accent-hover);
+}
+.button:active {
+  translate: 0 1px;
+}
+.button.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.button.ghost:hover {
+  border-color: var(--ink);
+}
+.button.small {
+  height: 32px;
+  padding: 0 13px;
+  font-size: 12.5px;
+}
+/*
+ * Icons in the site's stroke style, the label always beside them. The media ones (play, pause,
+ * record, stop) are solid shapes, as on the site's players: an outlined dot does not read as Record.
+ */
+.button svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.button svg.solid {
+  fill: currentColor;
+  stroke: none;
+}
+.button.small svg {
+  width: 14px;
+  height: 14px;
+}
+/* Which icon a two-state button shows: updateStatus in app.ts sets data-state. */
+#play:not([data-state='playing']) .icon-pause,
+#play[data-state='playing'] .icon-play,
+#record:not([data-state='recording']) .icon-stop,
+#record[data-state='recording'] .icon-record {
+  display: none;
+}
+/*
+ * The dice: the panel's first action, taller than the rest. Violet while nothing is ready to
+ * record, a ghost once Record is (app.ts syncPrimary).
+ */
+.button.dice {
+  height: 48px;
+  font-size: 15px;
+}
+.button.dice svg {
+  width: 20px;
+  height: 20px;
+}
+/* Record: violet when the race is ready (syncPrimary), red only while it records. */
+.recording .button.record {
+  background: var(--rec-fill);
+  border-color: transparent;
+  color: #fff;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--rec) 25%, transparent);
+  }
+}
+
+/* ── Stage ─────────────────────────────────────────────────────────────── */
+
+/*
+ * The site's ink stage (src/site/site.css .stage) with the preview as its hero. It re-declares the
+ * tokens, so the toolbar, the status, the timeline and the toast on it read right with no rules of
+ * their own. Narrower than 1200 px the toolbar is a row above the preview; from 1200 px it is a
+ * column on its right (row-reverse: it stays first in the tab order), so the preview takes the
+ * whole height but its timeline's.
+ */
+.stage {
+  color-scheme: dark;
+  --ink: #f2f4f8;
+  --ink-inverse: #0b0e16;
+  --muted: #a6adbb;
+  --faint: #6b7384;
+  --line: rgb(255 255 255 / 0.1);
+  --line-strong: rgb(255 255 255 / 0.2);
+  --surface: #141924;
+  --sunken: rgb(255 255 255 / 0.06);
+  --raised: #1b2030;
+  --focus: #b4a3ff;
+  --focus-soft: rgb(180 163 255 / 0.3);
+  --rec: #ff7a8b;
+  --warn: #ffc861;
+  --warn-soft: rgb(255 200 97 / 0.1);
+  --warn-line: rgb(255 200 97 / 0.35);
+  --accent-text: #ab98ff;
+
+  position: relative;
+  /*
+   * The balls' light (.stage-preview::before) sits behind the preview, above this background, and is cut
+   * at the stage's sides. Only the sides: content taller than the screen (the format warning in a
+   * browser that writes WebM) must make the page scroll, not vanish under a clip.
+   */
+  isolation: isolate;
+  overflow-x: clip;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 20px 22px;
+  background: #0b0e16;
+  color: var(--ink);
+}
+/* Night: a step above the page's ground, as on the site. */
+:root[data-theme='dark'] .stage {
+  background: #0f131d;
+}
+
+/*
+ * One row, never two: the screen's height counts on a single 40 px row (.screen), so the status and
+ * the format give way with an ellipsis before the buttons or the day's allowance would wrap.
+ */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.toolbar .button,
+.toolbar .allowance {
+  flex: none;
+}
+.toolbar .status,
+.toolbar .format {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The format is the same all session; the status is what changes: the format gives way first. */
+.toolbar .format {
+  flex-shrink: 100;
+}
+@media (min-width: 1200px) {
+  .stage {
+    flex-direction: row-reverse;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    align-self: stretch;
+    flex-wrap: nowrap;
+    width: 200px;
+  }
+  .toolbar .status {
+    margin: 6px 0 0;
+    white-space: normal;
+  }
+  .toolbar .format {
+    margin: auto 0 0;
+  }
+}
+.status {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  margin-left: 6px;
+}
+/* The plan's daily allowance, beside Record (app.ts syncDay): what is left, or when the next day starts. */
+.allowance {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.allowance.used {
+  color: var(--warn);
+}
+.recording .status {
+  color: var(--rec);
+  font-weight: 700;
+}
+/* The recording dot before "REC 12.3 s" (app.ts updateStatus), a shape rather than a ● in the text. */
+.recording .status::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: 1px;
+}
+.format {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+/* A browser that cannot write the MP4: said above the video, before a recording is made. */
+.format-warning {
+  width: 100%;
+  margin: 0;
+  padding: 9px 13px;
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
+  font-size: 12.5px;
+}
+
+/*
+ * The preview and its timeline, one column as wide as the video. Behind it the two balls' light,
+ * as behind the site's phones: the top ball's colour high on the left, the bottom one's low on the
+ * right, as the video stacks them (--team-a and --team-b, set from the matchup). Centred on the
+ * screen's edges, since the screen covers whatever is behind its middle.
+ */
+.stage-preview {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+/* No higher or lower than the preview: below it the page would grow taller than the screen. */
+.stage-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0 -60%;
+  z-index: -1;
+  background:
+    radial-gradient(45% 34% at 30% 26%, color-mix(in srgb, var(--team-a) 32%, transparent), transparent 70%),
+    radial-gradient(45% 34% at 70% 74%, color-mix(in srgb, var(--team-b) 26%, transparent), transparent 70%);
+  pointer-events: none;
+}
+/*
+ * As tall as the screen allows: 100vh less the stage's padding (16 + 22), the timeline (28 and a
+ * 10 px gap) and, below 1200 px, the toolbar's row (40 and a 12 px gap). 464×824 at 1440×900,
+ * 362×644 at 1280×720.
+ */
+.screen {
+  position: relative;
+  height: calc(100vh - 128px);
+  aspect-ratio: 9 / 16;
+  max-width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 30px 60px -30px rgb(0 0 0 / 0.8);
+}
+@media (min-width: 1200px) {
+  .screen {
+    height: calc(100vh - 76px);
+  }
+}
+.screen canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #e8dbbe;
+}
+
+/*
+ * Under the preview, this run's phases at their real lengths (app.ts buildTimeline): each phase a
+ * segment that names itself where it has room (a container query hides the name when it does
+ * not), the part already played lit, and the clock beside them. The lit part is a layer as wide
+ * as the track, moved by `translate` alone (a share of its own width: -100% is nothing played,
+ * 0 is all of it), so a frame never lays anything out; the playhead is its right edge.
+ */
+.timeline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 28px;
+}
+.timeline-track {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 22px;
+  border-radius: 7px;
+  overflow: clip;
+}
+.phase {
+  container-type: inline-size;
+  flex: 1 1 0;
+  display: grid;
+  align-items: center;
+  min-width: 0;
+  padding: 0 5px;
+  background: rgb(255 255 255 / 0.09);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.phase b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: inherit;
+}
+/* A name shows only whole: at this size "Winner" is 36 px wide, the others less, "Slow motion" 64. */
+@container (max-width: 35px) {
+  .phase b {
+    visibility: hidden;
+  }
+}
+@container (max-width: 63px) {
+  .phase-slow b {
+    visibility: hidden;
+  }
+}
+.phase-race {
+  background: rgb(255 255 255 / 0.15);
+  color: var(--ink);
+}
+.phase-card {
+  background: rgb(255 255 255 / 0.12);
+}
+.timeline-head {
+  position: absolute;
+  inset: 0;
+  background: rgb(255 255 255 / 0.14);
+  translate: -100% 0;
+  pointer-events: none;
+  will-change: translate;
+}
+.timeline-head::after {
+  content: '';
+  position: absolute;
+  inset: 0 -1px 0 auto;
+  width: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 6px rgb(255 255 255 / 0.6);
+}
+/*
+ * "12.4 / 30.0 s": the video's own clock against its length; warm when the end ran past it. Its
+ * text, like the status's, changes ten times a second and costs a small layout each time (in
+ * Chrome a grid or flex item is never a layout boundary, so `contain` does not spare it: measured).
+ */
+.timeline-time {
+  min-width: 11ch;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.timeline-time.over {
+  color: var(--warn);
+}
+/* While recording, the timeline is the take's: red. */
+.recording .timeline-head {
+  background: color-mix(in srgb, var(--rec) 22%, transparent);
+}
+.recording .timeline-head::after {
+  background: var(--rec);
+  box-shadow: 0 0 6px var(--rec);
+}
+
+/*
+ * Over the preview while a take runs (app.ts startTake): the red dot and what is left, the one
+ * thing that spoils a take, and after a hidden tab, what to do about the pause it left. On the
+ * stage's tokens; the recorder takes the canvas alone, so none of it is in the file.
+ */
+.rec-bar {
+  position: absolute;
+  inset: 10px 10px auto;
+  display: grid;
+  gap: 3px;
+  padding: 9px 12px 10px;
+  border-radius: 12px;
+  background: rgb(11 14 22 / 0.86);
+  box-shadow: 0 0 0 1px var(--line);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.rec-bar p {
+  margin: 0;
+}
+.rec-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.rec-dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--rec);
+}
+.rec-note {
+  color: var(--muted);
+}
+.rec-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+/* Stop & save here is the toolbar's Stop & save: red, as Record is while it records. */
+.rec-actions .button:not(.ghost) {
+  background: var(--rec-fill);
+}
+.rec-actions .button:not(.ghost):hover {
+  background: color-mix(in srgb, var(--rec-fill) 85%, #000);
+}
+
+/* Where TikTok / Reels / Shorts draw their own UI. Percentages of the 1080×1920 frame. */
+.safe-zones {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.zone {
+  position: absolute;
+  background: repeating-linear-gradient(45deg, rgb(255 190 30 / 0.2) 0 8px, rgb(255 190 30 / 0.08) 8px 16px);
+  border: 1px dashed rgb(217 119 6 / 0.7);
+  color: #8a4b00;
+  font-size: 11px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.zone.top {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 10.9%;
+}
+.zone.bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 20.8%;
+}
+.zone.side {
+  right: 0;
+  top: 47%;
+  bottom: 20.8%;
+  width: 13%;
+  writing-mode: vertical-rl;
+}
+
+.start {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: max-content;
+  height: max-content;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 22px 30px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+}
+/* On a plan with a daily limit: watching is free, only Record counts (app.ts applyPlan). */
+.start small {
+  max-width: 220px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+}
+.start small[hidden] {
+  display: none;
+}
+/* Ink, not violet: the panel's one action keeps the accent (syncPrimary). */
+.start span {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+.start svg {
+  width: 22px;
+  height: 22px;
+  /* The triangle's weight sits left of its box: nudged to look centred in the disc. */
+  margin-left: 3px;
+  fill: currentColor;
+}
+.start:hover {
+  border-color: var(--line-strong);
+}
+.start:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* The question before the day's last video (app.ts confirmRecord). */
+.confirm {
+  width: min(400px, calc(100vw - 32px));
+  padding: 22px 22px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.confirm::backdrop {
+  background: rgb(10 12 20 / 0.45);
+}
+.confirm h2 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.confirm p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* The sheet after a take (app.ts showFinished): the file, then what the library did with it. */
+.finished {
+  width: min(460px, calc(100vw - 32px));
+}
+.finished .finished-file {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--sunken);
+  color: var(--ink);
+}
+.finished-file b {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.finished-file span {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/*
+ * A first visit's one hint (app.ts showHint): in the toolbar's column under Record from 1200 px;
+ * narrower, it hangs under the toolbar's row over the preview, so the row stays one line.
+ */
+.first-hint {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line-strong);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+@media (max-width: 1199px) {
+  .toolbar {
+    position: relative;
+  }
+  .first-hint {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 2;
+    max-width: 320px;
+    box-shadow:
+      0 0 0 1px var(--line-strong),
+      var(--shadow);
+  }
+}
+
+.toast {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  translate: -50% 0;
+  margin: 0;
+  max-width: min(560px, 90%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 15px;
+  box-shadow: var(--shadow);
+  font-size: 13px;
+}
+/* In the studio, over the video's foot and clear of the timeline under it. */
+.stage-preview .toast {
+  bottom: 48px;
+  width: max-content;
+}
+
+/* ── Videos page (app/videos.html) ─────────────────────────────────────── */
+
+.library {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 22px 24px 60px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+.library-head {
+  margin-bottom: 0;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.tile {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.tile strong {
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.tile span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* How full the library is, on a plan that limits it. */
+.room {
+  margin: -6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.room.full {
+  color: var(--warn);
+}
+
+.library-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.library-bar input[type='search'] {
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+.library-bar select {
+  width: auto;
+  min-width: 210px;
+}
+.library-count {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* The table keeps its columns at any width and scrolls sideways inside its card instead. */
+.table-wrap {
+  /* Positioned, so the header's absolute .sr-only label is clipped here and does not widen the page. */
+  position: relative;
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.videos {
+  width: 100%;
+  min-width: 1180px;
+  border-collapse: collapse;
+}
+.videos th {
+  padding: 11px 12px;
+  background: var(--sunken);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.videos th button {
+  all: unset;
+  cursor: pointer;
+}
+.videos th button:hover,
+.videos th[aria-sort] {
+  color: var(--ink);
+}
+.videos th button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.videos th[aria-sort='ascending'] button::after {
+  content: ' ↑';
+}
+.videos th[aria-sort='descending'] button::after {
+  content: ' ↓';
+}
+.videos td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.videos tbody tr:last-child td {
+  border-bottom: 0;
+}
+.videos tbody tr:hover {
+  background: var(--sunken);
+}
+.videos td small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.videos .when,
+.videos .length,
+.videos .finish {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.videos .what {
+  min-width: 270px;
+}
+.videos .what strong {
+  display: block;
+  font-weight: 700;
+}
+.videos .what .file {
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+.videos td small.badge {
+  width: fit-content;
+  margin-top: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.videos .link {
+  min-width: 180px;
+}
+.link-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.link-box input[type='url'] {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+.link-box input.invalid {
+  border-color: var(--rec);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rec) 18%, transparent);
+}
+.videos .actions {
+  white-space: nowrap;
+  text-align: right;
+}
+.videos .actions > * {
+  display: inline-flex;
+  vertical-align: middle;
+}
+.videos .actions > * + * {
+  margin-left: 6px;
+}
+
+.library-empty {
+  margin: 0;
+  padding: 28px 0;
+  color: var(--muted);
+  text-align: center;
+}
+.library .toast {
+  position: fixed;
+}
+
+/* ── Shared by the pages behind the sign-in (the account page and the admin area: console.css) ── */
+
+/* A small label beside a value: "stopped early" on the Videos page. */
+.badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+.button.danger {
+  background: var(--rec-fill);
+  color: #fff;
+}
+.button.danger:hover {
+  background: color-mix(in srgb, var(--rec-fill) 85%, #000);
+}
+/* Off, as on the site: grey, not a faded violet that still reads as the way forward. */
+.button:disabled {
+  cursor: not-allowed;
+  background: var(--sunken);
+  border-color: var(--line);
+  color: var(--faint);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 16px 16px 32px;
+  }
+  .stage {
+    order: -1;
+    padding: 12px 16px;
+  }
+  /* The page scrolls here, so the toolbar may take two rows. */
+  .toolbar {
+    flex-wrap: wrap;
+  }
+  /* The width sets the size here, not the screen's height; the timeline follows it. */
+  .stage-preview {
+    width: min(100%, 420px);
+  }
+  .screen {
+    height: auto;
+    width: 100%;
+  }
+  .library {
+    padding: 16px 16px 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button.dice:active,
+  .button:active {
+    translate: none;
+  }
+  .recording .button.record {
+    animation: none;
+  }
+  .switch input,
+  .switch input::after,
+  .look canvas {
+    transition: none;
+  }
+}
+
+/*
+ * The theme toggle's change: the new theme spreads over the page as a circle from the
+ * button (app.ts runs it in a view transition and writes --flip-x, --flip-y, --flip-r).
+ * Colour transitions are held while it runs, or every control would fade on its own
+ * clock inside the circle.
+ */
+:root[data-theme-flip] *,
+:root[data-theme-flip] *::before,
+:root[data-theme-flip] *::after {
+  transition: none !important;
+}
+:root[data-theme-flip]::view-transition-old(root) {
+  animation: none;
+}
+:root[data-theme-flip]::view-transition-new(root) {
+  animation: theme-flip 650ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes theme-flip {
+  from {
+    clip-path: circle(0 at var(--flip-x) var(--flip-y));
+  }
+  to {
+    clip-path: circle(var(--flip-r) at var(--flip-x) var(--flip-y));
+  }
+}

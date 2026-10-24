@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- site:head /signup -->
+    <title>Start free · BounceReel</title>
+    <meta name="description" content="Create a free BounceReel account and make ball race videos for Shorts, TikTok and Reels in your browser." />
+  </head>
+  <body>
+    <!-- site:header -->
+
+    <main id="main" class="auth">
+      <section class="auth-box" aria-labelledby="auth-title">
+        <h1 id="auth-title">Start free</h1>
+        <p>Make one race a day, up to 30 seconds, with music or silence and a small watermark. No card needed.</p>
+        <p class="form-error" id="error" role="alert" hidden></p>
+        <p class="form-ok" id="ok" role="status" hidden></p>
+        <form class="form" id="form" data-action="signup" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required aria-describedby="password-hint" />
+            <small id="password-hint">At least 8 characters.</small>
+          </div>
+          <button class="btn btn-primary btn-wide" type="submit">Create my account</button>
+          <small class="auth-alt">By creating an account you agree to the <a href="/terms">terms</a> and the <a href="/privacy">privacy policy</a>.</small>
+        </form>
+        <p class="auth-alt">Already have an account? <a href="/login" data-keep-next>Sign in</a></p>
+      </section>
+    </main>
+
+    <!-- site:footer -->
+    <script type="module" src="/src/site/auth.ts"></script>
+  </body>
+</html>

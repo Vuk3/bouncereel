@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- app:head -->
+    <link rel="stylesheet" href="/src/console.css" />
+    <title>Account · BounceReel</title>
+  </head>
+  <body class="console">
+    <header class="console-top">
+      <a href="/app" class="side-brand" aria-label="BounceReel: open the studio">
+        <span class="logo" aria-hidden="true"></span>
+        <span><strong>BounceReel</strong></span>
+      </a>
+      <nav class="top-nav" aria-label="Your pages">
+        <a href="/app">Studio</a>
+        <a href="/app/videos">Videos</a>
+        <a href="/account" aria-current="page">Account</a>
+        <a href="/admin" id="admin-link" hidden>Admin</a>
+      </nav>
+      <!-- app:theme -->
+    </header>
+
+    <main class="console-main narrow">
+      <header class="view-head">
+        <div class="titles">
+          <h1>Account</h1>
+          <p id="who">&nbsp;</p>
+        </div>
+      </header>
+
+      <p id="verify" class="verify-banner" role="status" hidden></p>
+
+      <section class="card" aria-labelledby="plan-title">
+        <div class="card-head"><h2 id="plan-title">Your plan</h2></div>
+        <div id="plan" class="plan-summary" aria-busy="true"></div>
+        <div class="row-actions">
+          <a href="/pricing" class="button ghost">Compare the plans</a>
+          <button id="billing" type="button" class="button" disabled>Upgrades open soon</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="password-title">
+        <div class="card-head"><h2 id="password-title">Password</h2></div>
+        <form id="password-form" class="form-grid" novalidate>
+          <input type="email" name="username" autocomplete="username" id="username" hidden />
+          <label class="field"><span>Current password</span><input type="password" name="current" autocomplete="current-password" required /></label>
+          <label class="field"><span>New password</span><input type="password" name="password" autocomplete="new-password" minlength="8" required /><small class="hint">At least 8 characters. Every other browser is signed out.</small></label>
+          <div><button type="submit" class="button">Change the password</button></div>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="sessions-title">
+        <div class="card-head"><h2 id="sessions-title">Signing out</h2></div>
+        <p class="card-text">Signing out here also clears this browser's saved studio settings for your account.</p>
+        <div class="row-actions">
+          <button id="logout" type="button" class="button ghost">Sign out</button>
+          <button id="logout-everywhere" type="button" class="button ghost">Sign out everywhere</button>
+        </div>
+      </section>
+
+      <section class="card danger-zone" aria-labelledby="delete-title">
+        <div class="card-head"><h2 id="delete-title">Delete the account</h2></div>
+        <p class="card-text">Your account, every video in your library and their links are deleted at once. The MP4 files on your computer stay. This cannot be undone.</p>
+        <form id="delete-form" class="danger-inline" novalidate>
+          <label class="field"><span>Your password, to confirm</span><input type="password" name="password" autocomplete="current-password" required /></label>
+          <button type="submit" class="button danger">Delete my account</button>
+        </form>
+      </section>
+    </main>
+
+    <p id="toast" class="toast" role="status" hidden></p>
+    <script type="module" src="/src/account.ts"></script>
+  </body>
+</html>

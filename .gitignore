@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+# Test recordings; the home page's gallery is the exception (public/gallery/, docs/website.md §5).
+*.webm
+*.mp4
+!public/gallery/*.mp4
+
+# Wrangler: the local D1 database and build state, and local secrets. Never a .dev.vars:
+# when one exists Wrangler reads it instead of .env.
+.wrangler
+.dev.vars*
+.env*
+!.env.example

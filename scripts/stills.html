@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <title>Stills · BounceReel</title>
+    <style>
+      /* The renderer draws in Rubik, as the studio and the hero do (src/style.css, src/site/site.css). */
+      @font-face {
+        font-family: 'Rubik';
+        src: url('/fonts/rubik-latin.woff2') format('woff2');
+        font-weight: 400 900;
+      }
+      body { font: 14px/1.5 system-ui, sans-serif; margin: 24px; background: #ddd; }
+      figure { display: inline-grid; gap: 6px; margin: 0 16px 16px 0; vertical-align: top; }
+      img { max-width: 360px; height: auto; border: 1px solid #999; }
+    </style>
+  </head>
+  <body>
+    <h1>Stills</h1>
+    <p>The images the public site shows, drawn by the real renderer. Download each into public/ at the path under it (docs/website.md).</p>
+    <div id="out"></div>
+    <script type="module" src="./stills.ts"></script>
+  </body>
+</html>

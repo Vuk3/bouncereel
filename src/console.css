@@ -1,0 +1,1345 @@
+/*
+ * The pages behind the sign-in that are not the studio: the account page and the admin area
+ * (docs/accounts-and-billing.md). The public site's identity (src/site/site.css) as a console:
+ * the cool grey ground, white tiles with a hairline edge and no resting shadow, one violet
+ * accent for the action that matters on a screen, pill buttons, Rubik. The admin's sidebar is
+ * the site's ink stage, the one dark surface; everything on the ground stays quiet, so a
+ * status, a limit or a price is what the eye finds.
+ *
+ * Loaded after src/style.css, whose tokens are the site's too (the studio shares them), so its
+ * fields, selects, switches and theme toggle already look right here. `.console` (the body of
+ * these pages) adds only what differs: a taller control, the tiles' corner, and green for a
+ * status that is fine.
+ */
+
+.console {
+  --ok: light-dark(#157a46, #5ee39a);
+  --control: 42px;
+  --tile: 22px;
+
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.console h1,
+.console h2,
+.console h3,
+.console p {
+  margin: 0;
+}
+
+/* ── The shell: the sidebar and the page beside it ─────────────────────── */
+
+.console-shell {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* The ink stage: it re-declares the tokens, so whatever sits on it reads right. */
+.console-side {
+  color-scheme: dark;
+  --ink: #f2f4f8;
+  --muted: #a6adbb;
+  --line: rgb(255 255 255 / 0.1);
+  --line-strong: rgb(255 255 255 / 0.2);
+  --surface: #141924;
+  --focus: #b4a3ff;
+  --focus-soft: rgb(180 163 255 / 0.3);
+
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 22px 14px 18px;
+  background: light-dark(#0b0e16, #0f131d);
+  box-shadow: inset -1px 0 0 light-dark(transparent, rgb(255 255 255 / 0.07));
+  color: var(--ink);
+}
+.side-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 10px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.side-brand strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.side-brand small {
+  display: block;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.side-nav {
+  display: grid;
+  gap: 2px;
+}
+.side-nav a,
+.side-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    color 0.15s var(--ease),
+    background-color 0.15s var(--ease);
+}
+.side-nav a:hover,
+.side-link:hover {
+  color: var(--ink);
+  background: rgb(255 255 255 / 0.05);
+}
+.side-nav a[aria-current='page'] {
+  color: var(--ink);
+  background: rgb(255 255 255 / 0.09);
+}
+.side-nav a[aria-current='page'] svg {
+  color: #b4a3ff;
+}
+.side-nav svg,
+.side-link svg {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.side-nav a:focus-visible,
+.side-link:focus-visible,
+.side-brand:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.side-foot {
+  display: grid;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.side-me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* A grid item sizes to its content by default: a long address would push the theme button out. */
+  min-width: 0;
+  padding: 6px 4px 0 12px;
+}
+.side-me span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-content: start;
+  width: 100%;
+  max-width: 1240px;
+  min-width: 0;
+  padding: 40px clamp(16px, 4vw, 48px) 88px;
+}
+.console-main[aria-busy='true'] {
+  opacity: 0.55;
+}
+
+/* A page's head: what it is, a line on what it is for, and its main action. */
+.view-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 6px;
+}
+.view-head .titles {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.view-head > .person {
+  gap: 16px;
+}
+.view-head h1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+.view-head p {
+  max-width: 64ch;
+  color: var(--muted);
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.back:hover {
+  color: var(--ink);
+}
+.back svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Tiles ─────────────────────────────────────────────────────────────── */
+
+.card {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--tile);
+}
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.card h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.card-text {
+  color: var(--muted);
+  font-size: 14px;
+}
+.card-link {
+  color: var(--accent-text);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.card-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* A tile that is a table: the table runs to its edges, its head row is the tile's top. */
+.card.flush {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+/* The same top as a tile with padding, so two tiles side by side have their titles on one line. */
+.card.flush > .card-head {
+  padding: 24px 24px 16px;
+}
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.columns.wide-first {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+}
+
+/* The numbers that open the overview: the number is the content, so nothing decorates it. */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.kpi {
+  display: grid;
+  gap: 10px;
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--tile);
+}
+.kpi span {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.kpi strong {
+  font-size: 34px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.kpi.alert strong {
+  color: var(--rec);
+}
+
+/* How much of something is used: a plan's subscriptions, a day's videos, a library. */
+.meters {
+  display: grid;
+  gap: 16px;
+}
+.meter {
+  display: grid;
+  gap: 8px;
+}
+.meter-label {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 14px;
+}
+.meter-label span {
+  color: var(--muted);
+}
+.meter-label strong {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.meter-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--sunken);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.meter-bar i {
+  display: block;
+  width: var(--fill, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+.meter.full .meter-bar i {
+  background: var(--warn);
+}
+.meter small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ── People, statuses, tags ───────────────────────────────────────────── */
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.person a {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  text-overflow: ellipsis;
+}
+.person a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* The account's initial on one of the two balls' colours, picked by its id. */
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--avatar, var(--team-a));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.avatar.large {
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 11px 3px 9px;
+  border-radius: 999px;
+  background: var(--sunken);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.pill::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.pill.active::before {
+  background: var(--ok);
+}
+.pill.canceled::before,
+.pill.expired::before {
+  background: var(--warn);
+}
+.pill.suspended {
+  background: color-mix(in srgb, var(--rec) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rec) 35%, transparent);
+}
+.pill.suspended::before {
+  background: var(--rec);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--sunken);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.tag.accent {
+  background: var(--accent-soft);
+  box-shadow: none;
+  color: var(--accent-text);
+}
+
+/* ── Buttons: the studio's pills (src/style.css), a little larger on these roomier pages. ── */
+
+.console .button {
+  height: 40px;
+  font-size: 14px;
+}
+.console .button.small {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13.5px;
+}
+.console .button.small svg {
+  width: 16px;
+  height: 16px;
+}
+/* A small round button with only an icon: move a plan, close the editor. */
+.console .icon-button {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.console .icon-button:hover {
+  border-color: var(--ink);
+}
+.console .icon-button:disabled {
+  cursor: not-allowed;
+  border-color: var(--line);
+  color: var(--faint);
+}
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Forms ─────────────────────────────────────────────────────────────── */
+
+.console input[type='text'],
+.console input[type='email'],
+.console input[type='number'],
+.console input[type='password'],
+.console input[type='search'],
+.console input[type='date'],
+.console select {
+  width: 100%;
+  height: var(--control);
+  padding: 0 14px;
+  background: light-dark(#ffffff, #0c0f16);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14.5px;
+}
+.console select {
+  padding-right: 38px;
+}
+.form-grid {
+  display: grid;
+  gap: 16px;
+  max-width: 560px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.console .field {
+  display: grid;
+  gap: 7px;
+  /* In a row of fields, one with a hint under it is taller: the others keep to the top. */
+  align-content: start;
+  min-width: 0;
+}
+.console .field > span {
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.console .field small,
+.console .hint {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* ── Tables ────────────────────────────────────────────────────────────── */
+
+.table-scroll {
+  overflow-x: auto;
+}
+.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.data th {
+  padding: 11px 16px;
+  background: var(--sunken);
+  border-block: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+.card.flush .data th {
+  border-top: 0;
+}
+.card.flush > .card-head + .table-scroll .data th {
+  border-top: 1px solid var(--line);
+}
+.data th:first-child,
+.data td:first-child {
+  padding-left: 24px;
+}
+.data th:last-child,
+.data td:last-child {
+  padding-right: 24px;
+}
+.data td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.data tbody tr:last-child td {
+  border-bottom: 0;
+}
+.data tbody tr:hover td {
+  background: color-mix(in srgb, var(--sunken) 55%, transparent);
+}
+.data td.num,
+.data th.num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.data td.quiet {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.data td a {
+  color: var(--ink);
+  font-weight: 600;
+}
+.data th button {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.data th button:hover,
+.data th[aria-sort] {
+  color: var(--ink);
+}
+.data th button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.data th[aria-sort='ascending'] button::after,
+.data th[aria-sort='descending'] button::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 15 6-6 6 6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+.data th[aria-sort='descending'] button::after {
+  rotate: 180deg;
+}
+/* The users list is wide: it scrolls inside its tile rather than squeezing every column. */
+.data.wide {
+  min-width: 900px;
+}
+.empty {
+  padding: 36px 24px;
+  color: var(--muted);
+  text-align: center;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 12px 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+.pager span {
+  margin-right: auto;
+}
+.results[aria-busy='true'] {
+  opacity: 0.55;
+}
+
+/* The users list's search and filters, above its tile. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.search {
+  position: relative;
+  flex: 1 1 280px;
+  max-width: 440px;
+}
+.search svg {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  width: 17px;
+  height: 17px;
+  translate: 0 -50%;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.console .search input {
+  padding-left: 42px;
+  border-radius: 999px;
+}
+.console .filters select {
+  width: auto;
+  min-width: 160px;
+  border-radius: 999px;
+}
+
+/* Label and value pairs: one account's facts. */
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 10px 20px;
+  margin: 0;
+  font-size: 14px;
+}
+.facts dt {
+  color: var(--muted);
+}
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ── Plans: each as the pricing page draws it, with what only the admin needs ── */
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+}
+.plan-tile {
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  gap: 14px;
+  min-width: 0;
+  padding: 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--tile);
+}
+/* The plan's tone, as the pricing page draws it (src/site/site.css): bold is the violet, dark the ink stage. */
+.plan-tile.tone-bold {
+  --ink: #ffffff;
+  --muted: rgb(255 255 255 / 0.82);
+  --line: rgb(255 255 255 / 0.24);
+  --line-strong: rgb(255 255 255 / 0.4);
+  --accent: #ffffff;
+  --accent-text: #4a28d8;
+  --sunken: rgb(255 255 255 / 0.16);
+  border-color: transparent;
+  background:
+    radial-gradient(120% 70% at 100% 0%, rgb(255 255 255 / 0.16), transparent 60%),
+    linear-gradient(165deg, #7650ff 0%, #5a35f5 55%, #4a28d8 100%);
+  color: var(--ink);
+}
+.plan-tile.tone-dark {
+  --ink: #f2f4f8;
+  --muted: #a6adbb;
+  --line: rgb(255 255 255 / 0.12);
+  --line-strong: rgb(255 255 255 / 0.24);
+  --sunken: rgb(255 255 255 / 0.08);
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(170deg, #161b2a, #0b0e16) padding-box,
+    linear-gradient(135deg, var(--team-a), var(--team-b)) border-box;
+  color: var(--ink);
+}
+.plan-tile.tone-bold .ticks li:not(.no)::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.5 2.6 2.5L14 7.5' fill='none' stroke='%235a35f5' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    #ffffff;
+}
+.plan-tile.tone-dark .ticks li:not(.no)::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.5 2.6 2.5L14 7.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    linear-gradient(135deg, var(--team-a), var(--team-b));
+}
+/* On a coloured tile the buttons stay legible: the ghost reads white, the main one turns white. */
+.plan-tile.tone-bold .button:not(.ghost) {
+  background: #ffffff;
+  color: #4a28d8;
+}
+.plan-tile:is(.tone-bold, .tone-dark) .icon-button {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.plan-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tone-bold .plan-badge {
+  background: #ffffff;
+  color: #4a28d8;
+}
+.tone-dark .plan-badge {
+  background: linear-gradient(135deg, rgb(124 77 255 / 0.35), rgb(14 165 233 / 0.35));
+  color: #ffffff;
+}
+.plan-tile.archived {
+  border-style: dashed;
+  box-shadow: none;
+  border-color: var(--line-strong);
+}
+.plan-tile.archived > :not(.plan-actions) {
+  opacity: 0.65;
+}
+.plan-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.plan-top h2,
+.plan-top h3 {
+  margin-right: auto;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+.plan-emblem {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--sunken);
+}
+.plan-emblem svg {
+  width: 28px;
+  height: 28px;
+}
+/* As on the pricing page (src/site/site.css): the mark on white on the violet, a ring on the ink. */
+.plan-tile.tone-bold .plan-emblem {
+  background: #ffffff;
+}
+.plan-tile.tone-dark .plan-emblem {
+  background: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 40px;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.plan-price small {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.plan-price.soon {
+  align-items: center;
+  color: var(--muted);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.plan-desc {
+  min-height: 2.9em;
+  color: var(--muted);
+  font-size: 14px;
+}
+/* A tick for what is in it, a dash for what is not: the pricing page's list. */
+.ticks {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  margin: 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+.ticks li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 14px;
+}
+.ticks li::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.5 2.6 2.5L14 7.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    var(--accent);
+}
+.ticks li.no {
+  color: var(--muted);
+}
+.ticks li.no::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.5 10h7' stroke='%23878e9c' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    var(--sunken);
+}
+.plan-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.plan-meta svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.plan-actions .spacer {
+  flex: 1;
+}
+/* The last tile: a new plan. */
+.plan-new {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  min-height: 280px;
+  padding: 26px;
+  background: transparent;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--tile);
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    background-color 0.15s var(--ease);
+}
+.plan-new:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.plan-new:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.plan-new svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* ── The plan editor: a drawer from the right, the plan as the pricing page will show it on top ── */
+
+.drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(580px, 100vw);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: -30px 0 80px -40px rgb(0 0 0 / 0.45);
+}
+.drawer[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  animation: drawer-in 0.26s var(--ease);
+}
+.drawer::backdrop {
+  background: rgb(8 10 16 / 0.5);
+}
+@keyframes drawer-in {
+  from {
+    translate: 32px 0;
+    opacity: 0;
+  }
+}
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 18px 28px;
+  border-bottom: 1px solid var(--line);
+}
+.drawer-head h2 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.drawer-body {
+  display: grid;
+  gap: 28px;
+  align-content: start;
+  overflow-y: auto;
+  padding: 24px 28px 32px;
+}
+.drawer-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 28px;
+  border-top: 1px solid var(--line);
+}
+/* The server's reason a save failed, on a line of its own above the buttons. */
+.drawer-error {
+  flex: 1 1 100%;
+  color: var(--rec);
+  font-size: 13.5px;
+}
+.drawer-error:empty {
+  display: none;
+}
+/*
+ * What the pricing page will say, redrawn on every change: a plan tile on the inset. Beside the
+ * fields where there is room, held in view while they scroll; on a narrow screen it comes after
+ * them, as the last look before saving.
+ */
+.preview {
+  order: 2;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--sunken);
+}
+@media (min-width: 1100px) {
+  .drawer {
+    width: min(1040px, calc(100vw - 160px));
+  }
+  .drawer-body {
+    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+    align-items: start;
+    gap: 32px;
+  }
+  .preview {
+    order: 0;
+    position: sticky;
+    top: 0;
+  }
+}
+.preview > span {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.preview .plan-tile {
+  padding: 22px;
+  grid-template-rows: none;
+}
+.form-section {
+  display: grid;
+  gap: 14px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+/* Floated, the legend is an ordinary grid item, so the section's gap spaces it like the rest. */
+.form-section legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.drawer-body form {
+  display: grid;
+  gap: 28px;
+}
+/* A choice of several, as pills that light up: sounds, looks. */
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.choice {
+  position: relative;
+}
+.choice input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.choice span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+.choice span::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+.choice input:checked + span {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.choice input:checked + span::before {
+  box-shadow: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.5 2.6 2.5L14 7.5' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 16px no-repeat,
+    var(--accent);
+}
+.choice input:focus-visible + span {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* On and off, one per line: the narrator, powers, the pricing page. */
+.toggles {
+  display: grid;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+.toggle-row:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.toggle-row span {
+  display: grid;
+  gap: 2px;
+}
+.toggle-row small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ── The account page: a top bar instead of the sidebar ───────────────── */
+
+.console-top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 12px clamp(16px, 4vw, 40px);
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  backdrop-filter: saturate(1.4) blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.console-top .side-brand {
+  padding: 0;
+  margin-right: auto;
+}
+.top-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.top-nav a {
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.top-nav a:hover {
+  color: var(--ink);
+  background: var(--sunken);
+}
+.top-nav a[aria-current='page'] {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.top-nav a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.console-main.narrow {
+  max-width: 880px;
+  margin: 0 auto;
+}
+.plan-summary {
+  display: grid;
+  gap: 18px;
+}
+.plan-summary .plan-name {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.danger-zone {
+  border-color: color-mix(in srgb, var(--rec) 40%, var(--line));
+}
+.danger-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.danger-inline .field {
+  flex: 1 1 280px;
+}
+.console .verify-banner {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+.console .toast {
+  position: fixed;
+  z-index: 20;
+  border-radius: 14px;
+  font-size: 14px;
+}
+
+@media (max-width: 960px) {
+  .console-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* The sidebar becomes a bar across the top: the brand, then the pages in a row that scrolls. */
+  .console-side {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    padding: 12px 16px;
+  }
+  .side-brand {
+    padding: 0;
+    margin-right: auto;
+  }
+  .side-nav {
+    order: 3;
+    display: flex;
+    flex: 1 1 100%;
+    gap: 4px;
+    overflow-x: auto;
+    margin: 0 -16px;
+    padding: 0 16px 2px;
+    scrollbar-width: none;
+  }
+  .side-nav a {
+    flex: none;
+    padding: 8px 12px;
+  }
+  .side-foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .side-link {
+    padding: 8px 10px;
+  }
+  .side-me {
+    padding: 0;
+  }
+  .side-me span {
+    display: none;
+  }
+  .columns.wide-first {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .console-main {
+    padding-top: 28px;
+  }
+}
+
+@media (max-width: 560px) {
+  /* The account page's bar: the brand and the theme on one line, its pages on the next. */
+  .console-top {
+    flex-wrap: wrap;
+  }
+  .top-nav {
+    order: 3;
+    flex: 1 1 100%;
+  }
+  .card,
+  .plan-tile {
+    padding: 20px;
+  }
+  .card.flush {
+    padding: 0;
+  }
+  .card.flush > .card-head {
+    padding: 18px 20px 14px;
+  }
+  .data th:first-child,
+  .data td:first-child {
+    padding-left: 20px;
+  }
+  /* Four pages in a row on a phone: their names only. */
+  .side-nav svg,
+  .side-link .label {
+    display: none;
+  }
+  .drawer-body {
+    padding: 20px;
+  }
+  .drawer-head {
+    padding-left: 20px;
+  }
+  .drawer-foot {
+    padding: 14px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer[open] {
+    animation: none;
+  }
+}

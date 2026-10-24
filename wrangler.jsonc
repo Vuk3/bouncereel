@@ -1,0 +1,50 @@
+/**
+ * Wrangler configuration: https://developers.cloudflare.com/workers/wrangler/configuration/
+ * After changing it: `npm run cf-typegen`. The deploy steps: docs/build-and-deploy.md.
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "bouncereel",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-10-01",
+	"assets": {
+		// The Worker serves the pages behind the sign-in through this (worker/pages.ts).
+		"binding": "ASSETS",
+		// These reach the Worker first: the API, and the pages whose answer depends on the session
+		// (signed out on /app goes to /login; signed in on /login goes to /app). Everything else
+		// is a file of the Vite build, served without running the Worker.
+		"run_worker_first": ["/api/*", "/app", "/app/*", "/account", "/admin", "/admin/*", "/login", "/signup"],
+		// A path that matches no file gets 404.html with a 404 status. No SPA fallback.
+		"not_found_handling": "404-page"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"upload_source_maps": true,
+
+	// The custom domain is the only way in. A workers.dev or preview URL would be a second copy
+	// of the site under another name (and outside the canonical links).
+	"workers_dev": false,
+	"preview_urls": false,
+	"routes": [
+		{ "pattern": "bouncereel.vukcvetkovic.com", "custom_domain": true }
+	],
+
+	"vars": {
+		// The site's address, for the links in mails (worker/site.ts). Not a secret. Empty, every
+		// request the Worker answers in production is a 500: it fails closed. The same as SITE_URL in
+		// shared/site.ts; the move to the site's own domain changes both (docs/build-and-deploy.md §5).
+		"SITE_URL": "https://bouncereel.vukcvetkovic.com"
+	},
+
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "bouncereel",
+			// Placeholder until `npx wrangler d1 create bouncereel` prints the real id. The local
+			// database file is keyed by this id: replacing it starts an empty local database.
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "migrations"
+		}
+	]
+}

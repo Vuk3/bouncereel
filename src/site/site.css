@@ -1,0 +1,3044 @@
+/*
+ * The public site: home, pricing, the sign-in pages, the legal pages (docs/website.md).
+ *
+ * A product site, quiet around one thing: the live race in the hero, on a dark stage. The
+ * ground is cool paper grey with white tiles; the dark theme is the same place at night. One
+ * accent, the violet of the Fibonacci ball, for the action that matters on a page and for
+ * links; the sky blue of its rival only ever appears beside it, in the drawings, as the
+ * second team. Rubik, the video's own lettering, sets everything, heavy and tight for display.
+ *
+ * Surfaces climb a ladder: ground, tile, inset (a block inside a tile). The stage (`.stage`,
+ * the hero and the close of the page) is the ink, and it re-declares the tokens, so whatever
+ * sits on it (buttons, chips, text) reads right without a rule of its own. No tile has a
+ * resting shadow: an edge and a step in colour are its whole lift.
+ */
+@font-face {
+  font-family: 'Rubik';
+  src: url('/fonts/rubik-latin.woff2') format('woff2');
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+
+  --bg: #eff1f5;
+  --bg-deep: #e6e9ef;
+  --surface: #ffffff;
+  --inset: #f4f5f8;
+  --ink: #0c0f17;
+  /* 5.5:1 on the ground, 6.3:1 on a tile. */
+  --muted: #586071;
+  --hairline: #dde1e8;
+  --hairline-strong: #c7ccd6;
+  /* The Fibonacci ball's violet. White on it is 5.1:1, and as text on white 5.6:1 (--accent-text). */
+  --accent: #6a46ff;
+  --accent-hover: #5a35f5;
+  --accent-text: #5b37f0;
+  --accent-soft: rgb(106 70 255 / 0.1);
+  --team-a: #7c4dff;
+  --team-b: #0ea5e9;
+  --focus: #6a46ff;
+  --danger: #c0283f;
+  --ok: #157a46;
+  --field: #ffffff;
+
+  /* The ink: the hero and the close of the page. */
+  --stage-bg: #0b0e16;
+  --stage-ink: #f2f4f8;
+  --stage-muted: #a6adbb;
+  --stage-hairline: rgb(255 255 255 / 0.11);
+  --stage-tile: #141924;
+
+  --radius-stage: 32px;
+  --radius-tile: 22px;
+  --radius-inner: 14px;
+  --radius-control: 12px;
+  --shell: 76rem;
+  --gutter: clamp(16px, 4vw, 40px);
+  --section: clamp(48px, 6vw, 80px);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  font: 400 1.0625rem/1.6 Rubik, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+/* Night: the ground carries a trace of blue rather than being black; the stage is a step above it. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #07090e;
+  --bg-deep: #040508;
+  --surface: #10131b;
+  --inset: #161a24;
+  --ink: #edf0f5;
+  --muted: #9aa2b2;
+  --hairline: #222736;
+  --hairline-strong: #31384a;
+  --accent-text: #ab98ff;
+  --accent-soft: rgb(138 112 255 / 0.16);
+  --focus: #a894ff;
+  --danger: #ff7a8b;
+  --ok: #5ee39a;
+  --field: #0c0f16;
+  --stage-bg: #0f131d;
+  --stage-tile: #171c29;
+}
+
+/* A surface on the ink: everything on it reads its tokens from here. */
+.stage {
+  color-scheme: dark;
+  --ink: var(--stage-ink);
+  --muted: var(--stage-muted);
+  --hairline: var(--stage-hairline);
+  --hairline-strong: rgb(255 255 255 / 0.22);
+  --surface: var(--stage-tile);
+  --accent-text: #b4a3ff;
+  --focus: #b4a3ff;
+  color: var(--ink);
+  background: var(--stage-bg);
+  border-radius: var(--radius-stage);
+}
+:root[data-theme='dark'] .stage {
+  box-shadow: inset 0 0 0 1px var(--stage-hairline);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow-wrap: break-word;
+}
+main {
+  flex: 1;
+}
+
+[hidden] {
+  display: none !important;
+}
+/* Signed in (the hint cookie, read in the head) or not: what the page offers. */
+:root[data-member] [data-guest],
+:root:not([data-member]) [data-member] {
+  display: none !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+a {
+  color: inherit;
+}
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.shell {
+  width: min(100%, var(--shell));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 20;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 600;
+}
+.skip:focus {
+  top: 12px;
+}
+/* For a screen reader only: a label the eye gets from the drawing beside it. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Buttons: pills. The violet one is the way forward; the ghost is everything else. ── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+.btn svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+}
+.btn-ghost:hover {
+  border-color: var(--ink);
+}
+.btn-small {
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 0.9375rem;
+}
+.btn-wide {
+  width: 100%;
+}
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  background: var(--inset);
+  border-color: var(--hairline);
+  color: var(--muted);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  backdrop-filter: saturate(1.5) blur(14px);
+  -webkit-backdrop-filter: saturate(1.5) blur(14px);
+  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 70%, transparent);
+}
+.scroll-progress {
+  display: none;
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--team-a), var(--team-b));
+  transform-origin: 0 50%;
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, var(--shell));
+  height: 64px;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+  font-weight: 700;
+  font-size: 1.1875rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+/*
+ * The mark (public/mark.svg): a ball with its trail, falling onto the layers it breaks, in the two
+ * teams' colours. The favicon is the same on the ink (public/favicon.svg).
+ */
+.mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  background: url('/mark.svg') center / contain no-repeat;
+}
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 24px);
+}
+.nav-link {
+  padding: 8px 2px;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s var(--ease);
+}
+.nav-link:hover {
+  color: var(--ink);
+}
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.theme-toggle:hover {
+  border-color: var(--hairline-strong);
+}
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.theme-toggle .sun,
+:root[data-theme='dark'] .theme-toggle .moon {
+  display: none;
+}
+:root[data-theme='dark'] .theme-toggle .sun {
+  display: block;
+}
+.label-short {
+  display: none;
+}
+/*
+ * A phone's header keeps what fits in 360 px: the name, Sign in (or Studio) and the theme.
+ * How it works and Pricing are a scroll away and in the footer; Start free is the hero's.
+ */
+@media (max-width: 720px) {
+  .nav-wide {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  .header-inner,
+  .site-nav {
+    gap: 8px;
+  }
+  .site-nav .nav-start,
+  .site-nav .label-long {
+    display: none;
+  }
+  .site-nav .label-short {
+    display: inline;
+  }
+}
+
+/* ── Hero: the ink stage, the words on one side and the live race on the other ── */
+
+.hero {
+  padding-top: clamp(12px, 3vw, 28px);
+}
+.hero-stage {
+  position: relative;
+  display: grid;
+  grid-template-areas: 'copy' 'demo' 'specs';
+  gap: 36px;
+  align-items: center;
+  padding: clamp(24px, 5vw, 56px) clamp(20px, 5vw, 64px);
+  overflow: hidden;
+}
+/* Side by side, the specs go under the words; on a phone, under the race, so it comes sooner. */
+@media (min-width: 920px) {
+  /* The words and the specs, centred as one block beside the phone (the empty rows take the rest). */
+  .hero-stage {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    grid-template-areas: '. demo' 'copy demo' 'specs demo' '. demo';
+    grid-template-rows: 1fr auto auto 1fr;
+    column-gap: 64px;
+    row-gap: 28px;
+  }
+}
+.hero-copy {
+  grid-area: copy;
+}
+.hero-demo {
+  grid-area: demo;
+}
+.hero h1 {
+  font-size: clamp(2.5rem, 6vw, 4.6rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+.lede {
+  margin-top: 24px;
+  max-width: 35rem;
+  color: var(--muted);
+  font-size: clamp(1.0625rem, 1.6vw, 1.1875rem);
+  line-height: 1.6;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+.specs {
+  grid-area: specs;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.specs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 13px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.specs li::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--team-b);
+}
+.specs li:first-child::before {
+  background: var(--team-a);
+}
+/*
+ * Which browsers can record: the one thing a visitor needs before trying. A line in the hero, by
+ * the buttons, and the reason right under the stage, in the accent so it is not read past.
+ */
+.hero-browser {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+.hero-browser svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: var(--accent-text);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hero-browser strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.hero-browser a {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.browser-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 18px 22px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: var(--radius-tile);
+  background: var(--accent-soft);
+}
+.browser-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.browser-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.browser-note h2 {
+  scroll-margin-top: 96px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.browser-note p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.hero-demo {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+@media (max-width: 480px) {
+  /* Two pills do not fit side by side on a phone: one a line, the width of the stage. */
+  .hero .actions .btn {
+    flex: 1 1 100%;
+  }
+  .specs li {
+    padding: 0 11px;
+    font-size: 0.8125rem;
+  }
+}
+/* The two balls' light behind the phone: violet above, sky below. */
+.hero-demo::before {
+  content: '';
+  position: absolute;
+  inset: -12% -20% 6%;
+  z-index: 0;
+  background:
+    radial-gradient(42% 34% at 34% 28%, rgb(124 77 255 / 0.32), transparent 70%),
+    radial-gradient(40% 32% at 66% 74%, rgb(14 165 233 / 0.26), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+.phone {
+  position: relative;
+  z-index: 1;
+  /* The screen inside the bezel is exactly 9:16, as the video is: the ratio applies to the content box. */
+  box-sizing: content-box;
+  /* As wide as the column allows, and no taller than a laptop's screen leaves under the header. */
+  width: min(calc(72vw - 20px), 300px, calc((100svh - 300px) * 9 / 16));
+  min-width: 200px;
+  aspect-ratio: 9 / 16;
+  border: 10px solid #1a1e2a;
+  border-radius: 42px;
+  background: #0c0e13;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    0 40px 80px -30px rgb(0 0 0 / 0.7);
+  overflow: hidden;
+}
+.phone img,
+.phone canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 32px;
+}
+.phone canvas {
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+}
+.phone canvas.live {
+  opacity: 1;
+}
+/*
+ * Two facts about the race in the phone, floating at its edges as the studio would show them:
+ * the length it is balanced to, and how close it ends. Beside the phone only where there is room.
+ */
+.float-chip {
+  position: absolute;
+  z-index: 2;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgb(20 25 36 / 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.1),
+    0 12px 30px -10px rgb(0 0 0 / 0.6);
+  color: var(--stage-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.float-chip i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--team-a);
+  box-shadow: 0 0 10px var(--team-a);
+}
+.chip-finish i {
+  border-radius: 2px;
+  background: repeating-conic-gradient(#f2f4f8 0 25%, #0b0e16 0 50%) 0 0 / 7px 7px;
+  box-shadow: none;
+}
+@media (min-width: 1100px) {
+  .float-chip {
+    display: inline-flex;
+  }
+  .chip-length {
+    top: 16%;
+    left: calc(50% - 250px);
+  }
+  .chip-finish {
+    top: 58%;
+    right: calc(50% - 254px);
+  }
+}
+.demo-bar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.matchup {
+  display: grid;
+  gap: 2px;
+  min-height: 3.1em;
+}
+.matchup-names {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px 10px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: -0.005em;
+}
+.matchup-names .vs {
+  color: var(--muted);
+  font-weight: 500;
+}
+.matchup-note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.ball {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 7px;
+  border-radius: 50%;
+  vertical-align: -0.06em;
+  background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--c) 35%, white) 0 16%, var(--c) 55%, color-mix(in srgb, var(--c) 70%, black));
+}
+@media (max-width: 480px) {
+  .matchup-names {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+/* ── Sections ────────────────────────────────────────────────────────── */
+
+.section {
+  padding-top: var(--section);
+}
+.section-head {
+  display: grid;
+  gap: 12px;
+  margin-bottom: clamp(22px, 2.6vw, 32px);
+}
+@media (min-width: 920px) {
+  .section-head {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: end;
+    gap: 40px;
+  }
+}
+.section-head h2,
+.page-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+}
+.section-head p {
+  max-width: 32rem;
+  color: var(--muted);
+  font-size: 1.0625rem;
+}
+.section-head a,
+.prose a,
+.auth-alt a,
+.form-links a,
+.plans-note a {
+  color: var(--accent-text);
+  font-weight: 500;
+  text-decoration: none;
+}
+.section-head a:hover,
+.prose a:hover,
+.auth-alt a:hover,
+.form-links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* A tile: white on the ground, an edge and nothing else. */
+.tile {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: clamp(20px, 2.4vw, 28px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+}
+.tile h3 {
+  margin-top: 8px;
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+.tile p {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+/* ── How it works: three steps beside the phone that plays what they set ── */
+
+/*
+ * A small working studio: one card a step, its words beside the piece of the studio it is about
+ * (side by side from 760 px), and the phone that plays what the steps set. From 64rem the phone
+ * stands beside the steps, sticky under the header, so a change in any step shows at once;
+ * narrower, it comes after step 2, under the controls that change it, which is why the steps are
+ * two lists. The cards simply follow each other: a deck that slid each card over the one before
+ * would hide the controls of the covered one.
+ */
+/* minmax(0, …) throughout: a track sized by its content grew with the longest ball's name, past the screen. */
+.how-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@media (min-width: 64rem) {
+  .how-grid {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'steps demo' 'post demo';
+    align-items: start;
+    column-gap: clamp(24px, 3vw, 40px);
+  }
+  .how-grid > .steps:first-child {
+    grid-area: steps;
+  }
+  .how-grid > .steps:last-child {
+    grid-area: post;
+  }
+  .how-demo {
+    grid-area: demo;
+    position: sticky;
+    top: calc(64px + 24px);
+  }
+}
+.how-demo {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+.how-caption {
+  max-width: 300px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+.steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.step {
+  grid-template-columns: minmax(0, 1fr);
+}
+.step-text {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+.step-num {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.step .step-num + h3 {
+  margin-top: 2px;
+}
+@media (min-width: 760px) {
+  .step {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    align-items: start;
+    gap: clamp(20px, 3vw, 44px);
+    padding: clamp(22px, 2.6vw, 32px);
+  }
+  .step h3 {
+    font-size: clamp(1.375rem, 2.2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  .step p {
+    max-width: 30rem;
+    font-size: 1.0625rem;
+  }
+  .step .piece {
+    padding: 22px;
+    font-size: 0.9375rem;
+  }
+}
+
+/*
+ * A piece of the studio in a step's tile: an inset block with the controls the step is about,
+ * real ones (src/site/home.ts drives them and the phone).
+ */
+.piece {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--radius-inner);
+  /* A touch of the accent's light from above, and an edge, so the block reads as a screen. */
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(106 70 255 / 0.07), transparent 60%),
+    var(--inset);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-size: 0.875rem;
+  overflow: clip;
+}
+.piece-roll .btn {
+  justify-self: start;
+}
+.piece-rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* One line a ball whatever the roll, so a new matchup never moves what is under it. */
+.piece-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 6px 14px -10px rgb(16 24 40 / 0.25);
+}
+.piece-row .ball {
+  margin-right: 0;
+}
+.piece-row b {
+  font-weight: 600;
+}
+.piece-row em {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+}
+/* How the matchup ends, under a strip of finish-line squares, worded as the studio's matchup card. */
+.piece-verdict {
+  position: relative;
+  padding-top: 14px;
+}
+.piece-verdict::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  background: repeating-conic-gradient(var(--ink) 0 25%, transparent 0 50%) 0 0 / 6px 6px;
+  opacity: 0.45;
+}
+.piece-verdict strong {
+  font-weight: 700;
+}
+.range {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.range:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+/*
+ * A choice of a few, as the studio draws its own (src/style.css .track): the radios stay in the
+ * page for the keyboard and screen readers (the arrow keys pick), the labels are what shows. The
+ * legend floats, which makes it a plain grid item rather than a caption on the border.
+ */
+.choice {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.choice legend {
+  float: left;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.choice-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.choice-options label {
+  position: relative;
+  display: grid;
+  cursor: pointer;
+}
+.choice-options input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.choice-options span {
+  padding: 5px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 500;
+  transition:
+    color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    background-color 0.15s var(--ease);
+}
+.choice-options label:hover span {
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+.choice-options input:checked + span {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.choice-options input:focus-visible + span {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* Segments: one bar, the picked part raised, as the studio's sound choice. */
+.choice-options.segments {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.segments span {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 9px;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  text-align: center;
+}
+.segments input:checked + span {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px var(--hairline),
+    0 2px 6px -2px rgb(16 24 40 / 0.12);
+}
+.piece-hint,
+.piece-note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.piece-note {
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+/*
+ * Step 3: the video as it will be posted, its first frame under the buttons an app lays over it,
+ * drawn generically (no app's logo or colours) and switched by the choice beside it. The zones
+ * are the studio's (src/style.css .zone): a bar over the top 10.9 %, a column at the right edge
+ * from 47 % down, the caption over the bottom 20.8 %.
+ */
+.piece-post {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+}
+.post-phone {
+  position: relative;
+  width: clamp(124px, 32vw, 180px);
+  aspect-ratio: 9 / 16;
+  border-radius: 16px;
+  background: #0c0e13;
+  box-shadow:
+    0 0 0 4px #1a1e2a,
+    0 18px 36px -18px rgb(0 0 0 / 0.6);
+  overflow: clip;
+}
+.post-phone img,
+.post-phone canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.post-phone canvas {
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+}
+.post-phone canvas.live {
+  opacity: 1;
+}
+/* White over the video in a soft shadow, as the apps draw it, so it reads on the paper look too. */
+.post-ui {
+  position: absolute;
+  inset: 0;
+  color: #ffffff;
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.75));
+}
+.post-ui svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.post-ui i,
+.post-ui b {
+  display: block;
+  background: rgb(255 255 255 / 0.88);
+}
+.post-top {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 10.9%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  padding: 0 7%;
+  background: linear-gradient(rgb(0 0 0 / 0.3), transparent);
+}
+.post-tabs {
+  gap: 5px;
+  margin-right: auto;
+  margin-left: 22%;
+  background: none !important;
+}
+.post-tabs b {
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+}
+.post-title {
+  width: 30%;
+  height: 4px;
+  margin-right: auto;
+  border-radius: 2px;
+}
+.post-side {
+  position: absolute;
+  top: 47%;
+  right: 0;
+  bottom: 20.8%;
+  width: 13%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 9px;
+  padding-bottom: 4px;
+}
+.post-bottom {
+  position: absolute;
+  inset: auto 0 0;
+  height: 20.8%;
+  display: grid;
+  align-content: end;
+  gap: 5px;
+  padding: 0 16% 7% 6%;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.42));
+}
+.post-who {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.post-ui .post-avatar {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  border-radius: 50%;
+}
+.post-line {
+  height: 3px;
+  border-radius: 2px;
+}
+.post-name {
+  width: 34%;
+}
+.post-short {
+  width: 58%;
+}
+.post-pill {
+  width: 24%;
+  height: 8px;
+  border-radius: 999px;
+}
+/* Only what the picked app shows; without :has(), the buttons every app has. */
+.post-ui [class*='only-'] {
+  display: none;
+}
+.piece-post:has(input[value='shorts']:checked) .post-ui .only-shorts,
+.piece-post:has(input[value='tiktok']:checked) .post-ui .only-tiktok,
+.piece-post:has(input[value='reels']:checked) .post-ui .only-reels {
+  display: block;
+}
+.piece-post:has(input[value='tiktok']:checked) .post-ui .post-tabs {
+  display: flex;
+}
+.post-info {
+  display: grid;
+  gap: 14px;
+  align-content: center;
+}
+.post-facts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.post-facts li {
+  display: grid;
+}
+.post-facts b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.post-facts span {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+/* ── Made in the studio: real videos ─────────────────────────────────── */
+
+/*
+ * Three recordings, each in a phone: side by side from 760 px, and on a phone a row to swipe
+ * through, scrolling inside the list, never the page.
+ */
+.gallery {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(72%, 260px);
+  gap: 16px;
+  margin: 0;
+  padding: 4px 4px 14px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+.gallery li {
+  scroll-snap-align: center;
+}
+@media (min-width: 760px) {
+  .gallery {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+}
+.gallery figure {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin: 0;
+}
+.gallery-phone {
+  position: relative;
+  width: min(100%, 260px);
+  aspect-ratio: 9 / 16;
+  border: 8px solid #1a1e2a;
+  border-radius: 34px;
+  background: #0c0e13;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    0 30px 60px -30px rgb(0 0 0 / 0.6);
+  overflow: clip;
+}
+.gallery-phone video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gallery-play {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(12 15 23 / 0.72);
+  color: #ffffff;
+  cursor: pointer;
+}
+.gallery-play svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+.gallery-play .pause-icon,
+.gallery-play[aria-pressed='true'] .play-icon {
+  display: none;
+}
+.gallery-play[aria-pressed='true'] .pause-icon {
+  display: block;
+}
+.gallery figcaption {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+}
+.gallery figcaption b {
+  font-weight: 600;
+}
+.gallery figcaption span {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* ── Why: what the studio does, on the stage, in three groups ───────── */
+
+/*
+ * The page's second stage (the hero is the first): the product's own pieces in the balls' light,
+ * in three named groups. Each group is one big card across the width, for its main drawing, and
+ * two side by side under it. A tall big card beside two short ones left a hole above its drawing.
+ */
+.features {
+  position: relative;
+  display: grid;
+  gap: clamp(44px, 5vw, 64px);
+  padding: clamp(18px, 4vw, 48px);
+  /* clip, not hidden: hidden makes a scroll container, and every view() timeline inside it would
+     measure against the stage instead of the page, and never move. */
+  overflow: clip;
+  isolation: isolate;
+}
+/* The balls' light: violet high on the right, sky in the middle on the left, violet again low. */
+.features::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(40% 26% at 88% 6%, rgb(124 77 255 / 0.24), transparent 70%),
+    radial-gradient(42% 26% at 6% 52%, rgb(14 165 233 / 0.14), transparent 70%),
+    radial-gradient(40% 22% at 92% 96%, rgb(124 77 255 / 0.16), transparent 70%);
+  pointer-events: none;
+}
+.features .section-head {
+  margin-bottom: 0;
+}
+.fgroup-head {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.fgroup-head h3 {
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.fgroup-head p {
+  max-width: 34rem;
+  color: var(--muted);
+}
+.fbento {
+  display: grid;
+  gap: 14px;
+}
+@media (min-width: 760px) {
+  .fbento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fcard-big {
+    grid-column: 1 / -1;
+  }
+}
+/* A card on the stage, lit along its top edge: its words first, its drawing filling the rest. */
+.fcard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: clamp(18px, 3vw, 24px);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: var(--radius-tile);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.012) 55%),
+    #10141f;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+.fcard h4 {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+.fcard p {
+  max-width: 34rem;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.9688rem;
+}
+.fviz {
+  flex: 1;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  min-height: 140px;
+  margin-top: 18px;
+  font-size: 0.875rem;
+}
+
+/* The race board, the lanes racing to the line on the race's own seconds, and beside it the two controls that set it. */
+.viz-race {
+  justify-items: stretch;
+  gap: 22px;
+}
+@media (min-width: 760px) {
+  .viz-race {
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(24px, 4vw, 48px);
+  }
+}
+.race-board {
+  display: grid;
+  gap: 14px;
+  padding: 22px 22px 16px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 16px;
+  background: rgb(4 6 12 / 0.55);
+}
+.race-top {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+}
+.race-top b {
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.lanes {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding-right: 22px;
+}
+.lane {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 10px;
+  min-height: 54px;
+  /* Clear of the ball at the bar's end; on a narrow card the words take two lines instead. */
+  padding: 8px 40px 8px 16px;
+  border-radius: 10px;
+  /* clip, not hidden, so the bar's view() timeline is the page's (see .features). */
+  overflow: clip;
+  background: rgb(255 255 255 / 0.03);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+.lane i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--w);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 4%, transparent), color-mix(in srgb, var(--c) 48%, transparent));
+  border-right: 3px solid var(--c);
+  box-shadow: 8px 0 22px -6px var(--c);
+}
+/* The ball, at the end of its bar. */
+.lane i::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--c) 40%, white) 0 14%, var(--c) 55%);
+  box-shadow: 0 0 16px var(--c);
+}
+.lane b,
+.lane em {
+  position: relative;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.lane b {
+  font-weight: 600;
+}
+/* Next to the name, so the bar's end at the line stays clear. */
+.lane em {
+  color: var(--muted);
+  font-style: normal;
+}
+.finish-line {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 10px;
+  background: repeating-conic-gradient(#ffffff 0 25%, transparent 0 50%) 0 0 / 10px 10px;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+.ruler {
+  display: flex;
+  justify-content: space-between;
+  margin-right: 22px;
+  padding-top: 8px;
+  border-top: 1px dashed rgb(255 255 255 / 0.14);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.ruler i {
+  font-style: normal;
+}
+.race-controls {
+  display: grid;
+  gap: 22px;
+  padding: 0 4px;
+}
+.control {
+  display: grid;
+  gap: 9px;
+}
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 0.8125rem;
+}
+.control-label label {
+  color: var(--muted);
+  font-weight: 500;
+}
+.control-label output {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The four powers as the video tags them, each picking what a little box shows: a ball on a floor,
+ * hit after hit, doing what the tag says (home.ts powerDemo).
+ */
+.viz-power {
+  gap: 14px;
+}
+.power-demo {
+  width: min(100%, 300px);
+  aspect-ratio: 2 / 1;
+  border-radius: 12px;
+  background: rgb(4 6 12 / 0.55);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+.power-choice {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.power-choice label {
+  position: relative;
+  cursor: pointer;
+}
+.power-choice input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.power-choice .power-tag {
+  height: 28px;
+  padding: 0 10px;
+  box-shadow: none;
+  font-size: 0.6875rem;
+  opacity: 0.55;
+  transition: opacity 0.15s var(--ease);
+}
+.power-choice label:hover .power-tag {
+  opacity: 0.85;
+}
+.power-choice input:checked + .power-tag {
+  opacity: 1;
+  box-shadow: 0 8px 20px -8px rgb(255 210 63 / 0.6);
+}
+.power-choice input:focus-visible + .power-tag {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.power-hint {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.power-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 2px solid #1b1b2f;
+  border-radius: 999px;
+  background: #ffd23f;
+  box-shadow: 0 8px 20px -8px rgb(255 210 63 / 0.6);
+  color: #1b1b2f;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.power-tag svg {
+  width: 8px;
+  height: 13px;
+  fill: currentColor;
+}
+
+.viz-looks {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-items: stretch;
+  gap: clamp(12px, 2vw, 22px);
+  padding: 0;
+  list-style: none;
+}
+.viz-looks li {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+.viz-looks img {
+  width: 100%;
+  aspect-ratio: 480 / 416;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.1),
+    0 26px 40px -26px rgb(0 0 0 / 0.9);
+}
+.viz-looks span {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.06);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+/* Each look a button: it opens that look larger, playing (the dialog under the sections). */
+.look-tile {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.look-tile img {
+  transition:
+    translate 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+.look-tile:hover img {
+  translate: 0 -3px;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.22),
+    0 30px 44px -26px rgb(0 0 0 / 0.95);
+}
+.look-tile:hover span {
+  color: var(--ink);
+}
+.look-tile:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+/* A look larger, playing: a modal on the ink, with its own phone and a way to the next look. */
+.look-dialog {
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+  border: 0;
+  color-scheme: dark;
+  --ink: var(--stage-ink);
+  --muted: var(--stage-muted);
+  --hairline: var(--stage-hairline);
+  --hairline-strong: rgb(255 255 255 / 0.22);
+  --focus: #b4a3ff;
+  border-radius: var(--radius-tile);
+  background: var(--stage-bg);
+  box-shadow:
+    0 0 0 1px var(--stage-hairline),
+    0 40px 80px -30px rgb(0 0 0 / 0.8);
+  color: var(--ink);
+}
+.look-dialog::backdrop {
+  background: rgb(4 6 12 / 0.62);
+}
+.look-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.look-dialog h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.look-dialog p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+.look-dialog .phone {
+  width: min(calc(100vw - 96px), 260px, calc((100dvh - 280px) * 9 / 16));
+  margin: 18px auto;
+}
+.look-dialog-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.icon-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.icon-close:hover {
+  border-color: var(--ink);
+}
+.icon-close svg,
+.look-dialog-nav svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* What the narrator says, and its voice playing. */
+.quote {
+  max-width: 300px;
+  padding: 10px 14px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 14px 14px 14px 4px;
+  background: rgb(255 255 255 / 0.05);
+  font-weight: 500;
+  line-height: 1.45;
+}
+.player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 300px);
+  padding: 7px 14px 7px 7px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.04);
+}
+.play {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 18px rgb(106 70 255 / 0.6);
+  color: #ffffff;
+  cursor: pointer;
+}
+.play:hover {
+  background: var(--accent-hover);
+}
+.play svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+.play-icon {
+  margin-left: 2px;
+}
+.play .pause-icon,
+.play[aria-pressed='true'] .play-icon {
+  display: none;
+}
+.play[aria-pressed='true'] .pause-icon {
+  display: block;
+}
+.wave {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+}
+.wave i {
+  flex: 1;
+  max-width: 4px;
+  height: 30%;
+  border-radius: 2px;
+  background: #8f6dff;
+}
+.wave i:nth-child(3n + 1) {
+  height: 70%;
+}
+.wave i:nth-child(4n + 2) {
+  height: 100%;
+}
+.wave i:nth-child(5n + 3) {
+  height: 48%;
+  background: var(--team-b);
+}
+.wave i:nth-child(7n) {
+  height: 85%;
+}
+.voice-name {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* The file as the platforms take it: the frame at its size, in its own light. */
+.viz-specs {
+  justify-content: center;
+}
+
+/* The sequences the dice picks from, each with its first numbers: two columns of facts, not tags. */
+.viz-seqs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-items: stretch;
+  align-content: start;
+  gap: 2px 18px;
+  margin-bottom: 0;
+  padding: 0;
+  list-style: none;
+}
+.viz-seqs li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgb(255 255 255 / 0.07);
+  white-space: nowrap;
+}
+.viz-seqs b {
+  font-weight: 600;
+}
+.viz-seqs em {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-style: normal;
+  text-overflow: ellipsis;
+}
+
+/* Where the apps put their buttons over the first frame: the studio's zones (src/style.css .zone), hatched as there. */
+.zones-frame {
+  position: relative;
+  display: block;
+  width: 150px;
+  aspect-ratio: 9 / 16;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 4px #1a1e2a,
+    0 18px 36px -18px rgb(0 0 0 / 0.6);
+  overflow: clip;
+}
+.zones-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.zones-frame i {
+  position: absolute;
+  background: repeating-linear-gradient(45deg, rgb(255 190 30 / 0.34) 0 6px, rgb(255 190 30 / 0.12) 6px 12px);
+  box-shadow: inset 0 0 0 1px rgb(255 190 30 / 0.7);
+}
+.zone-top {
+  inset: 0 0 auto;
+  height: 10.9%;
+}
+.zone-side {
+  top: 47%;
+  right: 0;
+  bottom: 20.8%;
+  width: 13%;
+}
+.zone-bottom {
+  inset: auto 0 0;
+  height: 20.8%;
+}
+.phone-frame {
+  position: relative;
+  width: 132px;
+  aspect-ratio: 9 / 16;
+  margin: 24px 40px 0 8px;
+  padding: 5px;
+  border-radius: 20px;
+  background: #05070c;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.12),
+    0 0 90px -12px rgb(124 77 255 / 0.5);
+}
+.phone-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 15px;
+}
+.dim {
+  position: absolute;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.dim-w {
+  top: -24px;
+  left: 50%;
+  translate: -50% 0;
+}
+.dim-h {
+  top: 50%;
+  left: calc(100% + 10px);
+  translate: 0 -50%;
+}
+
+/* The first frame and the last: one picture, which is what the fade at the end makes. */
+.viz-loop {
+  grid-template-columns: auto auto auto;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+.loop-frame {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.loop-frame img {
+  width: 64px;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.12),
+    0 16px 30px -18px rgb(0 0 0 / 0.9);
+}
+.loop-frame em {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+/* Level with the pictures, above their labels. */
+.loop-arrow {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 26px;
+  fill: none;
+  stroke: #b4a3ff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px rgb(124 77 255 / 0.7));
+}
+
+/* Two videos in the library, each with its links where they have been pasted. */
+.viz-library {
+  justify-items: stretch;
+  gap: 8px;
+}
+.lib-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.03);
+}
+.lib-row img {
+  width: 52px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.lib-text {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.lib-text b {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Where each video has a link, as a status, a filled dot or a hollow one: pills here read as buttons. */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+}
+.pills i {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-style: normal;
+}
+.pills i::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+.pills .on {
+  color: #c9bbff;
+  font-weight: 600;
+}
+.pills .on::before {
+  background: currentColor;
+}
+
+/* ── Pricing ─────────────────────────────────────────────────────────── */
+
+.plans {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 720px) {
+  .plans {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* Room for the violet card, which stands taller than its row (below). */
+    row-gap: 40px;
+  }
+}
+.plan {
+  --plan-pad: clamp(24px, 3vw, 32px);
+  display: grid;
+  grid-template-rows: auto auto auto auto 1fr;
+  gap: 12px;
+  padding: var(--plan-pad);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+}
+/*
+ * A plan's tone (set in the admin area). Plain is the card above: the free plan, quiet. Bold is
+ * the violet, the plan the page points at, the one place on the page that glows. Dark is the
+ * ink stage with the two balls' colours as its ring: the top plan.
+ */
+.plan.tone-bold {
+  --ink: #ffffff;
+  --muted: rgb(255 255 255 / 0.82);
+  --hairline: rgb(255 255 255 / 0.24);
+  --accent: #ffffff;
+  border-color: transparent;
+  background:
+    radial-gradient(120% 70% at 100% 0%, rgb(255 255 255 / 0.18), transparent 60%),
+    radial-gradient(90% 50% at 0% 100%, rgb(14 165 233 / 0.28), transparent 70%),
+    linear-gradient(165deg, #7650ff 0%, #5a35f5 55%, #4a28d8 100%);
+  color: var(--ink);
+  /* A lit top edge and a violet glow under it: the one card on the page that shines. */
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    0 32px 80px -28px rgb(90 53 245 / 0.8);
+}
+@media (min-width: 720px) {
+  /* The plan the page points at stands 14 px taller at both ends; its padding grows by as much,
+     so its name, price and button stay level with its neighbours'. */
+  .plan.tone-bold {
+    margin-block: -14px;
+    padding-block: calc(var(--plan-pad) + 14px);
+  }
+}
+.plan.tone-dark {
+  --ink: var(--stage-ink);
+  --muted: var(--stage-muted);
+  --hairline: var(--stage-hairline);
+  --inset: rgb(255 255 255 / 0.08);
+  border: 1.5px solid transparent;
+  /* The ink stage in the two balls' light, as the hero is: violet above, sky below. */
+  background:
+    radial-gradient(90% 55% at 100% 0%, rgb(124 77 255 / 0.24), transparent 65%) padding-box,
+    radial-gradient(80% 45% at 0% 100%, rgb(14 165 233 / 0.16), transparent 65%) padding-box,
+    linear-gradient(170deg, #161b2a, #0b0e16) padding-box,
+    linear-gradient(135deg, var(--team-a), var(--team-b)) border-box;
+  color: var(--ink);
+}
+.plan-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.plan-name {
+  margin-right: auto;
+  font-size: 1.3125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.plan-emblem {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: var(--radius-inner);
+  background: var(--inset);
+}
+.plan-emblem svg {
+  width: 32px;
+  height: 32px;
+}
+/* On the violet, the mark sits on white, as an app's icon does. */
+.tone-bold .plan-emblem {
+  background: #ffffff;
+  box-shadow: 0 10px 24px -12px rgb(20 8 80 / 0.6);
+}
+.tone-dark .plan-emblem {
+  background: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+.plan-badge {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.tone-bold .plan-badge {
+  background: #ffffff;
+  color: #4a28d8;
+}
+.tone-dark .plan-badge {
+  background: linear-gradient(135deg, rgb(124 77 255 / 0.3), rgb(14 165 233 / 0.3));
+  color: var(--ink);
+}
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  /* As tall as a price, so a plan that says "Coming soon" lines up with one that has one. */
+  min-height: 2.75rem;
+  margin-top: 4px;
+  font-weight: 700;
+  font-size: 2.75rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.plan-price small {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+/* No price yet: a quiet line in the price's place, so the space reads as waiting, not empty. */
+.plan-price.soon {
+  align-items: center;
+  color: var(--muted);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.plan-desc {
+  color: var(--muted);
+}
+@media (min-width: 720px) {
+  /* Two lines on every card side by side, so the buttons under them line up. */
+  .plan-desc {
+    min-height: 3.2em;
+  }
+}
+.plan ul {
+  display: grid;
+  align-content: start;
+  gap: 11px;
+  margin: 10px 0 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--hairline);
+  list-style: none;
+}
+.plan li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 0.9688rem;
+}
+/* A tick for what is in it, a dash for what is not. */
+.plan li::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.5 2.6 2.5L14 7.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    var(--accent);
+}
+.plan li.no {
+  color: var(--muted);
+}
+.plan li.no::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.5 10h7' stroke='%23878e9c' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    var(--inset);
+}
+/* On the violet, the tick turns over: a white disc with a violet check. */
+.tone-bold li::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.5 2.6 2.5L14 7.5' fill='none' stroke='%235a35f5' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    #ffffff;
+}
+.tone-bold li.no::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.5 10h7' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    rgb(255 255 255 / 0.16);
+}
+.tone-dark li::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.5 2.6 2.5L14 7.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    linear-gradient(135deg, var(--team-a), var(--team-b));
+}
+/* Buttons on the coloured cards: white on the violet, and a waiting one that still reads. */
+.tone-bold .btn-primary {
+  background: #ffffff;
+  color: #4a28d8;
+}
+.tone-bold .btn-primary:hover {
+  background: rgb(255 255 255 / 0.9);
+}
+.tone-bold .btn:disabled,
+.tone-dark .btn:disabled {
+  background: rgb(255 255 255 / 0.12);
+  border-color: rgb(255 255 255 / 0.18);
+  color: rgb(255 255 255 / 0.85);
+}
+.tone-bold .current,
+.tone-dark .current {
+  background: rgb(255 255 255 / 0.12);
+  color: var(--ink);
+}
+.plan .current {
+  padding: 13px 0;
+  border-radius: 999px;
+  background: var(--inset);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-align: center;
+}
+.plans-note {
+  /* Clear of the violet card, which reaches 14 px below its row. */
+  margin-top: 32px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+/*
+ * Until the plans arrive (GET /api/plans), the list keeps most of a screen, so what follows it
+ * starts below the fold and does not jump when they appear (layout shift).
+ */
+.plans-loading {
+  min-height: 80vh;
+}
+/* Without scripts they never arrive: the space goes, and a noscript line under the list says why. */
+@media (scripting: none) {
+  .plans-loading {
+    min-height: 0;
+  }
+}
+
+/* ── Questions ───────────────────────────────────────────────────────── */
+
+/*
+ * The questions under their heading, in two columns of their own, each opening on its own: a
+ * heading in a column beside a long list left that column empty under it.
+ */
+.faq {
+  display: grid;
+  column-gap: clamp(32px, 4vw, 56px);
+}
+@media (min-width: 820px) {
+  .faq {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+.faq-col {
+  border-top: 1px solid var(--hairline);
+}
+/* One under the other on a phone: the second column carries on from the first's last line. */
+@media (max-width: 819px) {
+  .faq-col + .faq-col {
+    border-top: 0;
+  }
+}
+.faq details {
+  border-bottom: 1px solid var(--hairline);
+}
+.faq summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: clamp(14px, 1.6vw, 18px) 2px;
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+/* A plus that turns into a minus. */
+.faq summary::after {
+  content: '';
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background:
+    linear-gradient(var(--ink), var(--ink)) center / 11px 2px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) center / 2px 11px no-repeat,
+    var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+.faq details[open] summary::after {
+  background:
+    linear-gradient(var(--ink), var(--ink)) center / 11px 2px no-repeat,
+    var(--surface);
+}
+.faq details p {
+  max-width: 40rem;
+  padding: 0 2px 22px;
+  color: var(--muted);
+}
+
+/* ── The close: the last call to action, on the ink ──────────────────── */
+
+.close {
+  padding-top: var(--section);
+}
+.close-stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: clamp(40px, 6vw, 72px) clamp(20px, 5vw, 64px);
+  overflow: hidden;
+  text-align: center;
+}
+.close-stage::before {
+  content: '';
+  position: absolute;
+  inset: auto -10% -60% -10%;
+  height: 120%;
+  background:
+    radial-gradient(36% 46% at 30% 50%, rgb(124 77 255 / 0.28), transparent 70%),
+    radial-gradient(36% 46% at 70% 50%, rgb(14 165 233 / 0.2), transparent 70%);
+  pointer-events: none;
+}
+.close-stage > * {
+  position: relative;
+}
+.close-stage h2 {
+  max-width: 18ch;
+  font-size: clamp(2.1rem, 5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+.close-stage p {
+  color: var(--muted);
+  font-size: 1.0625rem;
+}
+.close-stage .actions {
+  justify-content: center;
+  margin-top: 18px;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+
+.site-footer {
+  margin-top: clamp(48px, 6vw, 80px);
+  border-top: 1px solid var(--hairline);
+  background: var(--bg-deep);
+  font-size: 0.9375rem;
+}
+.footer-inner {
+  display: grid;
+  gap: 36px;
+  width: min(100%, var(--shell));
+  margin-inline: auto;
+  padding: 48px var(--gutter) 56px;
+}
+@media (min-width: 820px) {
+  .footer-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+.footer-brand p {
+  max-width: 22rem;
+  margin-top: 12px;
+  color: var(--muted);
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 56px;
+}
+.footer-links h2 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.footer-links ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.footer-links a {
+  display: inline-block;
+  padding: 3px 0;
+  color: var(--muted);
+  text-decoration: none;
+}
+.footer-links a:hover {
+  color: var(--ink);
+}
+
+/* ── Forms: sign up, sign in, forgot, reset, verify ──────────────────── */
+
+.auth {
+  display: grid;
+  place-items: start center;
+  padding: clamp(28px, 7vw, 88px) var(--gutter) 0;
+}
+.auth-box {
+  width: min(100%, 440px);
+  display: grid;
+  gap: 18px;
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+}
+.auth-box h1 {
+  font-size: clamp(1.75rem, 5vw, 2.125rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+.auth-box > p,
+.auth-alt {
+  color: var(--muted);
+}
+.auth-alt {
+  font-size: 0.9375rem;
+  text-align: center;
+}
+.form {
+  display: grid;
+  gap: 16px;
+}
+.field {
+  display: grid;
+  gap: 7px;
+}
+.field label {
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+.field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-control);
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+  transition:
+    border-color 0.15s var(--ease),
+    box-shadow 0.15s var(--ease);
+}
+.field input:hover {
+  border-color: var(--muted);
+}
+.field input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.field input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.field small {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.form-links {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  font-size: 0.9375rem;
+}
+.form-error,
+.form-ok {
+  padding: 12px 14px;
+  border-radius: var(--radius-control);
+  font-size: 0.9375rem;
+}
+.form-error {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+.form-ok {
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+  color: var(--ok);
+}
+.form-error a,
+.form-ok a {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* ── Pages of their own: pricing, the legal pages, 404 ───────────────── */
+
+.page-top {
+  padding-top: clamp(32px, 7vw, 80px);
+}
+.page-top + .section {
+  padding-top: clamp(48px, 6vw, 80px);
+}
+
+.prose {
+  max-width: 44rem;
+  padding-top: clamp(32px, 7vw, 80px);
+}
+.prose h1 {
+  font-size: clamp(2.2rem, 5vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+}
+.prose h2 {
+  margin-top: 2.2em;
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.prose p,
+.prose ul {
+  margin-top: 0.9em;
+}
+.prose li + li {
+  margin-top: 0.4em;
+}
+.prose .updated {
+  margin-top: 12px;
+  color: var(--muted);
+}
+/*
+ * The legal pages: the short version in a tile up top, the contents as a list of anchors, the
+ * sections numbered (they are a sequence, read and cited by number), tables for who does what.
+ */
+.legal h2 {
+  scroll-margin-top: 88px;
+}
+.legal-summary {
+  margin-top: 28px;
+  padding: 22px 26px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+}
+.prose .legal-summary h2 {
+  margin-top: 0;
+  font-size: 1.125rem;
+}
+.legal-summary ul {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0;
+  list-style: none;
+}
+.prose .legal-summary li + li {
+  margin-top: 0;
+}
+.legal-summary li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+}
+.legal-summary li::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.5 2.6 2.5L14 7.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    var(--accent);
+}
+.toc {
+  margin-top: 28px;
+  padding: 18px 22px;
+  border-radius: var(--radius-tile);
+  background: var(--inset);
+}
+.toc ol {
+  columns: 2 14rem;
+  column-gap: 32px;
+  margin: 0;
+  padding-left: 1.4em;
+  font-size: 0.9375rem;
+}
+.prose .toc li + li {
+  margin-top: 0;
+}
+.toc li {
+  padding: 3px 0;
+  break-inside: avoid;
+}
+.table-scroll {
+  overflow-x: auto;
+  margin-top: 1em;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-inner);
+  background: var(--surface);
+}
+.prose table {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.prose th,
+.prose td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
+  vertical-align: top;
+}
+.prose th {
+  background: var(--inset);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.prose tbody tr:last-child td {
+  border-bottom: 0;
+}
+.prose code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--inset);
+  font-size: 0.875em;
+}
+
+.lost {
+  padding-top: clamp(48px, 10vw, 120px);
+}
+.lost h1 {
+  font-size: clamp(2.6rem, 7vw, 4.6rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+.lost p {
+  max-width: 32rem;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 1.125rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .nav-link,
+  .phone canvas,
+  .field input {
+    transition: none;
+  }
+}
+
+/* The theme toggle's circle (src/ui/theme.ts runs it in a view transition). */
+:root[data-theme-flip] *,
+:root[data-theme-flip] *::before,
+:root[data-theme-flip] *::after {
+  transition: none !important;
+}
+:root[data-theme-flip]::view-transition-old(root) {
+  animation: none;
+}
+:root[data-theme-flip]::view-transition-new(root) {
+  animation: theme-flip 650ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes theme-flip {
+  from {
+    clip-path: circle(0 at var(--flip-x) var(--flip-y));
+  }
+  to {
+    clip-path: circle(var(--flip-r) at var(--flip-x) var(--flip-y));
+  }
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────── */
+
+/*
+ * A system rather than a set of effects, in four registers, as on vukcvetkovic-web:
+ *
+ *   arrive  the hero's words come in once at load, one after another; the phone settles. The
+ *           still frame in it is the LCP, so it is moved, never faded.
+ *   scroll  what is below it moves with the page, on view() and scroll() timelines: things rise
+ *           in as they arrive, the hero steps back as it leaves, a line under the header says
+ *           how far down the page is.
+ *   story   a drawing that tells something (the lanes racing to the line) plays once on its
+ *           own clock when its card is half in view. Scrubbed by the scroll, it had finished
+ *           before the reader got to it.
+ *           src/site/home.ts arms them (`data-stories`) and marks a card `.played`.
+ *   answer  a hover or a press is answered at once.
+ *
+ * And the drawings at work: a voice's wave, the loop turning, the phone floating. Small,
+ * composited (scale, translate, rotate, opacity) and nothing else moves.
+ *
+ * Nothing is hidden by default. Every rule is inside the motion guard, the scroll-driven ones
+ * inside the support guard too, and the stories wait only once the script has armed them, so a
+ * browser without scroll-driven animation or without JS, or a reader who asked for less motion,
+ * simply sees the page. Keyframes use translate, scale and rotate, never transform, so they
+ * compose with what a rule elsewhere sets; and the longhands are written out where a timeline is
+ * set, since the `animation` shorthand resets animation-timeline to its initial value.
+ *
+ * ⚠️ Rise ranges are in `cover`, in svh, so they land at the same place on every screen: from
+ * 15svh (the element's top 85 % of the way down) to 50svh (its top at the middle), whatever its
+ * height. They end by 640 px at most: an element's travel is the page below it plus the screen,
+ * and a range that ends past it leaves the element half-way for as long as the page is open.
+ * The least page there is under the close's top is 757 px (at 1920 wide).
+ *
+ * ⚠️ No `overflow: hidden` between an animated element and the page: it makes a scroll container,
+ * the element's view() timeline measures against that box instead, and the animation never
+ * moves. `overflow: clip` cuts the same edges without it.
+ */
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 36px;
+  }
+}
+@keyframes rise-scale {
+  from {
+    opacity: 0;
+    translate: 0 44px;
+    scale: 0.96;
+  }
+}
+@keyframes settle {
+  from {
+    translate: 0 28px;
+    scale: 0.97;
+  }
+}
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    translate: 32px 0;
+  }
+}
+@keyframes bar-in {
+  from {
+    translate: -101% 0;
+  }
+}
+/* Smaller only: faded, the ink over the grey ground went muddy. */
+@keyframes hero-recede {
+  to {
+    scale: 0.92;
+  }
+}
+@keyframes progress {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+@keyframes header-lift {
+  to {
+    box-shadow: 0 10px 30px -20px rgb(12 15 23 / 0.45);
+  }
+}
+@keyframes eq {
+  0%,
+  100% {
+    scale: 1 0.4;
+  }
+  50% {
+    scale: 1 1;
+  }
+}
+@keyframes bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -7px;
+  }
+}
+@keyframes spin {
+  to {
+    rotate: 1turn;
+  }
+}
+@keyframes ring {
+  from {
+    box-shadow:
+      0 0 18px rgb(106 70 255 / 0.6),
+      0 0 0 0 rgb(106 70 255 / 0.55);
+  }
+  to {
+    box-shadow:
+      0 0 18px rgb(106 70 255 / 0.6),
+      0 0 0 12px rgb(106 70 255 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Arrive: the hero's words one after another, the phone settling into place. */
+  .hero-copy > *,
+  .hero .specs {
+    animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .hero-copy > :nth-child(2) {
+    animation-delay: 0.08s;
+  }
+  .hero-copy > :nth-child(3) {
+    animation-delay: 0.16s;
+  }
+  .hero-copy > :nth-child(4) {
+    animation-delay: 0.24s;
+  }
+  .hero .specs {
+    animation-delay: 0.32s;
+  }
+  .hero .phone {
+    animation: settle 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  /* Answer: the way forward lifts under the pointer. */
+  .btn-primary {
+    transition:
+      background-color 0.15s var(--ease),
+      border-color 0.15s var(--ease),
+      color 0.15s var(--ease),
+      translate 0.25s var(--ease),
+      box-shadow 0.25s var(--ease);
+  }
+  .btn-primary:not(:disabled):hover {
+    translate: 0 -1px;
+    box-shadow: 0 12px 26px -14px rgb(106 70 255 / 0.9);
+  }
+
+  /* An answer opening: the height follows the words instead of jumping to them. */
+  :root {
+    interpolate-size: allow-keywords;
+  }
+  .faq details::details-content {
+    height: 0;
+    overflow: clip;
+    transition:
+      height 0.35s var(--ease),
+      content-visibility 0.35s allow-discrete;
+  }
+  .faq details[open]::details-content {
+    height: auto;
+  }
+
+  /* The drawings at work. */
+  .float-chip {
+    animation: bob 5s ease-in-out infinite;
+  }
+  .chip-finish {
+    animation-delay: -2.5s;
+  }
+  /* The voice's wave moves only while the voice plays (home.ts marks the player), the press's ring until then. */
+  .playing .wave i {
+    animation: eq 1.1s ease-in-out infinite;
+  }
+  .playing .wave i:nth-child(2n) {
+    animation-duration: 0.9s;
+    animation-delay: -0.3s;
+  }
+  .playing .wave i:nth-child(3n) {
+    animation-duration: 1.3s;
+    animation-delay: -0.6s;
+  }
+  .playing .wave i:nth-child(5n) {
+    animation-delay: -0.15s;
+  }
+  .play[aria-pressed='false'] {
+    animation: ring 2.2s ease-out infinite;
+  }
+  .loop-arrow {
+    animation: spin 7s linear infinite;
+  }
+  .phone-frame {
+    animation: bob 6s ease-in-out infinite;
+  }
+
+  /*
+   * Stories, once home.ts has armed them: each waits on its first frame (paused) until its card is
+   * marked `.played`, then plays once on its own clock. The lanes race to the line together, each
+   * to its own length, so the loser is still short of it when the winner arrives.
+   */
+  [data-stories] .lane i {
+    animation: bar-in 1.6s cubic-bezier(0.25, 0.7, 0.2, 1) both paused;
+  }
+  [data-stories] .played .lane i {
+    animation-play-state: running;
+  }
+
+  @supports (animation-timeline: view()) {
+    /* How far down the page is, and the header lifting off it once it scrolls. */
+    .scroll-progress {
+      display: block;
+      animation-name: progress;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: scroll(root block);
+    }
+    .site-header {
+      animation-name: header-lift;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 120px;
+    }
+
+    /* The hero steps back as the page leaves it. */
+    .hero-stage {
+      transform-origin: 50% 0;
+      animation-name: hero-recede;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+
+    /*
+     * Arrivals: headings, cards, plans, questions and the close rise in as they come, from their
+     * top 85 % of the way down the screen to the middle (see the ⚠️ above for the 640 px).
+     */
+    .section-head,
+    .fgroup-head,
+    .close-stage {
+      animation-name: rise;
+      animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: cover 15svh cover min(50svh, 640px);
+    }
+    .fcard,
+    .plans > .plan,
+    .faq details {
+      animation-name: rise-scale;
+      animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: cover 15svh cover min(50svh, 640px);
+    }
+    /* Side by side, each a step (4svh) behind the one before it. */
+    .fbento > .fcard:nth-child(3),
+    .plans > .plan:nth-child(2) {
+      animation-range: cover 19svh cover min(54svh, 676px);
+    }
+    .plans > .plan:nth-child(3) {
+      animation-range: cover 23svh cover min(58svh, 712px);
+    }
+    .faq details:nth-child(2) {
+      animation-range: cover 16svh cover min(51svh, 649px);
+    }
+    .faq details:nth-child(n + 3) {
+      animation-range: cover 17svh cover min(52svh, 658px);
+    }
+
+    /* Inside the cards as they arrive: the looks rise, the rows slide in. */
+    .viz-looks li {
+      animation-name: rise;
+      animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: cover 15svh cover min(50svh, 640px);
+    }
+    .viz-looks li:nth-child(2) {
+      animation-range: cover 19svh cover min(54svh, 676px);
+    }
+    .viz-looks li:nth-child(3) {
+      animation-range: cover 23svh cover min(58svh, 712px);
+    }
+    .lib-row,
+    .piece-row {
+      animation-name: slide-in;
+      animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: cover 15svh cover min(50svh, 640px);
+    }
+    .lib-row + .lib-row,
+    .piece-row + .piece-row {
+      animation-range: cover 19svh cover min(54svh, 676px);
+    }
+  }
+}

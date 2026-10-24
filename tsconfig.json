@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": [],
+    "strict": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+
+    // The simulation also runs in plain Node (`npm run tune`), which only strips
+    // types: imports need their .ts extension, type-only imports must say so, and
+    // nothing may need emitting (no enums, namespaces or parameter properties).
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true
+  },
+  // The Worker has its own (worker/tsconfig.json); shared/ is checked by both.
+  "include": ["src", "scripts", "shared"]
+}
