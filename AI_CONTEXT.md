@@ -89,7 +89,7 @@ enough to read whole before the real work starts.
 | [app.html](app.html), [app/videos.html](app/videos.html), [src/dashboard.ts](src/dashboard.ts) | the studio's page; the Videos page |
 | [account.html](account.html), [src/account.ts](src/account.ts) | the account page |
 | [admin.html](admin.html), [admin/](admin/), [src/admin/main.ts](src/admin/main.ts) | the admin area |
-| [src/console.css](src/console.css) | how the account page and the admin area look: the public site's identity as a console |
+| [src/console.css](src/console.css) | how the account page, the Videos page and the admin area look: the public site's identity as a console |
 | [index.html](index.html) and the other root HTML files, [src/site/](src/site/) | the public site: pages, shared partials, the hero, pricing, the sign-in forms, its stylesheet |
 | [worker/](worker/) | the Cloudflare Worker: `/api` routes, the session check, D1 queries, mail, the page gate |
 | [shared/](shared/) | what the pages and the Worker both use: API shapes, plan features, site constants, reading post links |

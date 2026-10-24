@@ -22,7 +22,7 @@ provider.
 | the daily allowance (`perDay`): how a day is counted | `utcDay`, `selectDay`, `claimDay` in [worker/plans.ts](../worker/plans.ts), `takeVideo` in [worker/routes/account.ts](../worker/routes/account.ts), [migrations/0004_daily_videos.sql](../migrations/0004_daily_videos.sql); in the studio `takeVideo`, `confirmRecord`, `syncDay` in [src/app.ts](../src/app.ts); the words `dayLine` in [src/ui/plan.ts](../src/ui/plan.ts) |
 | how the studio tells a plan's limits (the plan card, the note on the preview) | `buildPlanCard`, `applyPlan` in [src/app.ts](../src/app.ts); `planChips`, `planHoldsBack` in [src/ui/plan.ts](../src/ui/plan.ts) |
 | the admin area | [worker/routes/admin.ts](../worker/routes/admin.ts), [worker/admin.ts](../worker/admin.ts) (SQL), [admin.html](../admin.html), [admin/](../admin/), [src/admin/main.ts](../src/admin/main.ts); its sidebar is the `admin:nav` partial, [src/site/partials/admin-nav.html](../src/site/partials/admin-nav.html) |
-| how the admin area and the account page look | [src/console.css](../src/console.css) |
+| how the admin area, the account page and the Videos page look | [src/console.css](../src/console.css) |
 | the mails | [worker/mail/templates.ts](../worker/mail/templates.ts) (words), [worker/mail/resend.ts](../worker/mail/resend.ts) (sending, `MAIL_FROM`) |
 | the contact address | `CONTACT_EMAIL` in [shared/site.ts](../shared/site.ts) |
 | making a superadmin | [scripts/admin.mjs](../scripts/admin.mjs) |
@@ -461,3 +461,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-10-23 - a refused save is explained in the studio's sheet after the take, with See plans; the studio loads the public plans beside the account to word what the paid plans add.
 - 2026-10-24 - mail from `bouncereel@vukcvetkovic.com`, replies to `vuk@vukcvetkovic.com`; the watermark named without the address in the plans' lists and the admin.
 - 2026-10-24 - `PUT /api/admin/videos/:id/texts`, a superadmin's texts for posting a video.
+- 2026-10-24 - the Videos page in the console look (src/console.css), with the account page's top bar; the console's selects keep their chevron; a page under the top bar is centred.

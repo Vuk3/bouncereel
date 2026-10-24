@@ -19,10 +19,12 @@ export interface ApiErrorBody {
 }
 
 /** A link to where a video was published. */
+/** That a video went up on a platform: ticked on the Videos page, with its link once pasted. */
 export interface Post {
   platform: Platform;
-  url: string;
-  /** YouTube's video id, TikTok's video id or Instagram's shortcode; null when the link does not carry it. */
+  /** null when only the tick was given. */
+  url: string | null;
+  /** YouTube's video id, TikTok's video id or Instagram's shortcode; null without a link, or when the link does not carry it. */
   externalId: string | null;
   addedAt: string;
 }
@@ -64,6 +66,8 @@ export interface VideoSummary {
   appVersion: string;
   /** null for a game that is not a ball race. */
   race: RaceSummary | null;
+  /** The two balls' colours from its config, top then bottom, for the Videos page's thumbnail; null when the config has none. */
+  colors: { a: string; b: string } | null;
   posts: Post[];
   /** Whether texts for posting it were pasted (a superadmin's, PUT /api/admin/videos/:id/texts). */
   hasTexts: boolean;
@@ -125,8 +129,9 @@ export interface CreatedResponse {
 }
 
 /** PUT /api/videos/:id/posts/:platform */
+/** PUT /api/videos/:id/posts/:platform: posted there, with a link or (none, null or empty) without. */
 export interface PostBody {
-  url: string;
+  url?: string | null;
 }
 
 export interface PostResponse {

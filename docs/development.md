@@ -220,8 +220,8 @@ spreads the new theme from the button as a circle (a view transition; instant wi
 reduced motion). Every colour is a token in [style.css](../src/style.css) written with
 `light-dark()`, resolved by `color-scheme`: `light` on `:root`, `dark` under
 `html[data-theme='dark']`, which a script in [app.html](../app.html) sets from the saved
-choice before first paint so a dark page never flashes light (the Videos page has the
-same script and shares the toggle, [src/ui/theme.ts](../src/ui/theme.ts)). No raw colours
+choice before first paint so a dark page never flashes light (the pages behind the sign-in
+have the same script, the `app:head` partial, and share the toggle, [src/ui/theme.ts](../src/ui/theme.ts)). No raw colours
 in a rule below the tokens. Selects draw their own chevron (the native arrow painted over the border).
 
 ⚠️ **Rules for a field's label are `.field > label`**, children only: a looser
@@ -279,7 +279,7 @@ only tells the public pages to offer "Open studio"
 ([accounts-and-billing](./accounts-and-billing.md#2-sessions-and-cookies)).
 
 Keys saved under the project's earlier name (`arcade:…`) move to these once, in the boot
-script at the top of the studio and the Videos page, before anything reads them; a key that
+script at the top of the studio, before anything reads them; a key that
 already exists under the new name wins. `bouncereel:keys`, where paid voices' API keys were
 kept, is removed when the studio starts: the narrator needs none, and a key left in a browser
 is a secret with no use.
@@ -303,3 +303,4 @@ browser's Cache Storage. The videos themselves live in D1, locally in `.wrangler
 - 2026-10-23 - the preview on an ink stage in the balls' light, the toolbar a column beside it from 1200 px (one row below), a timeline of the run's phases with a playhead and the video's clock under it, the matchup card's lanes as on the home page's race board, the panel on one spacing scale with small section titles and Classics as a ghost pill; red buttons keep one red in both themes (`--rec-fill`).
 - 2026-10-23 - what the plan holds back at full contrast with a Paid plans tag and, in the accent, what the paid plans add (worded from `GET /api/plans`); a first visit's one hint (`bouncereel:hints:v1:<id>`); the recording bar and the sheet after a take, pointed to.
 - 2026-10-23 - the look thumbnails are drawn without the video's opening title.
+- 2026-10-24 - the Videos page has the console pages' head (`app:head`): no `arcade:` boot of its own, the studio's does it.

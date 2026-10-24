@@ -29,23 +29,27 @@ interface VideoRow {
   margin: number | null;
   lead_changes: number | null;
   has_texts: number;
+  a_color: unknown;
+  b_color: unknown;
 }
 
 interface PostRow {
   video_id: number;
   platform: Platform;
-  url: string;
+  url: string | null;
   external_id: string | null;
   added_at: string;
 }
 
 /**
  * Everything but `config` and `texts`, which only the single-video read needs: parsing them for
- * every row of a long list would not fit the Worker's CPU time (worker/CLAUDE.md).
+ * every row of a long list would not fit the Worker's CPU time (worker/CLAUDE.md). The balls'
+ * colours for the list's thumbnails are read out of the config by D1 (json_extract), whose time is
+ * not the Worker's.
  */
 const SUMMARY_COLUMNS = `id, game, recorded_at, title, file_name, format, seconds, stopped_early, video_length, seed,
   app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes,
-  texts IS NOT NULL AS has_texts`;
+  texts IS NOT NULL AS has_texts, json_extract(config, '$.a.color') AS a_color, json_extract(config, '$.b.color') AS b_color`;
 const POST_COLUMNS = 'video_id, platform, url, external_id, added_at';
 
 function toPost(row: PostRow): Post {
@@ -75,6 +79,7 @@ function toSummary(row: VideoRow, posts: Post[]): VideoSummary {
             leadChanges: row.lead_changes ?? 0,
           }
         : null,
+    colors: typeof row.a_color === 'string' && typeof row.b_color === 'string' ? { a: row.a_color, b: row.b_color } : null,
     posts,
     hasTexts: row.has_texts === 1,
   };
@@ -182,15 +187,15 @@ export async function postOwner(db: D1Database, userId: number, platform: Platfo
   return row?.video_id ?? null;
 }
 
-/** Sets a video's link on a platform, replacing the one it had; the caller has checked the video is the account's. */
-export async function upsertPost(db: D1Database, videoId: number, userId: number, platform: Platform, link: PostLink, now: Date): Promise<Post> {
+/** Marks a video posted on a platform, with its link or none, replacing what it had; the caller has checked the video is the account's. */
+export async function upsertPost(db: D1Database, videoId: number, userId: number, platform: Platform, link: PostLink | null, now: Date): Promise<Post> {
   const row = await db
     .prepare(
       `INSERT INTO posts (video_id, user_id, platform, url, external_id, added_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
        ON CONFLICT (video_id, platform) DO UPDATE SET url = excluded.url, external_id = excluded.external_id, added_at = excluded.added_at
        RETURNING ${POST_COLUMNS}`,
     )
-    .bind(videoId, userId, platform, link.url, link.externalId, now.toISOString())
+    .bind(videoId, userId, platform, link?.url ?? null, link?.externalId ?? null, now.toISOString())
     .first<PostRow>();
   if (!row) throw new Error('INSERT … RETURNING returned no post');
   return toPost(row);

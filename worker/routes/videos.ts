@@ -95,10 +95,13 @@ export async function putPost(context: RouteContext): Promise<Response> {
   const id = videoId(params);
   const platform = platformParam(params);
   const { url } = await readJsonObject(request);
-  const link = typeof url === 'string' ? parsePostLink(platform, url) : null;
-  if (!link) throw new HttpError(400, 'invalid_url', `That is not a link to a post on ${PLATFORM_LABELS[platform]}.`);
+  if (url !== undefined && url !== null && typeof url !== 'string') throw new HttpError(400, 'invalid_url', 'url must be text or null.');
+  // No link is the tick alone: posted there, link to follow or never.
+  const given = typeof url === 'string' && url.trim() !== '';
+  const link = given ? parsePostLink(platform, url) : null;
+  if (given && !link) throw new HttpError(400, 'invalid_url', `That is not a link to a post on ${PLATFORM_LABELS[platform]}.`);
   if (!(await videoExists(env.DB, id, user.id))) throw noVideo(id);
-  const owner = link.externalId ? await postOwner(env.DB, user.id, platform, link.externalId) : null;
+  const owner = link?.externalId ? await postOwner(env.DB, user.id, platform, link.externalId) : null;
   if (owner !== null && owner !== id) {
     throw new HttpError(409, 'post_taken', `That ${PLATFORM_LABELS[platform]} post is already linked to video ${owner}.`);
   }

@@ -4,9 +4,11 @@ import {
   type AccountResponse,
   type Day,
   type Platform,
+  type Post,
   type PostResponse,
   type PostTexts,
   type TextsResponse,
+  type VideoDetail,
   type VideoResponse,
   type VideoSummary,
   type VideosResponse,
@@ -18,20 +20,36 @@ import { api, ApiError } from './api.ts';
 import { savedConfig } from './config.ts';
 import { postPrompt, retryPending } from './library.ts';
 import { loadAccount, toLogin } from './session.ts';
-import { bindAccountChrome, dayLine, upgradeLink } from './ui/plan.ts';
 import { SEQUENCES, type SequenceId } from './sim/sequences.ts';
+import { bindAccountChrome, dayLine, upgradeLink } from './ui/plan.ts';
 import { bindThemeToggle } from './ui/theme.ts';
 
-// The Videos page (/app/videos): every recording in the account's library, where each went up,
-// a link box per platform, and a way back into the studio with the video's config. One request
-// loads it all; a link is saved on its own, without redrawing the table (so Tab moves on to the
-// next box while the last one saves). A superadmin also gets the texts for posting each video
-// (docs/video-library.md §6).
+// The Videos page (/app/videos): every recording in the account's library and where each went up.
+// The look is src/console.css, as on the account page. A row ticks the platforms a video is
+// posted on (a post needs no link); the video's drawer adds the links, its facts, deleting it and
+// the way back into the studio, and for a superadmin the texts for posting it
+// (docs/video-library.md §6). One request loads the list; a tick or a link saves on its own and
+// redraws only its row, so the list does not jump while working down it.
 
 type SortKey = 'recorded' | 'title' | 'length' | 'margin';
 type Show = 'all' | 'unposted' | `no-${Platform}`;
 
 const SPECIALS: Record<string, string> = { faster: 'speeds up', slower: 'slows down', grow: 'grows', split: 'splits' };
+
+/** A glyph per platform that reads as it without being its logo: a play button, a note, a camera. */
+const ICONS: Record<Platform, string> = {
+  youtube: '<rect x="3" y="5.5" width="18" height="13" rx="4" /><path d="m10.5 9.5 4 2.5-4 2.5Z" />',
+  tiktok: '<path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5" /><path d="M14 4c.6 2.4 2.4 4 5 4.2" />',
+  instagram: '<rect x="4" y="4" width="16" height="16" rx="5" /><circle cx="12" cy="12" r="3.6" /><path d="M16.8 7.2h.01" />',
+};
+
+/** What the skill leaves to be set by hand on each platform: the same for every video, so it is written here once. */
+const SETTINGS: Record<Platform, string> = {
+  youtube: 'Thumbnail: the first frame (0:00), the title with both names. Audience: not made for kids. Altered content: no. Category: Entertainment.',
+  tiktok: 'Cover: the first frame (0:00). Sound: the video’s own.',
+  instagram: 'Cover: the first frame (0:00).',
+};
+const SHOWN_AS: Record<Platform, string> = { youtube: 'YouTube Shorts', tiktok: 'TikTok', instagram: 'Instagram Reels' };
 
 const $ = <T extends HTMLElement>(selector: string) => document.querySelector(selector) as T;
 
@@ -43,7 +61,6 @@ let videos: VideoSummary[] = [];
 let limit: number | null = null;
 /** The plan's day as the page loaded (shared/api.ts Day). */
 let day: Day | null = null;
-let sort: { key: SortKey; dir: 1 | -1 } = { key: 'recorded', dir: -1 };
 /** A superadmin: what each video is about to copy, and its texts for posting. */
 let admin = false;
 
@@ -52,6 +69,15 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', text 
   if (className) node.className = className;
   if (text) node.textContent = text;
   return node;
+}
+
+function icon(paths: string, className = ''): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  if (className) svg.setAttribute('class', className);
+  svg.innerHTML = paths;
+  return svg;
 }
 
 function errorText(err: unknown): string {
@@ -67,11 +93,17 @@ function flash(message: string): void {
   toastTimer = window.setTimeout(() => (toast.hidden = true), 6000);
 }
 
+/** What went wrong, where it is seen: the open drawer covers the page's toast, so it says it in its foot. */
+function report(message: string): void {
+  if (drawer.open && !$('#video-foot').hidden) $('#video-error').textContent = message;
+  else flash(message);
+}
+
 function sequenceLabel(id: string): string {
   return SEQUENCES[id as SequenceId]?.label ?? id;
 }
 
-/** "Fibonacci vs Factorial · speeds up", the line under a video's title. */
+/** "Fibonacci vs Factorial (speeds up)", the line under a video's title. */
 function matchupLine(video: VideoSummary): string {
   const race = video.race;
   if (!race) return video.game;
@@ -79,43 +111,76 @@ function matchupLine(video: VideoSummary): string {
   return `${side(race.a)} vs ${side(race.b)}`;
 }
 
-function postOn(video: VideoSummary, platform: Platform) {
+/** "Fibonacci Ball by 0.3 s", or null for a game that is not a race. */
+function finishLine(video: VideoSummary): string | null {
+  const race = video.race;
+  if (!race) return null;
+  const winner = race.winner === 'a' ? race.a.name : race.winner === 'b' ? race.b.name : 'Nobody';
+  return `${winner} ${race.margin === null ? 'by a mile' : `by ${race.margin.toFixed(1)} s`}`;
+}
+
+function postOn(video: VideoSummary, platform: Platform): Post | undefined {
   return video.posts.find((p) => p.platform === platform);
+}
+
+/** A ball's colour from the saved config, put in a style only when it is one. */
+function color(value: string | undefined, fallback: string): string {
+  return value && /^#[0-9a-f]{3,8}$/i.test(value) ? value : fallback;
+}
+
+/** The two balls on the dark stage, top then bottom: the video's two cards in small. */
+function paintThumb(thumb: HTMLElement, video: VideoSummary): void {
+  thumb.style.setProperty('--a', color(video.colors?.a, 'var(--team-a)'));
+  thumb.style.setProperty('--b', color(video.colors?.b, 'var(--team-b)'));
+}
+
+function thumb(video: VideoSummary): HTMLElement {
+  const box = el('span', 'thumb');
+  box.setAttribute('aria-hidden', 'true');
+  box.append(el('i'), el('i'));
+  paintThumb(box, video);
+  return box;
 }
 
 // ── Totals ──────────────────────────────────────────────────────────────
 
-function renderTiles(): void {
-  const tiles: [string, number][] = [
-    ['Videos', videos.length],
-    ...PLATFORMS.map((p): [string, number] => [`On ${PLATFORM_LABELS[p]}`, videos.filter((v) => postOn(v, p)).length]),
-    ['Not posted yet', videos.filter((v) => !v.posts.length).length],
-  ];
-  $('#tiles').replaceChildren(
-    ...tiles.map(([label, value]) => {
-      const tile = el('div', 'tile');
-      tile.append(el('strong', '', value.toLocaleString('en-US')), el('span', '', label));
-      return tile;
-    }),
-  );
-  // The plan's limits, when it has them: how full the library is, what is left of the day, and the way to more.
-  const room = $('#room');
-  const full = limit !== null && videos.length >= limit;
-  const dayUsed = day !== null && day.limit !== null && day.used >= day.limit;
-  const today = day ? dayLine(day) : null;
-  room.hidden = limit === null && !today;
-  room.replaceChildren(
-    limit === null ? '' : full ? `${videos.length} of ${limit} videos kept on your plan: delete one to make room for the next recording. ` : `${videos.length} of ${limit} videos kept on your plan. `,
-    today ? `${today}. ` : '',
-    upgradeLink(full || dayUsed ? 'Upgrade' : 'Upgrade for more'),
-  );
-  room.classList.toggle('full', full || dayUsed);
+function meter(platform: Platform, used: number, total: number): HTMLElement {
+  const box = el('div', 'meter');
+  const head = el('div', 'meter-label');
+  const name = el('span', 'platform-name');
+  name.append(icon(ICONS[platform]), PLATFORM_LABELS[platform]);
+  head.append(name, el('strong', '', `${used} of ${total}`));
+  const bar = el('div', 'meter-bar');
+  bar.append(el('i'));
+  bar.style.setProperty('--fill', `${total ? (used / total) * 100 : 0}%`);
+  bar.setAttribute('aria-hidden', 'true');
+  box.append(head, bar);
+  return box;
 }
 
-// ── The table ───────────────────────────────────────────────────────────
+function renderSummary(): void {
+  const total = videos.length;
+  const waiting = videos.filter((v) => !v.posts.length).length;
+  $('#kpi-videos').textContent = total.toLocaleString('en-US');
+  $('#kpi-waiting').textContent = waiting.toLocaleString('en-US');
+  $('#kpi-waiting-tile').classList.toggle('waiting', waiting > 0);
+  $('#kpi-waiting-note').textContent = !total ? 'Record one and it appears here' : waiting ? 'Tick where each one went up' : 'Every video is up somewhere';
+  // The plan's limits, when it has them: how full the library is, what is left of the day, the way to more.
+  const room = $('#kpi-room');
+  const full = limit !== null && total >= limit;
+  const dayUsed = day !== null && day.limit !== null && day.used >= day.limit;
+  const today = day ? dayLine(day) : null;
+  const parts = [limit === null ? null : full ? `Library full: ${limit} kept on your plan` : `${limit - total} more fit on your plan`, today].filter(Boolean);
+  room.replaceChildren(parts.join(' · '), ...(parts.length ? [' ', upgradeLink(full || dayUsed ? 'Upgrade' : 'Upgrade for more')] : []));
+  room.classList.toggle('full', full || dayUsed);
+  $('#coverage').replaceChildren(...PLATFORMS.map((p) => meter(p, videos.filter((v) => postOn(v, p)).length, total)));
+}
+
+// ── The list ────────────────────────────────────────────────────────────
 
 function shown(): VideoSummary[] {
   const show = $<HTMLSelectElement>('#show').value as Show;
+  const [key, dir] = $<HTMLSelectElement>('#sort').value.split(':') as [SortKey, string];
   const words = $<HTMLInputElement>('#search').value.toLowerCase().split(/\s+/).filter(Boolean);
   const list = videos.filter((v) => {
     if (show === 'unposted' && v.posts.length) return false;
@@ -125,7 +190,7 @@ function shown(): VideoSummary[] {
     return words.every((w) => haystack.includes(w));
   });
   const value = (v: VideoSummary): number | string => {
-    switch (sort.key) {
+    switch (key) {
       case 'recorded':
         return v.recordedAt;
       case 'title':
@@ -136,241 +201,298 @@ function shown(): VideoSummary[] {
         return v.race?.margin ?? Infinity;
     }
   };
-  // Ties keep the newest first, whatever the column.
+  // Ties keep the newest first, whatever the order.
   return list.sort((x, y) => {
     const a = value(x);
     const b = value(y);
-    return (a < b ? -1 : a > b ? 1 : 0) * sort.dir || y.recordedAt.localeCompare(x.recordedAt);
+    return (a < b ? -1 : a > b ? 1 : 0) * Number(dir) || y.recordedAt.localeCompare(x.recordedAt);
   });
 }
 
-function renderTable(): void {
+function renderList(): void {
   const list = shown();
   $('#rows').replaceChildren(...list.map(row));
-  for (const th of document.querySelectorAll<HTMLElement>('th[data-sort]')) {
-    if (th.dataset.sort === sort.key) th.setAttribute('aria-sort', sort.dir === 1 ? 'ascending' : 'descending');
-    else th.removeAttribute('aria-sort');
-  }
   $('#count').textContent = list.length === videos.length ? '' : `${list.length} of ${videos.length}`;
   const empty = $('#empty');
   empty.hidden = list.length > 0;
   empty.textContent = videos.length ? 'No video matches.' : 'No videos yet. Record one in the studio and it appears here.';
 }
 
-function row(video: VideoSummary): HTMLTableRowElement {
-  const tr = el('tr');
+function row(video: VideoSummary): HTMLLIElement {
+  const li = el('li', 'video-row');
+  li.dataset.id = String(video.id);
   const recorded = new Date(video.recordedAt);
 
-  const when = el('td', 'when');
-  when.append(el('span', '', dateFormat.format(recorded)), el('small', '', timeFormat.format(recorded)));
-
-  const what = el('td', 'what');
-  what.append(el('strong', '', video.title), el('small', '', matchupLine(video)));
-  const file = el('small', 'file', video.fileName);
-  file.title = `Seed ${video.seed} · ${video.format} · BounceReel ${video.appVersion}`;
-  what.append(file);
-
-  const length = el('td', 'length');
-  length.append(el('span', '', `${video.videoLength} s`));
-  length.title = `The file is ${video.seconds.toFixed(1)} s`;
-  if (video.stoppedEarly) length.append(el('small', 'badge', 'stopped early'));
-
-  const finish = el('td', 'finish');
-  const race = video.race;
-  if (race) {
-    const winner = race.winner === 'a' ? race.a.name : race.winner === 'b' ? race.b.name : 'Nobody';
-    const margin = race.margin === null ? 'by a mile' : `by ${race.margin.toFixed(1)} s`;
-    const changes = race.leadChanges === 1 ? '1 lead change' : `${race.leadChanges} lead changes`;
-    finish.append(el('span', '', winner), el('small', '', `${margin} · ${changes}`));
+  const main = el('div', 'video-main');
+  const title = el('button', 'video-title', video.title);
+  title.type = 'button';
+  title.addEventListener('click', () => void openVideo(video));
+  const meta = el('p', 'video-meta');
+  const finish = finishLine(video);
+  for (const part of [`${dateFormat.format(recorded)}, ${timeFormat.format(recorded)}`, `${video.videoLength} s`, finish]) {
+    if (part) meta.append(el('span', '', part));
   }
+  if (video.stoppedEarly) meta.append(el('span', 'tag', 'Stopped early'));
+  if (admin && video.hasTexts) meta.append(el('span', 'tag accent', 'Texts ready'));
+  main.append(title, el('p', 'video-sub', matchupLine(video)), meta);
 
-  const actions = el('td', 'actions');
-  if (admin) {
-    const about = el('button', 'icon-button small');
-    about.type = 'button';
-    about.title = 'Copy what this video is about (the balls, who won and by how much, the look), for /bouncereel-post';
-    about.setAttribute('aria-label', `Copy what ${video.title} is about`);
-    about.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h9" /></svg>';
-    about.addEventListener('click', () => void copyAbout(video));
-    const texts = el('button', `icon-button small${video.hasTexts ? ' has-texts' : ''}`);
-    texts.type = 'button';
-    texts.title = video.hasTexts ? 'Texts for posting: titles, captions, tags' : 'Texts for posting: none yet';
-    texts.setAttribute('aria-label', `Texts for posting ${video.title}`);
-    texts.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM14 3v5h5M9 13h6M9 17h4" /></svg>';
-    texts.addEventListener('click', () => void openTexts(video));
-    actions.append(about, texts);
-  }
+  const posted = el('div', 'posted');
+  posted.setAttribute('role', 'group');
+  posted.setAttribute('aria-label', `Where ${video.title} is posted`);
+  posted.append(...PLATFORMS.map((p) => postCheck(video, p)));
+
+  const actions = el('div', 'video-actions');
   const open = el('a', 'button small ghost', 'Open in studio');
   open.href = `/app?video=${video.id}`;
   open.title = 'Loads this video’s config into the studio: the same race, ready to record again or change';
-  const remove = el('button', 'icon-button small danger');
-  remove.type = 'button';
-  remove.title = 'Delete from Videos';
-  remove.setAttribute('aria-label', `Delete ${video.title}`);
-  remove.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>';
-  remove.addEventListener('click', () => void deleteVideo(video));
-  actions.append(open, remove);
+  const more = el('button', 'icon-button small');
+  more.type = 'button';
+  more.title = 'Links, details and more';
+  more.setAttribute('aria-label', `More about ${video.title}`);
+  more.append(icon('<path d="m9 6 6 6-6 6" />'));
+  more.addEventListener('click', () => void openVideo(video));
+  actions.append(open, more);
 
-  tr.append(when, what, length, finish, ...PLATFORMS.map((p) => linkCell(video, p)), actions);
-  return tr;
+  li.append(thumb(video), main, posted, actions);
+  return li;
 }
 
-/** A link box: paste and leave it (or Enter) to save, empty it to remove. */
-function linkCell(video: VideoSummary, platform: Platform): HTMLTableCellElement {
-  const td = el('td', 'link');
+/**
+ * Redraws a video's row where it is (the filter applies again on the next search, filter or sort),
+ * the totals, and the drawer's line for the platform that changed when it shows that video. Only
+ * that line: a link half typed in another stays as it is.
+ */
+function refresh(video: VideoSummary, changed?: Platform): { row: HTMLElement | null; line: HTMLElement | null } {
+  const old = document.querySelector(`.video-row[data-id="${video.id}"]`);
+  const fresh = old ? row(video) : null;
+  if (old && fresh) old.replaceWith(fresh);
+  renderSummary();
+  const oldLine = current === video && changed ? document.querySelector(`#video-platforms [data-platform="${changed}"]`) : null;
+  const line = oldLine && changed ? platformLine(video, changed) : null;
+  if (oldLine && line) oldLine.replaceWith(line);
+  return { row: fresh, line };
+}
+
+/** A platform's tick: posted there or not. The link, when there is one, is in the video's drawer. */
+function postCheck(video: VideoSummary, platform: Platform): HTMLElement {
+  const post = postOn(video, platform);
+  const label = el('label', 'post-check');
   const input = el('input');
-  input.type = 'url';
-  input.name = `${platform}-${video.id}`;
-  input.placeholder = 'Paste link';
-  input.spellcheck = false;
-  input.setAttribute('aria-label', `${PLATFORM_LABELS[platform]} link for ${video.title}`);
-  const open = el('a', 'icon-button small');
-  open.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5" /></svg>';
-  open.target = '_blank';
-  open.rel = 'noopener noreferrer';
-  open.title = `Open on ${PLATFORM_LABELS[platform]}`;
-  open.setAttribute('aria-label', open.title);
-
-  const show = () => {
-    const post = postOn(video, platform);
-    input.value = post?.url ?? '';
-    input.classList.remove('invalid');
-    open.hidden = !post;
-    if (post) open.href = post.url;
-  };
-  show();
-
-  input.addEventListener('change', async () => {
-    const value = input.value.trim();
-    const had = postOn(video, platform);
-    if (value === (had?.url ?? '')) return show();
-    if (value && !parsePostLink(platform, value)) {
-      input.classList.add('invalid');
-      flash(`That is not a link to a post on ${PLATFORM_LABELS[platform]}.`);
-      return;
-    }
-    input.disabled = true;
-    try {
-      if (value) {
-        const { post } = await api<PostResponse>('PUT', `/api/videos/${video.id}/posts/${platform}`, { url: value });
-        video.posts = [...video.posts.filter((p) => p.platform !== platform), post];
-      } else {
-        await api('DELETE', `/api/videos/${video.id}/posts/${platform}`);
-        video.posts = video.posts.filter((p) => p.platform !== platform);
-      }
-      show();
-      renderTiles();
-    } catch (err) {
-      input.classList.add('invalid');
-      flash(`${PLATFORM_LABELS[platform]} link not saved: ${errorText(err)}`);
-    } finally {
-      input.disabled = false;
-    }
-  });
-  const box = el('div', 'link-box');
-  box.append(input, open);
-  td.append(box);
-  return td;
+  input.type = 'checkbox';
+  input.name = platform;
+  input.checked = Boolean(post);
+  input.setAttribute('aria-label', `Posted on ${PLATFORM_LABELS[platform]}`);
+  label.append(input, el('span', '', PLATFORM_LABELS[platform]));
+  label.title = post ? (post.url ? `Posted on ${PLATFORM_LABELS[platform]}` : `Posted on ${PLATFORM_LABELS[platform]}; no link yet`) : `Not on ${PLATFORM_LABELS[platform]} yet`;
+  input.addEventListener('change', () => void setPosted(video, platform, input));
+  return label;
 }
 
-/** The video's facts as text (library.ts postPrompt), with its config for the colours, look and question, onto the clipboard. */
-async function copyAbout(video: VideoSummary): Promise<void> {
+/** Ticked: posted there, without a link. Unticked: the post goes, and its link with it (asked first). */
+async function setPosted(video: VideoSummary, platform: Platform, input: HTMLInputElement): Promise<void> {
+  const on = input.checked;
+  const had = postOn(video, platform);
+  if (!on && had?.url && !confirm(`Untick ${PLATFORM_LABELS[platform]}? Its link is removed too.`)) {
+    input.checked = true;
+    return;
+  }
+  input.disabled = true;
+  try {
+    if (on) {
+      const { post } = await api<PostResponse>('PUT', `/api/videos/${video.id}/posts/${platform}`, {});
+      video.posts = [...video.posts.filter((p) => p.platform !== platform), post];
+    } else {
+      await api('DELETE', `/api/videos/${video.id}/posts/${platform}`);
+      video.posts = video.posts.filter((p) => p.platform !== platform);
+    }
+    // The box was disabled while it saved, which took the focus from it: it goes back to the new one.
+    const redrawn = refresh(video, platform);
+    (drawer.open ? redrawn.line : redrawn.row)?.querySelector<HTMLInputElement>(`input[name="${platform}"]`)?.focus();
+  } catch (err) {
+    input.checked = !on;
+    input.disabled = false;
+    report(`${PLATFORM_LABELS[platform]} not saved: ${errorText(err)}`);
+  }
+}
+
+// ── A video's drawer ────────────────────────────────────────────────────
+
+const drawer = $<HTMLDialogElement>('#video');
+/** The video the drawer shows; null on a paste that is still to say which. */
+let current: VideoSummary | null = null;
+
+/** Opens the drawer on a video, or (null) on a paste of texts that names its video itself. */
+async function openVideo(video: VideoSummary | null): Promise<void> {
+  current = video;
+  $('#video-error').textContent = '';
+  $('#video-foot').hidden = !video;
+  $('#video-thumb').hidden = !video;
+  const body = $('#video-body');
+  if (!drawer.open) drawer.showModal();
+  body.scrollTop = 0;
+  if (!video) {
+    $('#video-title').textContent = 'Paste texts';
+    $('#video-what').textContent = 'The answer says which video it is for: its library id, else its file name.';
+    body.replaceChildren(textsSection(null, null, null));
+    return;
+  }
+  $('#video-title').textContent = video.title;
+  $('#video-what').textContent = matchupLine(video);
+  paintThumb($('#video-thumb'), video);
+  $<HTMLAnchorElement>('#video-open').href = `/app?video=${video.id}`;
+
+  const platforms = el('section', 'drawer-section');
+  platforms.id = 'video-platforms';
+  body.replaceChildren(platforms, factsSection(video));
+  renderPlatforms(video);
+  if (!admin) return;
+  const texts = el('section', 'drawer-section');
+  texts.append(el('h3', '', 'Texts for posting'), el('p', 'drawer-note', 'Loading…'));
+  body.append(texts);
   try {
     const { video: detail } = await api<VideoResponse>('GET', `/api/videos/${video.id}`);
-    await navigator.clipboard.writeText(postPrompt(detail, savedConfig(detail.config)));
-    flash(`Copied what “${video.title}” is about.`);
+    if (current === video) texts.replaceWith(textsSection(video, detail.texts, detail));
   } catch (err) {
-    flash(`Not copied: ${errorText(err)}`);
+    if (current === video) texts.replaceWith(el('p', 'drawer-note', `The texts could not be loaded: ${errorText(err)}.`));
   }
+}
+
+/** Where it went up: each platform's tick, and its link, which saves on leaving the box or on Enter. */
+function renderPlatforms(video: VideoSummary): void {
+  const box = document.querySelector<HTMLElement>('#video-platforms');
+  if (!box) return;
+  const head = el('div', 'section-head');
+  head.append(el('h3', '', 'Where it went up'), el('small', '', 'A link is optional'));
+  box.replaceChildren(head, ...PLATFORMS.map((platform) => platformLine(video, platform)));
+}
+
+function platformLine(video: VideoSummary, platform: Platform): HTMLElement {
+  const line = el('div', 'platform-line');
+  line.dataset.platform = platform;
+  const input = el('input');
+  input.type = 'url';
+  input.name = `${platform}-link`;
+  input.placeholder = `${PLATFORM_LABELS[platform]} link`;
+  input.spellcheck = false;
+  input.value = postOn(video, platform)?.url ?? '';
+  input.setAttribute('aria-label', `${PLATFORM_LABELS[platform]} link`);
+  input.addEventListener('change', () => void saveLink(video, platform, input));
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') input.blur();
+  });
+  line.append(postCheck(video, platform), input);
+  const url = postOn(video, platform)?.url;
+  if (url) {
+    const link = el('a', 'post-link');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.title = `Open it on ${PLATFORM_LABELS[platform]}`;
+    link.setAttribute('aria-label', link.title);
+    link.append(icon('<path d="M7 17 17 7M8.5 7H17v8.5" />'));
+    line.append(link);
+  }
+  return line;
+}
+
+/** A link saved for a platform marks it posted; an emptied box keeps the tick and drops the link. */
+async function saveLink(video: VideoSummary, platform: Platform, input: HTMLInputElement): Promise<void> {
+  const value = input.value.trim();
+  const had = postOn(video, platform);
+  if (value === (had?.url ?? '')) return;
+  if (value && !parsePostLink(platform, value)) {
+    input.classList.add('invalid');
+    report(`That is not a link to a post on ${PLATFORM_LABELS[platform]}.`);
+    return;
+  }
+  input.disabled = true;
+  try {
+    const { post } = await api<PostResponse>('PUT', `/api/videos/${video.id}/posts/${platform}`, { url: value || null });
+    video.posts = [...video.posts.filter((p) => p.platform !== platform), post];
+    $('#video-error').textContent = '';
+    refresh(video, platform);
+  } catch (err) {
+    input.disabled = false;
+    input.classList.add('invalid');
+    report(`${PLATFORM_LABELS[platform]} link not saved: ${errorText(err)}`);
+  }
+}
+
+function factsSection(video: VideoSummary): HTMLElement {
+  const section = el('section', 'drawer-section');
+  const facts = el('dl', 'facts');
+  const recorded = new Date(video.recordedAt);
+  const race = video.race;
+  const pairs: [string, string][] = [
+    ['Recorded', `${dateFormat.format(recorded)}, ${timeFormat.format(recorded)}`],
+    ['Length', `${video.videoLength} s${video.stoppedEarly ? `, stopped early at ${video.seconds.toFixed(1)} s` : ` (the file is ${video.seconds.toFixed(1)} s)`}`],
+  ];
+  if (race) pairs.push(['Finish', `${finishLine(video)}, ${race.leadChanges === 1 ? '1 lead change' : `${race.leadChanges} lead changes`}`]);
+  pairs.push(['Seed', video.seed], ['File', video.fileName], ['Format', `${video.format}, BounceReel ${video.appVersion}`]);
+  for (const [term, value] of pairs) facts.append(el('dt', '', term), el('dd', '', value));
+  section.append(el('h3', '', 'Details'), facts);
+  return section;
 }
 
 // ── Texts for posting (a superadmin's) ──────────────────────────────────
 
-/** What the skill leaves to be set by hand on each platform: the same for every video, so it is written here once. */
-const SETTINGS: Record<Platform, string> = {
-  youtube: 'Thumbnail: the first frame (0:00), the title with both names. Audience: not made for kids. Altered content: no. Category: Entertainment.',
-  tiktok: 'Cover: the first frame (0:00). Sound: the video’s own.',
-  instagram: 'Cover: the first frame (0:00).',
-};
-const SHOWN_AS: Record<Platform, string> = { youtube: 'YouTube Shorts', tiktok: 'TikTok', instagram: 'Instagram Reels' };
-
-/** The video the drawer is about; null while a paste is still to say which. */
-let textsFor: VideoSummary | null = null;
-
-/** Opens the drawer on a video's texts, or (null) on a paste that names its video itself. */
-async function openTexts(video: VideoSummary | null): Promise<void> {
-  textsFor = video;
-  pasteError('');
-  $<HTMLTextAreaElement>('#texts-paste').value = '';
-  const drawer = $<HTMLDialogElement>('#texts');
-  if (!drawer.open) drawer.showModal();
-  if (!video) return showTexts(null, null, null);
-  $('#texts-title').textContent = video.title;
-  $('#texts-what').textContent = matchupLine(video);
-  $('#texts-body').replaceChildren(el('p', 'drawer-note', 'Loading…'));
-  try {
-    const { video: detail } = await api<VideoResponse>('GET', `/api/videos/${video.id}`);
-    if (textsFor === video) showTexts(video, detail.texts, postPrompt(detail, savedConfig(detail.config)));
-  } catch (err) {
-    if (textsFor === video) $('#texts-body').replaceChildren(el('p', 'drawer-note', `The texts could not be loaded: ${errorText(err)}.`));
-  }
-}
-
-/** The drawer's content: a video's texts, or the steps to them (`about` is what the video is about, to copy in the first). */
-function showTexts(video: VideoSummary | null, texts: VideoTexts | null, about: string | null): void {
-  $('#texts-title').textContent = video ? video.title : 'Paste texts';
-  $('#texts-what').textContent = video ? matchupLine(video) : 'The answer says which video it is for: its library id, else its file name.';
-  $('#texts-paste-label').textContent = texts ? 'Paste new texts to replace these' : 'Paste the bouncereel-post answer';
-  // Small once there are texts, so they have the drawer's height; a paste scrolls inside it.
-  $<HTMLTextAreaElement>('#texts-paste').rows = texts ? 2 : 5;
-  const body = $('#texts-body');
-  if (!video || !texts) return body.replaceChildren(howTo(about));
-  const saved = new Date(texts.savedAt);
-  body.replaceChildren(
-    textsSection(video, 'youtube', [
-      ['Title', texts.youtube.title],
-      ['Description', texts.youtube.description],
-      ['Tags', texts.youtube.tags.join(', ')],
-      ['Pinned comment', texts.youtube.pinnedComment],
-    ]),
-    textsSection(video, 'tiktok', [
-      ['Caption', texts.tiktok.caption],
-      ['Pinned comment', texts.tiktok.pinnedComment],
-    ]),
-    textsSection(video, 'instagram', [
-      ['Caption', texts.instagram.caption],
-      ['Pinned comment', texts.instagram.pinnedComment],
-    ]),
-    el('p', 'drawer-note', `Saved ${dateFormat.format(saved)}, ${timeFormat.format(saved)}`),
-  );
-}
-
-/** The three steps, while a video has no texts yet. */
-function howTo(about: string | null): HTMLElement {
-  const steps = el('ol', 'drawer-steps');
-  const first = el('li', '', 'Copy what the video is about');
-  if (about) {
-    const copy = el('button', 'text-copy', 'Copy');
+/**
+ * The drawer's texts: the video's, platform by platform, or the steps to them; then the box their
+ * answer is pasted in. `detail` gives what the video is about, to copy for the skill.
+ */
+function textsSection(video: VideoSummary | null, texts: VideoTexts | null, detail: VideoDetail | null): HTMLElement {
+  const section = el('section', 'drawer-section');
+  const head = el('div', 'section-head');
+  head.append(el('h3', '', 'Texts for posting'));
+  if (detail) {
+    const about = postPrompt(detail, savedConfig(detail.config));
+    const copy = el('button', 'text-copy', 'Copy what it is about');
     copy.type = 'button';
+    copy.title = 'The balls, who won and by how much, the look: for /bouncereel-post';
     copy.addEventListener('click', () => void copyText(copy, about));
-    first.append(': ', copy);
-  } else first.append(': the copy icon on its row, or Copy on the sheet after a take.');
-  steps.append(first, el('li', '', 'Paste it to /bouncereel-post in Claude Code.'), el('li', '', 'Paste its answer below, and save.'));
-  return steps;
-}
-
-function textsSection(video: VideoSummary, platform: Platform, fields: [string, string][]): HTMLElement {
-  const section = el('section', 'text-section');
-  const head = el('h3', '', SHOWN_AS[platform]);
-  const post = postOn(video, platform);
-  if (post) {
-    const link = el('a', 'text-posted', 'Posted');
-    link.href = post.url;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    head.append(link);
+    head.append(copy);
   }
   section.append(head);
+  if (video && texts) {
+    section.append(
+      textsGroup(video, 'youtube', [
+        ['Title', texts.youtube.title],
+        ['Description', texts.youtube.description],
+        ['Tags', texts.youtube.tags.join(', ')],
+        ['Pinned comment', texts.youtube.pinnedComment],
+      ]),
+      textsGroup(video, 'tiktok', [
+        ['Caption', texts.tiktok.caption],
+        ['Pinned comment', texts.tiktok.pinnedComment],
+      ]),
+      textsGroup(video, 'instagram', [
+        ['Caption', texts.instagram.caption],
+        ['Pinned comment', texts.instagram.pinnedComment],
+      ]),
+    );
+    const saved = new Date(texts.savedAt);
+    section.append(el('p', 'drawer-note', `Saved ${dateFormat.format(saved)}, ${timeFormat.format(saved)}`));
+  } else {
+    const steps = el('ol', 'steps');
+    steps.append(
+      el('li', '', video ? 'Copy what the video is about (above).' : 'Copy what the video is about: in its drawer, or on the sheet after a take.'),
+      el('li', '', 'Paste it to /bouncereel-post in Claude Code.'),
+      el('li', '', 'Paste its answer below, and save.'),
+    );
+    section.append(steps);
+  }
+  section.append(pasteForm(video, Boolean(texts)));
+  return section;
+}
+
+function textsGroup(video: VideoSummary, platform: Platform, fields: [string, string][]): HTMLElement {
+  const group = el('div', 'text-group');
+  const head = el('div', 'text-group-head');
+  const name = el('span', 'platform-name');
+  name.append(icon(ICONS[platform]), SHOWN_AS[platform]);
+  head.append(name);
+  if (postOn(video, platform)) head.append(el('span', 'tag accent', 'Posted'));
+  group.append(head);
   for (const [label, value] of fields) {
     if (!value) continue;
     const field = el('div', 'text-field');
@@ -381,74 +503,98 @@ function textsSection(video: VideoSummary, platform: Platform, fields: [string, 
     copy.addEventListener('click', () => void copyText(copy, value));
     top.append(el('span', '', label), copy);
     field.append(top, el('p', '', value));
-    section.append(field);
+    group.append(field);
   }
-  section.append(el('p', 'text-settings', SETTINGS[platform]));
-  return section;
+  group.append(el('p', 'text-settings', SETTINGS[platform]));
+  return group;
 }
 
-/** Onto the clipboard, the button saying so; the drawer covers the page's toast, so the button is the answer. */
+/** Onto the clipboard, the button saying so: the drawer covers the page's toast. */
 async function copyText(button: HTMLButtonElement, text: string): Promise<void> {
+  const label = button.textContent;
   try {
     await navigator.clipboard.writeText(text);
     button.textContent = 'Copied';
   } catch {
     button.textContent = 'Not copied';
   }
-  window.setTimeout(() => (button.textContent = 'Copy'), 2000);
+  window.setTimeout(() => (button.textContent = label), 2000);
 }
 
-function pasteError(message: string): void {
-  const error = $('#texts-error');
-  error.textContent = message;
-  error.hidden = !message;
+function pasteForm(video: VideoSummary | null, replacing: boolean): HTMLFormElement {
+  const form = el('form', 'paste-form');
+  form.noValidate = true;
+  const label = el('label', '', replacing ? 'Paste new texts to replace these' : 'Paste the bouncereel-post answer');
+  const area = el('textarea');
+  area.id = 'texts-paste';
+  area.name = 'texts';
+  area.rows = replacing ? 3 : 6;
+  area.spellcheck = false;
+  area.placeholder = '{ "video": 12, "youtube": { … }, "tiktok": { … }, "instagram": { … } }';
+  label.htmlFor = area.id;
+  const error = el('p', 'paste-error');
+  error.setAttribute('role', 'alert');
+  const save = el('button', 'button small', 'Save texts');
+  save.type = 'submit';
+  const foot = el('div', 'paste-foot');
+  foot.append(error, save);
+  form.append(label, area, foot);
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void saveTexts(video, area, error, save);
+  });
+  return form;
 }
 
 /**
  * A pasted answer, checked here as the Worker will check it (shared/texts.ts), then stored with
  * its video: the drawer's, else the one the answer names, which must then be in the library.
  */
-async function saveTexts(): Promise<void> {
+async function saveTexts(target: VideoSummary | null, area: HTMLTextAreaElement, error: HTMLElement, save: HTMLButtonElement): Promise<void> {
   let pasted: unknown;
   let texts: PostTexts;
   try {
-    pasted = readPasted($<HTMLTextAreaElement>('#texts-paste').value);
+    pasted = readPasted(area.value);
     texts = parseTexts(pasted);
   } catch (err) {
-    return pasteError(errorText(err));
+    error.textContent = errorText(err);
+    return;
   }
-  const target = textsTarget(pasted);
-  const named = target.id !== null ? `video ${target.id}` : target.file;
-  const video = textsFor ?? (target.id !== null ? videos.find((v) => v.id === target.id) : videos.find((v) => v.fileName === target.file));
-  if (!video) return pasteError(named ? `There is no ${named} in your library.` : 'The answer does not say which video it is for: open the video’s texts from its row and paste it there.');
-  const fits = target.id !== null ? target.id === video.id : !target.file || target.file === video.fileName;
-  if (!fits) return pasteError(`These texts are for ${named}, not “${video.title}”.`);
-  const submit = $<HTMLButtonElement>('#texts-form button[type=submit]');
-  submit.disabled = true;
+  const named = textsTarget(pasted);
+  const name = named.id !== null ? `video ${named.id}` : named.file;
+  const video = target ?? (named.id !== null ? videos.find((v) => v.id === named.id) : videos.find((v) => v.fileName === named.file));
+  if (!video) {
+    error.textContent = name ? `There is no ${name} in your library.` : 'The answer does not say which video it is for: open the video and paste it there.';
+    return;
+  }
+  const fits = named.id !== null ? named.id === video.id : !named.file || named.file === video.fileName;
+  if (!fits) {
+    error.textContent = `These texts are for ${name}, not “${video.title}”.`;
+    return;
+  }
+  save.disabled = true;
   try {
-    const { texts: stored } = await api<TextsResponse>('PUT', `/api/admin/videos/${video.id}/texts`, texts);
+    await api<TextsResponse>('PUT', `/api/admin/videos/${video.id}/texts`, texts);
     video.hasTexts = true;
-    renderTable();
-    textsFor = video;
-    $<HTMLTextAreaElement>('#texts-paste').value = '';
-    pasteError('');
-    showTexts(video, stored, null);
+    refresh(video);
+    await openVideo(video);
   } catch (err) {
-    pasteError(`Not saved: ${errorText(err)}`);
-  } finally {
-    submit.disabled = false;
+    error.textContent = `Not saved: ${errorText(err)}`;
+    save.disabled = false;
   }
 }
 
 async function deleteVideo(video: VideoSummary): Promise<void> {
-  if (!confirm(`Delete “${video.title}” from Videos? Its links go with it; the file in your Downloads stays.`)) return;
+  if (!confirm(`Delete “${video.title}” from Videos? Its ticks and links go with it; the file in your Downloads stays.`)) return;
   try {
     await api('DELETE', `/api/videos/${video.id}`);
     videos = videos.filter((v) => v !== video);
-    renderTiles();
-    renderTable();
+    drawer.close();
+    renderSummary();
+    renderList();
+    flash(`Deleted “${video.title}”.`);
   } catch (err) {
-    flash(`Not deleted: ${errorText(err)}`);
+    report(`Not deleted: ${errorText(err)}`);
   }
 }
 
@@ -471,32 +617,22 @@ async function load(account: AccountResponse): Promise<void> {
     empty.textContent = `Videos could not be loaded: ${errorText(err)}.`;
     return;
   }
-  renderTiles();
-  renderTable();
+  renderSummary();
+  renderList();
 }
 
 bindThemeToggle($('#theme'));
-const drawer = $<HTMLDialogElement>('#texts');
-$('#paste-texts').addEventListener('click', () => void openTexts(null));
-$('#texts-close').addEventListener('click', () => drawer.close());
+$('#paste-texts').addEventListener('click', () => void openVideo(null));
+$('#video-close').addEventListener('click', () => drawer.close());
+$('#video-delete').addEventListener('click', () => current && void deleteVideo(current));
 // Its parts fill it edge to edge, so a click on the drawer itself is one on the backdrop.
 drawer.addEventListener('click', (event) => {
   if (event.target === drawer) drawer.close();
 });
-$('#texts-form').addEventListener('submit', (event) => {
-  event.preventDefault();
-  void saveTexts();
-});
-$('#search').addEventListener('input', renderTable);
-$('#show').addEventListener('change', renderTable);
-for (const th of document.querySelectorAll<HTMLElement>('th[data-sort]')) {
-  th.querySelector('button')!.addEventListener('click', () => {
-    const key = th.dataset.sort as SortKey;
-    // A new column starts the way it is most often wanted: newest, A to Z, shortest, closest.
-    sort = { key, dir: sort.key === key ? (-sort.dir as 1 | -1) : key === 'recorded' ? -1 : 1 };
-    renderTable();
-  });
-}
+drawer.addEventListener('close', () => (current = null));
+$('#search').addEventListener('input', renderList);
+$('#show').addEventListener('change', renderList);
+$('#sort').addEventListener('change', renderList);
 void loadAccount().then((account) => {
   bindAccountChrome(account);
   return load(account);

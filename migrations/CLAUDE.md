@@ -16,6 +16,7 @@ throttling, plans, subscriptions and the change log in
 | [0005_three_plans.sql](./0005_three_plans.sql) | `tone` and `badge` on `plans` (the card on the pricing page); `watermark` and `allGames` on every plan's features; Free renamed Rookie, with the watermark; Champion seeded |
 | [0006_pro_five_a_day.sql](./0006_pro_five_a_day.sql) | Pro at five videos a day; each plan's seeded description replaced by one line on who it is for |
 | [0007_video_texts.sql](./0007_video_texts.sql) | `texts` on `videos`: a superadmin's texts for posting a video, as JSON |
+| [0008_posts_without_link.sql](./0008_posts_without_link.sql) | `posts.url` may be NULL: a platform ticked without a link (`posts` rebuilt; nothing references it) |
 
 ## Rules
 

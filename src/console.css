@@ -1,6 +1,6 @@
 /*
- * The pages behind the sign-in that are not the studio: the account page and the admin area
- * (docs/accounts-and-billing.md). The public site's identity (src/site/site.css) as a console:
+ * The pages behind the sign-in that are not the studio: the account page, Videos and the admin
+ * area (docs/accounts-and-billing.md, docs/video-library.md). The public site's identity (src/site/site.css) as a console:
  * the cool grey ground, white tiles with a hairline edge and no resting shadow, one violet
  * accent for the action that matters on a screen, pill buttons, Rubik. The admin's sidebar is
  * the site's ink stage, the one dark surface; everything on the ground stays quiet, so a
@@ -501,7 +501,8 @@
   width: 100%;
   height: var(--control);
   padding: 0 14px;
-  background: light-dark(#ffffff, #0c0f16);
+  /* The colour only: the shorthand would reset the image the select's chevron is (src/style.css). */
+  background-color: light-dark(#ffffff, #0c0f16);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   color: var(--ink);
@@ -1204,9 +1205,12 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
+/* Under the top bar the page is centred (beside the admin's sidebar it starts at its edge). */
+.console-top ~ .console-main {
+  margin: 0 auto;
+}
 .console-main.narrow {
   max-width: 880px;
-  margin: 0 auto;
 }
 .plan-summary {
   display: grid;
@@ -1240,6 +1244,535 @@
   z-index: 20;
   border-radius: 14px;
   font-size: 14px;
+}
+
+/* ── Videos (app/videos.html, src/dashboard.ts): the totals, a row per video, its drawer ── */
+
+.library-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2.4fr);
+  gap: 12px;
+}
+.library-summary .kpi {
+  align-content: start;
+}
+.kpi small {
+  color: var(--muted);
+  font-size: 13px;
+}
+.kpi small.full {
+  color: var(--warn);
+}
+.kpi.waiting strong {
+  color: var(--accent-text);
+}
+.coverage {
+  gap: 14px;
+  padding: 20px 22px;
+}
+/* Worded like a number tile's label: the bars are the content. */
+.coverage h2 {
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+/* The three platforms side by side, so the tile is no taller than the numbers beside it. */
+.coverage .meters {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+.coverage .meter-label span {
+  color: var(--ink);
+}
+.platform-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.platform-name svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.library-count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.video-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.video-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px 22px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+  transition: background-color 0.15s var(--ease);
+}
+.video-row:last-child {
+  border-bottom: 0;
+}
+.video-row:hover {
+  background: color-mix(in srgb, var(--sunken) 55%, transparent);
+}
+
+/*
+ * A video in small, as it opens: its two cards on the ink stage, each with its ball in the
+ * colour the config gave it (--a, --b from dashboard.ts paintThumb). 9:16, like the video.
+ */
+.thumb {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 3px;
+  flex: none;
+  width: 44px;
+  height: 78px;
+  padding: 4px;
+  border-radius: 11px;
+  background: linear-gradient(170deg, #1a2031, #0b0e16);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.07),
+    0 8px 18px -10px rgb(11 14 22 / 0.7);
+}
+.thumb i {
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.05);
+}
+.thumb i::before {
+  content: '';
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--ball);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ball) 75%, transparent);
+}
+.thumb i:first-child {
+  --ball: var(--a, var(--team-a));
+}
+.thumb i:last-child {
+  --ball: var(--b, var(--team-b));
+}
+
+.video-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.video-title {
+  all: unset;
+  width: fit-content;
+  max-width: 100%;
+  color: var(--ink);
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.video-title:hover {
+  color: var(--accent-text);
+}
+.video-title:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.video-sub {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.video-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+/* A dot between the facts, none before a tag. */
+.video-meta > span:not(.tag) + span:not(.tag)::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin: 0 10px 0 0;
+  border-radius: 50%;
+  background: var(--faint);
+  vertical-align: middle;
+}
+
+/* The ticks: a real checkbox under each pill, so the keyboard and a screen reader get one. In the drawer the pill fills its column. */
+.posted {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.post-check {
+  position: relative;
+  display: inline-flex;
+}
+.post-check input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.platform-line .post-check span {
+  width: 100%;
+}
+.post-check span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 13px 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+.post-check span::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+.post-check:hover span {
+  border-color: var(--muted);
+  color: var(--ink);
+}
+.post-check input:checked + span {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.post-check input:checked + span::before {
+  box-shadow: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.5 2.6 2.5L14 7.5' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 16px no-repeat,
+    var(--accent);
+}
+.post-check input:focus-visible + span {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.post-check input:disabled + span {
+  opacity: 0.6;
+}
+.post-link {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--accent-text);
+}
+.post-link:hover {
+  background: var(--accent-soft);
+}
+.post-link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.post-link svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.video-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Narrower, the ticks go under the title, the thumbnail beside both. */
+@media (max-width: 1100px) {
+  .library-summary {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .coverage {
+    grid-column: 1 / -1;
+  }
+  .video-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .video-row .thumb {
+    grid-row: 1 / span 2;
+  }
+  .video-actions {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .posted {
+    grid-column: 2 / -1;
+    grid-row: 2;
+  }
+}
+@media (max-width: 720px) {
+  .coverage .meters {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+}
+@media (max-width: 560px) {
+  .video-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px 14px;
+    padding: 16px 20px;
+  }
+  .video-row .thumb {
+    grid-row: 1;
+    width: 38px;
+    height: 68px;
+  }
+  .posted {
+    grid-column: 1 / -1;
+  }
+  .video-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  .video-actions .button {
+    flex: 1;
+  }
+  /* A dot would start the line its fact wraps to: spacing alone separates them here. */
+  .video-meta {
+    gap: 2px 12px;
+  }
+  .video-meta > span:not(.tag) + span:not(.tag)::before {
+    content: none;
+  }
+  /* The three ticks on one line, a third of it each. */
+  .posted {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .posted .post-check span {
+    width: 100%;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 8px;
+    font-size: 12.5px;
+  }
+  .library-count {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
+/* The drawer: one column of sections, narrower than the plan editor's two. */
+.video-drawer.drawer {
+  width: min(560px, 100vw);
+}
+.video-drawer .drawer-body {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 0 28px 28px;
+}
+.drawer-video {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.drawer-video .thumb {
+  width: 34px;
+  height: 60px;
+  padding: 3px;
+  border-radius: 9px;
+}
+.drawer-video .thumb i::before {
+  width: 10px;
+  height: 10px;
+}
+.drawer-video p {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.drawer-section {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+}
+.drawer-section:last-child {
+  border-bottom: 0;
+}
+.drawer-section h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.section-head small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.platform-line {
+  display: grid;
+  grid-template-columns: 136px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 10px;
+}
+.console .platform-line input[type='url'] {
+  height: 38px;
+  padding: 0 12px;
+  background: light-dark(#ffffff, #0c0f16);
+  font-size: 13.5px;
+}
+.platform-line input.invalid {
+  border-color: var(--rec);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rec) 18%, transparent);
+}
+.drawer-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+.steps {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+}
+/* A word, not a button's box: there are up to nine of them down the texts. */
+.text-copy {
+  all: unset;
+  color: var(--accent-text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.text-copy:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.text-copy:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.text-group {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.text-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.text-field {
+  display: grid;
+  gap: 5px;
+}
+.text-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.text-field p {
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--sunken);
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.text-settings {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.paste-form {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+}
+.paste-form label {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.paste-form textarea {
+  max-height: 40dvh;
+  background: light-dark(#ffffff, #0c0f16);
+  font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.paste-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.paste-error {
+  flex: 1;
+  color: var(--rec);
+  font-size: 13px;
+}
+.drawer-foot .spacer {
+  flex: 1;
+}
+.console .button.danger-text {
+  color: var(--rec);
+}
+.console .button.danger-text:hover {
+  border-color: var(--rec);
+}
+@media (max-width: 560px) {
+  .video-drawer .drawer-body {
+    padding: 0 20px 24px;
+  }
+  .platform-line {
+    grid-template-columns: 118px minmax(0, 1fr) 28px;
+    gap: 8px;
+  }
 }
 
 @media (max-width: 960px) {

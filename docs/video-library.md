@@ -42,7 +42,8 @@ or with the browser's voice, opens as Music only (`savedConfig`,
 
 [migrations/0001_initial.sql](../migrations/0001_initial.sql),
 [0002_accounts.sql](../migrations/0002_accounts.sql),
-[0007_video_texts.sql](../migrations/0007_video_texts.sql):
+[0007_video_texts.sql](../migrations/0007_video_texts.sql),
+[0008_posts_without_link.sql](../migrations/0008_posts_without_link.sql):
 
 **`videos`**, one row per finished recording.
 
@@ -62,9 +63,9 @@ or with the browser's voice, opens as Music only (`savedConfig`,
 | `texts` | a superadmin's texts for posting it (`VideoTexts` as JSON: YouTube's title, description, tags and pinned comment, the TikTok and Instagram captions and pinned comments, when they were saved); NULL until pasted (section 6). Read and replaced whole, never queried by field |
 
 **`posts`**, where a video went up: at most one per platform (`UNIQUE (video_id, platform)`).
-`platform` is `youtube`, `tiktok` or `instagram`; `url` is the link as given, made absolute;
-`external_id` is the post's id read from the link (section 5), NULL when the link does not
-carry one; `user_id` copies the video's owner. A partial unique index on
+`platform` is `youtube`, `tiktok` or `instagram`; `url` is the link as given, made absolute,
+or NULL when the platform was only ticked on the Videos page; `external_id` is the post's id
+read from the link (section 5), NULL without a link or when the link does not carry one; `user_id` copies the video's owner. A partial unique index on
 `(user_id, platform, external_id)` keeps one published video from being linked to two of an
 account's recordings; two accounts may link the same public post. Deleting a video deletes
 its posts (`ON DELETE CASCADE`; D1 always enforces foreign keys).
@@ -79,18 +80,18 @@ does not exist (404 `video_not_found`), never 403, so nothing tells them apart. 
 
 | Method | Route | Does |
 | --- | --- | --- |
-| GET | `/api/videos` | the account's videos, newest first, each with its posts and whether it has texts (`hasTexts`); no configs, no texts. Two queries, whatever the count |
+| GET | `/api/videos` | the account's videos, newest first, each with its posts, the balls' colours (`colors`, read from the config by D1's `json_extract`) and whether it has texts (`hasTexts`); no configs, no texts. Two queries, whatever the count |
 | POST | `/api/videos` | a recording (`NewVideo`) → `201 { id }`, if the plan allows it (below) |
 | GET | `/api/videos/:id` | one video with its config, posts and texts (null without) |
 | DELETE | `/api/videos/:id` | the video and its posts → 204 |
-| PUT | `/api/videos/:id/posts/:platform` | set or replace a link: `{ url }` → `{ post }` |
-| DELETE | `/api/videos/:id/posts/:platform` | remove a link → 204 |
+| PUT | `/api/videos/:id/posts/:platform` | mark it posted there, replacing what it had: `{ url }` with a link, `{}` (or `url` null or empty) without → `{ post }` |
+| DELETE | `/api/videos/:id/posts/:platform` | not posted there: the post and its link go → 204 |
 | PUT | `/api/admin/videos/:id/texts` | superadmin only (the router checks the role for `/api/admin/*`), and only the superadmin's own video: set or replace its texts, `PostTexts` → `{ texts }` with `savedAt` |
 
 | Code | When |
 | --- | --- |
 | `invalid_<field>` (400) | a body field is missing or out of range; the message names it. The page never sends one |
-| `invalid_url` (400) | not a link to a post on that platform |
+| `invalid_url` (400) | not a link to a post on that platform, or `url` neither text nor null |
 | `invalid_texts` (400) | texts missing a field or past a platform's limit ([shared/texts.ts](../shared/texts.ts)); the message says which |
 | `video_not_found`, `post_not_found`, `not_found` (404) | no such video, link, platform or route |
 | `post_taken` (409) | that post is already linked to another of the account's videos |
@@ -142,7 +143,8 @@ the live config in place, and a save that has to wait is sent later.
 
 ## 5. Links
 
-[shared/links.ts](../shared/links.ts) `parsePostLink(platform, text)` runs in the page
+A post needs no link: ticking a platform on the Videos page stores it with `url` NULL, and a link
+can follow. When there is one, [shared/links.ts](../shared/links.ts) `parsePostLink(platform, text)` runs in the page
 before a link is sent and in the Worker before it is stored. It takes a link with or
 without `https://`, accepts only `http(s)`, compares host names exactly (so
 `youtube.com.example.net` is not YouTube; `www.` and `m.` are dropped) and reads the id:
@@ -157,49 +159,39 @@ without `https://`, accepts only `http(s)`, compares host names exactly (so
 ## 6. The Videos page
 
 `/app/videos` ([app/videos.html](../app/videos.html), [src/dashboard.ts](../src/dashboard.ts)),
-linked from the ▶-in-a-box button in the studio's panel header and back with **← Studio**.
-Same tokens, buttons and two themes as the studio ([development](./development.md#3-the-control-panel)).
-`/dashboard`, its old address, redirects here. It shows the signed-in account's videos only.
+linked from the ▶-in-a-box button in the studio's panel header. It is one of the console pages,
+with the account page's top bar (Studio, Videos, Account, Admin for a superadmin) and its look,
+[src/console.css](../src/console.css) (its "Videos" section), in both themes. `/dashboard`, its old
+address, redirects here. It shows the signed-in account's videos only.
 
-- **How full the library is, and the day**, on a plan with limits: "3 of 5 videos kept on
-  your plan. 1 video left today", with an Upgrade link; in the warning colour once the library
-  is full or the day is used ("Next video tomorrow at 09:05").
-
-- **Totals**: videos, how many are on each platform, how many are not posted yet.
+- **The head**: the title, a line on what the page is for, **Record a video** (to the studio),
+  and **Paste texts** for a superadmin (below).
+- **Totals**, three tiles: how many videos, with the plan's limits under the number when it has
+  them ("4 more fit on your plan · 1 video left today", Upgrade for more; in the warning colour
+  once the library is full or the day is used); how many are not posted anywhere; and a bar per
+  platform, how many of them are posted there.
 - **Search** across title, sequences, seed, file name and length; **Show**: all, not posted
-  anywhere, not on YouTube / TikTok / Instagram.
-- **The table**: recorded (date and time), the video (title, sequences with specials, file
-  name; hover for seed, format and version), length (and **stopped early**), finish
-  (winner, margin, lead changes), a link box per platform, **Open in BounceReel**, delete.
-  Recorded, Video, Length and Finish sort on click (again to reverse); ties stay newest
-  first. Below about 1,200 px the table scrolls sideways inside its card.
-- **A link box** saves when it loses focus or on Enter, and an emptied box removes the
-  link. A bad link is refused in the page (red box and a toast) without a request. A save
-  updates only its own box and the totals, so Tab moves straight on to the next box; the
-  filter applies again on the next search, filter or sort.
-- **Delete** asks first and removes the video and its links; the file in Downloads stays.
-- **A superadmin's texts for posting.** Two more icons on each row and **Paste texts** in the bar,
-  for a superadmin only (other accounts see none of it, and the route is under `/api/admin`):
-  - **Copy about** (the copy icon) puts what the video is on the clipboard, the same text the
-    sheet after a take shows a superadmin (`postPrompt` in [library.ts](../src/library.ts)): the
-    balls, the winner and margin, the look, the question on the first frame, the file and the
-    library id. It loads the video's config first (`GET /api/videos/:id`) for the colours, the
-    look, the sound and the question. It is built from the row and its config, not stored.
-  - That text goes to the `/bouncereel-post` skill (`.claude/skills/`), which answers with one
-    JSON block: `video` (the library id), `file`, and `youtube` (`title`, `description`, `tags`,
-    `pinnedComment`), `tiktok` and `instagram` (`caption`, `pinnedComment`).
-  - **The texts icon** (in the accent once the video has texts) opens a drawer on the right with
-    the video's texts, platform by platform, each with Copy, and under each platform what is the
-    same for every video (the first frame as cover and thumbnail, not made for kids, no altered
-    content, Entertainment, the video's own sound), so the skill leaves it out. Without texts it
-    gives the three steps, the first with Copy. Pasting the answer at its foot saves it for that
-    video, replacing any before; an answer naming another video is refused.
-  - **Paste texts** opens the same drawer on a paste alone: the video is the one the answer
-    names, by library id, else by file name (the newest with it), and must be in the library.
-  - The paste is read in the page (code fences stripped, the fields and each platform's limits
-    checked by [shared/texts.ts](../shared/texts.ts), which the Worker runs again before storing),
-    then sent with `PUT /api/admin/videos/:id/texts`. The drawer covers the page's toast, so it
-    says what went wrong under the paste box and a Copy says Copied.
+  anywhere, not on YouTube / TikTok / Instagram; **sort**: newest or oldest first, title, length
+  either way, closest finish. Ties stay newest first.
+- **A row per video**: a thumbnail (its two cards on the dark stage, each ball in the colour its
+  config gave it, from `colors` in the list), the title (opens the drawer), the sequences with
+  their powers, then when it was recorded, its length and the finish (winner and margin), with
+  a tag for **Stopped early** and, for a superadmin, **Texts ready**. Then a **tick per platform**,
+  **Open in studio**, and the arrow to the drawer. Narrower, the ticks go under the title; on a
+  phone they share one line and the actions take the next.
+- **A tick** marks the video posted on that platform: `PUT …/posts/:platform` with no link.
+  Unticking removes the post, asking first when it has a link, which goes with it. A save
+  redraws only its row and the totals and gives the focus back to the tick, so the list does
+  not jump; the filter applies again on the next search, filter or sort.
+- **The drawer** (from the right, the account page's drawer at 560 px):
+  - **Where it went up**: each platform's tick and its link box, with an arrow to the post once
+    it has a link. A link saves when its box loses focus or on Enter and ticks the platform; an
+    emptied box keeps the tick and drops the link. A bad link is refused in the page without a
+    request. Errors are said in the drawer's foot, since the drawer covers the page's toast.
+  - **Details**: recorded, length (the file's own, or where Stop & save ended it), the finish and
+    lead changes, seed, file, format and version.
+  - **Delete** (asks first; the video, its ticks and links go, the file in Downloads stays) and
+    **Open in studio**.
 - **Open in studio** goes to `/app?video=<id>`: the studio loads that config through
   `savedConfig` without balancing it again (so the speeds are the recorded ones), clears the
   address, and says "Loaded “…” from Videos". A config recorded before the looks existed has no
@@ -208,6 +200,25 @@ Same tokens, buttons and two themes as the studio ([development](./development.m
   still the earlier default, "Follow for more!", opens with today's ("Did you call it? Comment
   below!"); a line the creator wrote stays. One recorded on a plan the account no longer has
   opens all the same; Record says what the plan lacks.
+- **A superadmin's texts for posting**, in the drawer's last section and behind **Paste texts**
+  (other accounts see none of it, and the route is under `/api/admin`):
+  - **Copy what it is about** puts what the video is on the clipboard, the same text the sheet
+    after a take shows a superadmin (`postPrompt` in [library.ts](../src/library.ts)): the balls,
+    the winner and margin, the look, the question on the first frame, the file and the library
+    id. It is built from the video and its config (`GET /api/videos/:id`), not stored.
+  - That text goes to the `/bouncereel-post` skill (`.claude/skills/`), which answers with one
+    JSON block: `video` (the library id), `file`, and `youtube` (`title`, `description`, `tags`,
+    `pinnedComment`), `tiktok` and `instagram` (`caption`, `pinnedComment`).
+  - The section shows the video's texts platform by platform, each field with Copy, and under
+    each platform what is the same for every video (the first frame as cover and thumbnail, not
+    made for kids, no altered content, Entertainment, the video's own sound), so the skill leaves
+    it out. Without texts it gives the three steps. Pasting the answer in its box saves it for
+    that video, replacing any before; an answer naming another video is refused.
+  - **Paste texts** opens the drawer on a paste alone: the video is the one the answer names, by
+    library id, else by file name (the newest with it), and must be in the library.
+  - The paste is read in the page (code fences stripped, the fields and each platform's limits
+    checked by [shared/texts.ts](../shared/texts.ts), which the Worker runs again before storing),
+    then sent with `PUT /api/admin/videos/:id/texts`; what is wrong is said under the box.
 
 ## 7. Adding statistics later
 
@@ -251,3 +262,4 @@ by in a migration; `NewVideo` gets a variant per game, and `toSummary` in
 - 2026-10-23 - a video whose last line is still the earlier default opens with today's comment line.
 - 2026-10-24 - Copy about on each row: what the video is, as text, for writing its posts.
 - 2026-10-24 - a superadmin's texts for posting: Copy about only for a superadmin, `texts` on `videos` (0007), `PUT /api/admin/videos/:id/texts`, the texts drawer and Paste texts on the Videos page.
+- 2026-10-24 - the Videos page redone as a console page (the account page's top bar and look): totals with a bar per platform, a row per video with a thumbnail in its balls' colours and a tick per platform, links, details and delete in a drawer; a post without a link (`url` NULL, 0008_posts_without_link.sql), `colors` in the list.
