@@ -43,7 +43,7 @@
 			"database_name": "bouncereel",
 			// Placeholder until `npx wrangler d1 create bouncereel` prints the real id. The local
 			// database file is keyed by this id: replacing it starts an empty local database.
-			"database_id": "00000000-0000-0000-0000-000000000000",
+			"database_id": "02544411-d2f6-44ad-8463-144b53f04078",
 			"migrations_dir": "migrations"
 		}
 	]
