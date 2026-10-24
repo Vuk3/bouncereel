@@ -15,8 +15,8 @@ UPDATE plans
    SET features   = json_set(features, '$.watermark', json('false'), '$.allGames', json('false')),
        updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now');
 
--- TODO(vuk): names, words and badges are placeholders to change in the admin area. A description
--- Vuk has written himself stays; only the seeded ones are replaced.
+-- TODO(owner): names, words and badges are placeholders to change in the admin area. A description
+-- the owner has written stays; only the seeded ones are replaced.
 UPDATE plans
    SET name        = 'Rookie',
        description = CASE WHEN description = 'One video a day: music or silent races up to 30 seconds, in the paper look.'

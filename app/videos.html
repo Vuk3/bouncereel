@@ -61,6 +61,10 @@
           <option value="no-instagram">Not on Instagram</option>
         </select>
         <span id="count" class="library-count"></span>
+        <button id="paste-texts" type="button" class="button small ghost paste-texts" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6v3H9zM9 5.5H7a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7.5a2 2 0 0 0-2-2h-2M9 12h6M9 16h4" /></svg>
+          Paste texts
+        </button>
       </div>
 
       <div class="table-wrap">
@@ -84,6 +88,29 @@
 
       <p id="toast" class="toast" hidden></p>
     </div>
+
+    <!--
+      A superadmin's: the texts for posting a video on each platform, the bouncereel-post skill's
+      answer pasted and kept with the video (dashboard.ts openTexts; docs/video-library.md §6).
+    -->
+    <dialog id="texts" class="drawer" aria-labelledby="texts-title">
+      <header class="drawer-head">
+        <div>
+          <h2 id="texts-title">Texts</h2>
+          <p id="texts-what"></p>
+        </div>
+        <button type="button" class="icon-button small" id="texts-close" title="Close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+      </header>
+      <div id="texts-body" class="drawer-body"></div>
+      <form id="texts-form" class="drawer-paste" novalidate>
+        <label for="texts-paste" id="texts-paste-label">Paste the bouncereel-post answer</label>
+        <textarea id="texts-paste" name="texts" rows="4" spellcheck="false" placeholder='{ "video": 12, "youtube": { … }, "tiktok": { … }, "instagram": { … } }'></textarea>
+        <p id="texts-error" class="drawer-error" role="alert" hidden></p>
+        <div class="confirm-actions"><button type="submit" class="button small">Save texts</button></div>
+      </form>
+    </dialog>
     <script type="module" src="/src/dashboard.ts"></script>
   </body>
 </html>

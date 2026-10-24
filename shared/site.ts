@@ -24,7 +24,7 @@ export const CONTACT_EMAIL = 'vuk@vukcvetkovic.com';
 
 /**
  * Who runs BounceReel: the controller the privacy page names and the party the terms are with.
- * TODO(vuk): confirm both. If BounceReel is run by a registered business (a preduzetnik or a
+ * TODO(owner): confirm both. If BounceReel is run by a registered business (a preduzetnik or a
  * company), its registered name, address and registration number (matični broj, PIB) go here
  * instead.
  */

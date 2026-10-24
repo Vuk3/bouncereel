@@ -5,7 +5,7 @@ import { AudioEngine } from './audio/engine.ts';
 import { VOICES, VoiceCache, introLine, outroLine, plannedLines, previewLine, voiceOf } from './audio/narration.ts';
 import { Sonifier } from './audio/sonify.ts';
 import { DEFAULT_CONFIG, PRESETS, SKINS, mergeConfig, savedConfig, type Config, type Skin, type Special } from './config.ts';
-import { addToLibrary, APP_VERSION, retryPending, type Saved } from './library.ts';
+import { addToLibrary, APP_VERSION, postPrompt, retryPending, type Saved } from './library.ts';
 import { download, describeType, pickType, Recorder } from './record/recorder.ts';
 import { Renderer } from './render/renderer.ts';
 import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL, narrated, openingShown, videoSeconds } from './pacing.ts';
@@ -550,6 +550,14 @@ export class App {
     const entry = this.libraryEntry(name, rec.type, seconds, stoppedEarly);
     const saved = await addToLibrary(entry, this.account.account.id);
     if (saved.added) this.account.library.count++;
+    // What the video is about, to write its posts from: a superadmin's tool (docs/video-library.md §6).
+    const admin = this.account.account.role === 'superadmin';
+    $('.finished-prompt').hidden = !admin;
+    if (admin) {
+      const about = $('#finished-prompt');
+      about.textContent = postPrompt({ ...entry, id: saved.id }, this.cfg);
+      about.scrollTop = 0;
+    }
     this.showFinished(name, seconds, blob.size, stoppedEarly, saved);
   }
 
@@ -1012,7 +1020,7 @@ export class App {
 
   /**
    * The account's saved config. One saved before accounts (under the bare key) is taken over by
-   * the first account that opens the studio in this browser: on Vuk's computer, Vuk's.
+   * the first account that opens the studio in this browser: on the owner's computer, the owner's.
    */
   private load(): Config {
     const key = `${STORAGE_KEY}:${this.account.account.id}`;
@@ -1358,6 +1366,19 @@ export class App {
 
     const finished = $<HTMLDialogElement>('#finished');
     $('#finished-close').addEventListener('click', () => finished.close());
+    $('#finished-copy').addEventListener('click', async () => {
+      const button = $('#finished-copy');
+      const text = $('#finished-prompt');
+      try {
+        await navigator.clipboard.writeText(text.textContent ?? '');
+        button.textContent = 'Copied';
+      } catch {
+        // The clipboard refused (a permission): the text is selected for a copy by hand instead.
+        getSelection()?.selectAllChildren(text);
+        button.textContent = 'Selected';
+      }
+      window.setTimeout(() => (button.textContent = 'Copy'), 2000);
+    });
     $('#finished-next').addEventListener('click', () => {
       finished.close();
       this.randomize();

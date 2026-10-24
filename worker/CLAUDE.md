@@ -68,4 +68,4 @@ make a superadmin with `npm run admin -- you@example.com` (use the printed path 
 With curl, keep the cookie and send an `Origin` on writes:
 `curl -c jar -H 'Content-Type: application/json' -H 'Origin: http://localhost:4199' -d '{"email":…,"password":…}' http://localhost:4199/api/auth/login`.
 The local database: `npx wrangler d1 execute bouncereel --local --command "SELECT …"`.
-⚠️ Never `--remote` without asking Vuk.
+⚠️ Never `--remote` without asking the owner.

@@ -7,7 +7,7 @@ search engines (`SITE_URL`, `INDEXED` in shared/site.ts), where creators make sh
 vertical game videos for YouTube Shorts, TikTok and Instagram Reels: 1080×1920, 60 fps,
 recorded in the browser straight to MP4, with synthesised sound and a narrator. Anyone can
 sign up; a **plan** decides what the account may make (the free plan's videos carry a small
-watermark), and Vuk manages users, plans and subscriptions in an **admin area**, while using
+watermark), and the owner manages users, plans and subscriptions in an **admin area**, while using
 the studio like anyone else.
 
 Its first game, and the only one so far, is **ball races**. Two balls race, one in each
@@ -257,7 +257,7 @@ takes effect when it passes, with nothing scheduled.
   missing one.
 - **Nothing reachable over HTTP grants `superadmin`.** Only `npm run admin`.
 - **The local database follows `database_id`** in `wrangler.jsonc`: changing the id opens
-  an empty local database. It holds Vuk's real videos; the first local superadmin receives
+  an empty local database. It holds the owner's real videos; the first local superadmin receives
   the ones recorded before accounts.
 - **No cron.** The account's five cron triggers are all Hoops'; nothing in BounceReel runs on
   a schedule. A subscription's end date takes effect when a request reads it.

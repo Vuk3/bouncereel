@@ -46,7 +46,7 @@ sends it again (three an hour).
 
 ```sh
 npm run admin -- you@example.com              # the local database
-npm run admin -- you@example.com --remote     # production (Vuk runs this himself)
+npm run admin -- you@example.com --remote     # production (the owner runs this)
 ```
 
 [scripts/admin.mjs](../scripts/admin.mjs) (modelled on Hoops' `scripts/invite.mjs`) prints a
@@ -57,7 +57,7 @@ back in, a confirmed address stays confirmed. Sign-up and the API never write th
 `insertUser` writes `'user'` in its SQL, and no route changes a role at all.
 
 **The first superadmin receives every video and link without an owner**: the ones recorded
-before accounts existed (Vuk's), which [0002_accounts.sql](../migrations/0002_accounts.sql)
+before accounts existed (the owner's), which [0002_accounts.sql](../migrations/0002_accounts.sql)
 could not give to anyone (no account existed). Both ways of making a superadmin run
 `claimOrphans`; after the first, there is nothing left to claim, and every new row names its
 account. ⚠️ Until then those videos are invisible to everyone: a query scoped to an account
@@ -248,7 +248,7 @@ it back when the day ends with the page open; the Videos page
 and the account page say the same.
 
 A stored plan missing a key, or with one that no longer reads, gets **the least** for it
-(`readFeatures`): a feature added to the code later is off on every plan until Vuk turns it on.
+(`readFeatures`): a feature added to the code later is off on every plan until the owner turns it on.
 The admin's form is checked strictly (`featuresProblem`).
 
 **Plan fields**: name, short description, price (amount in minor units, currency, interval
@@ -267,7 +267,7 @@ Seeded by [0003_plans.sql](../migrations/0003_plans.sql), with the free plan's d
 and the two newest features by [0005_three_plans.sql](../migrations/0005_three_plans.sql), and
 Pro's five a day and the one-line descriptions by
 [0006_pro_five_a_day.sql](../migrations/0006_pro_five_a_day.sql).
-Names, words, badges and prices are placeholders (`TODO(vuk)`):
+Names, words, badges and prices are placeholders (`TODO(owner)`):
 
 | Plan | Card | Price | A day | Sounds | Narrator | Longest | Looks | Powers | Library | Watermark | Every game |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -298,7 +298,7 @@ end date to take effect:
 
 `IN_FORCE` in [worker/plans.ts](../worker/plans.ts) is that table as SQL, used by the account's
 plan, the overview's "in force now" and the users list. **A superadmin has every feature
-whatever the row says**: Vuk's account always has everything.
+whatever the row says**: the owner's account always has everything.
 
 The admin sets a subscription by hand on a user's page: the plan (archived plans only for
 whoever has one already), the end date (a day; it ends at that day's last moment, UTC), the
@@ -390,6 +390,7 @@ The video routes (signed in, each account its own) are in
 | POST | `/api/admin/plans/:id/archive`, `/restore` | superadmin | 409 `default_plan` |
 | POST | `/api/admin/plans/order` | superadmin | `{ ids }`, every plan once |
 | GET | `/api/admin/log?page=` | superadmin | the change log, newest first |
+| PUT | `/api/admin/videos/:id/texts` | superadmin | texts for posting one of the superadmin's own videos ([video-library §6](./video-library.md#6-the-videos-page)); 400 `invalid_texts` |
 
 | Status | Codes |
 | --- | --- |
@@ -419,7 +420,7 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - The schema already has `subscriptions.source`, `provider_customer_id` and
   `provider_subscription_id`, and `status` has no CHECK, so a provider's statuses fit.
 
-`TODO(vuk)`: choose a provider, then:
+`TODO(owner)`: choose a provider, then:
 
 1. **Checkout**: `POST /api/billing/checkout { planId }` creates the provider's checkout
    session for the signed-in account (the account id in the session's metadata, the customer
@@ -459,3 +460,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-10-21 - Record takes the day's video from the server as it starts (`POST /api/account/day`), not on save; a question before the day's last video; the studio's plan card and the note that previews are free.
 - 2026-10-23 - a refused save is explained in the studio's sheet after the take, with See plans; the studio loads the public plans beside the account to word what the paid plans add.
 - 2026-10-24 - mail from `bouncereel@vukcvetkovic.com`, replies to `vuk@vukcvetkovic.com`; the watermark named without the address in the plans' lists and the admin.
+- 2026-10-24 - `PUT /api/admin/videos/:id/texts`, a superadmin's texts for posting a video.

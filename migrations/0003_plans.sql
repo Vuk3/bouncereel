@@ -1,7 +1,7 @@
 -- Plans, subscriptions and the change log (docs/accounts-and-billing.md).
 --
 -- What a plan can unlock is defined in code (shared/features.ts); each plan's values for it are
--- stored here as JSON, so Vuk changes what a plan gives in the admin area without a migration. A
+-- stored here as JSON, so the owner changes what a plan gives in the admin area without a migration. A
 -- feature added to the code later reads as "not included" on every plan until he turns it on
 -- (readFeatures).
 --
@@ -34,8 +34,8 @@ CREATE TABLE plans (
 
 CREATE UNIQUE INDEX plans_one_default ON plans (is_default) WHERE is_default = 1;
 
--- TODO(vuk): both plans are placeholders: names, words, limits, Free's currency and Pro's price
--- (empty, so the pricing page says "Coming soon") are for Vuk to set in the admin area. No
+-- TODO(owner): both plans are placeholders: names, words, limits, Free's currency and Pro's price
+-- (empty, so the pricing page says "Coming soon") are for the owner to set in the admin area. No
 -- watermark on either.
 INSERT INTO plans (name, description, price_amount, price_currency, sort_order, is_default, features, created_at, updated_at) VALUES
   ('Free', 'Music or silent races up to 30 seconds, in the paper look.', 0, 'EUR', 1, 1,

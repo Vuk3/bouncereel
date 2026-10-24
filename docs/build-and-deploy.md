@@ -53,7 +53,7 @@ npm run admin -- you@example.com     # a local superadmin: open the printed link
   dev server's output (`Mail is off (no RESEND_API_KEY); the link it would carry`).
 - **The local database** lives in `.wrangler/state` (git-ignored). Query it with
   `npx wrangler d1 execute bouncereel --local --command "SELECT …"`.
-  ⚠️ It holds Vuk's real videos: reset it only on purpose
+  ⚠️ It holds the owner's real videos: reset it only on purpose
   (`rm -rf .wrangler/state && npm run db:migrate:local`). The videos recorded before accounts
   belong to nobody until the first local superadmin is made, which receives them.
 - ⚠️ **The local database file is keyed by `database_id`** in
@@ -124,8 +124,8 @@ the throttling and the order of the checks:
 ## 5. The production cut-over
 
 The first deploy of the public site, on **`bouncereel.vukcvetkovic.com`** for now, kept out of
-search engines (the move to the site's own domain is at the end of this section). **Vuk runs
-these steps himself**; agents never deploy or run anything `--remote` without asking.
+search engines (the move to the site's own domain is at the end of this section). **The owner runs
+these steps**; agents never deploy or run anything `--remote` without asking.
 
 1. **The database**, if production has none yet: `npx wrangler login`, then
    `npx wrangler d1 create bouncereel`, and the printed `database_id` into
@@ -141,7 +141,7 @@ these steps himself**; agents never deploy or run anything `--remote` without as
    files, and attaches `bouncereel.vukcvetkovic.com` as a custom domain (DNS record and
    certificate; the zone is in the account already). `SITE_URL` is already in
    [wrangler.jsonc](../wrangler.jsonc).
-4. **The superadmin**: `npm run admin -- <Vuk's address> --remote`, then open the printed
+4. **The superadmin**: `npm run admin -- <your address> --remote`, then open the printed
    link and set the password. Making the first superadmin gives it the videos recorded before
    accounts.
 5. **Sign in** on `https://bouncereel.vukcvetkovic.com/login`, open the studio and the Videos
@@ -180,7 +180,7 @@ code goes live**, so a migration must work with the code still running for those
 `npx wrangler d1 migrations create bouncereel <name>`.
 
 ⚠️ Agents never run `npm run deploy`, `wrangler deploy` or anything with `--remote`
-without asking Vuk first.
+without asking the owner first.
 
 **Deploying on every push to `main`** (optional, as Hoops does): in the dashboard, the
 Worker's Settings → Build → connect the GitHub repository; production branch `main`, no

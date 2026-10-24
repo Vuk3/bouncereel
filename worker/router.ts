@@ -25,7 +25,7 @@ import { forgot, login, logout, reset, resetInfo, signup, verify } from './route
 import { checkout, portal, webhook } from './routes/billing.ts';
 import type { RouteHandler } from './routes/context.ts';
 import { listPlans } from './routes/plans.ts';
-import { createVideo, getVideo, listVideos, putPost, removePost, removeVideo } from './routes/videos.ts';
+import { createVideo, getVideo, listVideos, putPost, putTexts, removePost, removeVideo } from './routes/videos.ts';
 
 interface Route {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -82,6 +82,7 @@ const ROUTES: Route[] = [
   { method: 'POST', pattern: /^\/api\/admin\/plans\/(?<id>\d+)\/archive$/, handler: archivePlan },
   { method: 'POST', pattern: /^\/api\/admin\/plans\/(?<id>\d+)\/restore$/, handler: restorePlan },
   { method: 'GET', pattern: /^\/api\/admin\/log$/, handler: getLog },
+  { method: 'PUT', pattern: /^\/api\/admin\/videos\/(?<id>\d+)\/texts$/, handler: putTexts },
 ];
 
 /** The whole public API, as an explicit list: anything not on it needs a session. */

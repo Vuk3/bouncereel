@@ -43,7 +43,12 @@ clock, said 30.0 s. A warm device moves the clock within 12–66 ms, so the wait
 - **When it ends**, a sheet (`#finished`) opens once the file has downloaded and the library has
   answered: the file's name, length and size, what the library did with it (added; refused, with
   the reason and a link to the plans when the plan stood in the way; or waiting to be sent), and
-  Open Videos, Close and Roll the next one (the dice). It replaces the toasts.
+  Open Videos, Close and Roll the next one (the dice). It replaces the toasts. **A superadmin also
+  sees what the video is as text, with Copy** (the balls and what each does, who won and by how
+  much, the lead changes, the length, look and sound, the question on the first frame, the library
+  id: `postPrompt` in [src/library.ts](../src/library.ts)), for the `/bouncereel-post` skill in
+  `.claude/skills/`, whose answer is pasted on the Videos page
+  ([video-library §6](./video-library.md#6-the-videos-page)).
 - **While it records, the frame loop's clock may jump up to 0.5 s a frame** (0.1 otherwise): the
   encoder's first stalls (150–200 ms, measured) were time the race did not run, and the file came
   out 0.15 s long.
@@ -174,3 +179,5 @@ falls.
 - 2026-10-21 - the studio warns above the preview when the browser cannot record MP4; the browsers that record well, in a table; the watermark is in the file on a plan that has it.
 - 2026-10-21 - Record takes the day's video from the server once the narration is ready, before the first frame, and asks before the day's last one; Play is the free preview of the same race.
 - 2026-10-23 - Record waits for the audio clock before the first frame (a cold device had cut a fresh page's first take by 1.7 s), and the clock may jump up to 0.5 s a frame while recording (the file had run 0.15 s long); a bar over the preview while recording, a hidden tab's pause said with Stop & save or Record again; a sheet after each take in place of the toasts.
+- 2026-10-24 - the sheet after a take gives what the video is as text to copy (`postPrompt`), for writing its posts.
+- 2026-10-24 - that text only for a superadmin, with the library id.

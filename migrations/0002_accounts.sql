@@ -66,7 +66,7 @@ CREATE TABLE throttle (
 --
 -- The column has to be nullable: ALTER TABLE cannot add a NOT NULL column with a reference, and
 -- rebuilding `videos` would cascade-delete every post (D1 always enforces foreign keys, and
--- DROP TABLE deletes its rows first). The rows recorded before accounts existed (Vuk's) cannot
+-- DROP TABLE deletes its rows first). The rows recorded before accounts existed (the owner's) cannot
 -- be filled here either: no account exists yet. They stay NULL, which every query scoped to an
 -- account simply never returns, until the first superadmin is made: setting that account's
 -- password (worker/routes/auth.ts) or promoting it (scripts/admin.mjs) gives it every video and

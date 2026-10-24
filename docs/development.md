@@ -23,7 +23,7 @@ tab, test recordings, and what the pages store. The Worker, the database and dep
 
 ```sh
 npm install
-npm run dev        # http://localhost:5173 (Vuk runs this himself)
+npm run dev        # http://localhost:5173 (the owner runs this)
 ```
 
 | Script | Does |
@@ -230,7 +230,7 @@ out as a row.
 
 ## 4. Checking it in a browser
 
-Do not start the dev server; Vuk runs it. To see a change:
+Do not start the dev server; the owner runs it. To see a change:
 
 ```sh
 npx vite build
@@ -242,7 +242,7 @@ npx vite preview --port 4199 --strictPort   # in the background
 - **Sign in first**: the studio, the account page and the admin area need a session. Sign up
   on http://localhost:4199/signup (the confirmation link is in the preview's output), or make
   a superadmin with `npm run admin -- you@example.com` and open the printed path on port 4199.
-  ⚠️ The first local superadmin receives the videos recorded before accounts (Vuk's): for a
+  ⚠️ The first local superadmin receives the videos recorded before accounts (the owner's): for a
   throwaway check, back up `.wrangler/state/v3/d1` first and put it back afterwards, or delete
   only the accounts you made.
 - **One tab.** Open the page in one tab of the automation browser and do everything there;
@@ -251,7 +251,7 @@ npx vite preview --port 4199 --strictPort   # in the background
   `select`/`input` named after the config path and dispatching `change`/`input`.
 - **Afterwards**: stop the preview server, and quit the automation Chrome itself (the
   process with `--enable-automation` and the `chrome-devtools-mcp` profile), not just
-  its tab. Never touch Vuk's own Chrome.
+  its tab. Never touch the owner's own Chrome.
 
 ## 5. Test recordings
 

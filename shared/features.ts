@@ -1,5 +1,5 @@
 // What a plan can unlock. The set of features is defined here, in code; each plan's values
-// for them live in D1 (`plans.features`, JSON), so Vuk changes what a plan gives in the admin
+// for them live in D1 (`plans.features`, JSON), so the owner changes what a plan gives in the admin
 // area without a deploy. The pricing page, the studio's gates and the Worker's checks on a
 // save all read these same shapes. Nothing here may use the DOM or the Workers runtime.
 
@@ -46,7 +46,7 @@ export interface Features {
   allGames: boolean;
 }
 
-/** A superadmin's features, whatever plan their subscription names: Vuk's account has everything. */
+/** A superadmin's features, whatever plan their subscription names: the owner's account has everything. */
 export const EVERYTHING: Features = {
   sounds: [...SOUNDS],
   narrator: true,
@@ -62,7 +62,7 @@ export const EVERYTHING: Features = {
 /**
  * What a stored plan gets for a feature it has no value for (one added to the code after the
  * plan was saved), or for a value that no longer reads: the least. A plan unlocks nothing by
- * accident; Vuk turns the new feature on in the admin area.
+ * accident; the owner turns the new feature on in the admin area.
  */
 const LEAST: Features = {
   sounds: ['silent'],

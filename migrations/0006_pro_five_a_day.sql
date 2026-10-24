@@ -1,9 +1,9 @@
 -- Pro makes five videos a day, so the three plans climb in clear steps: Rookie one a day, Pro
 -- five, Champion as many as you like and every game (docs/accounts-and-billing.md).
 --
--- TODO(vuk): the words are placeholders, like the names and badges; change them in the admin
--- area. A plan changes here only while it is as 0005_three_plans.sql left it: a daily limit Vuk
--- has set on Pro stays, and so does a description he has written.
+-- TODO(owner): the words are placeholders, like the names and badges; change them in the admin
+-- area. A plan changes here only while it is as 0005_three_plans.sql left it: a daily limit the
+-- owner has set on Pro stays, and so does a description they have written.
 UPDATE plans
    SET features   = json_set(features, '$.perDay', 5),
        updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')

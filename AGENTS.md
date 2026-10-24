@@ -5,7 +5,7 @@ This file orients Claude Code (and any AI agent) working in this repository:
 for Shorts, TikTok and Reels, vertical (1080×1920, 60 fps) and recorded in the browser straight
 to MP4 with synthesised sound and a narrator. People sign up, a plan decides what they may
 make, and each account keeps its recordings in a video library (D1) with their links to the
-platforms. Vuk runs it from an admin area (users, plans, subscriptions) and uses the studio
+platforms. The owner runs it from an admin area (users, plans, subscriptions) and uses the studio
 like everyone else. It runs on Cloudflare: Workers Assets for the pages, a Worker for the
 API and the sign-in.
 Its first game is ball races: two balls, each in its own card, break layers with the
@@ -44,7 +44,7 @@ Documentation is layered, so you only pay for what the task needs:
   at 30, 40 and 60 s and says what failed.
   There is no test runner and no linter; do not add Vitest, ESLint or Prettier without
   asking.
-- **Do not start the dev server.** Vuk runs `npm run dev` himself. To see a change
+- **Do not start the dev server.** The owner runs `npm run dev`. To see a change
   running, build it (`npx vite build`), serve the bundle with the Worker and the local
   database (`npx vite preview --port 4199 --strictPort`), check it, and stop the server
   afterwards.
@@ -54,7 +54,7 @@ Documentation is layered, so you only pay for what the task needs:
 - **A test recording lands in `~/Downloads`** and as a row in the local database. Check
   the file (ffprobe, frames, spectrogram), then delete it, and the row from the Videos
   page. **Test accounts are data too**: delete them when done. ⚠️ The first local superadmin
-  receives Vuk's videos from before accounts, so back up `.wrangler/state/v3/d1` before making
+  receives the owner's videos from before accounts, so back up `.wrangler/state/v3/d1` before making
   one and put it back afterwards. Leave nothing you made in his folders or his data.
 - **Nothing `--remote`, and no deploy, without asking.** `npm run deploy`,
   `wrangler deploy`, `wrangler secret put`, `npm run admin -- … --remote` and every
@@ -119,5 +119,5 @@ Conventional commits, **one line**: `type: description`. No scope, no body, no t
 
 - Types in use: `feat`, `fix`, `perf`, `chore`, `docs`.
 - Lowercase after the prefix, imperative, about 50 characters.
-- **Never add a `Co-Authored-By` trailer.** Vuk commits himself; write the message, do
+- **Never add a `Co-Authored-By` trailer.** The owner commits; write the message, do
   not run `git commit`.

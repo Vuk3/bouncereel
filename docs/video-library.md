@@ -41,7 +41,8 @@ or with the browser's voice, opens as Music only (`savedConfig`,
 ## 2. The schema
 
 [migrations/0001_initial.sql](../migrations/0001_initial.sql),
-[0002_accounts.sql](../migrations/0002_accounts.sql):
+[0002_accounts.sql](../migrations/0002_accounts.sql),
+[0007_video_texts.sql](../migrations/0007_video_texts.sql):
 
 **`videos`**, one row per finished recording.
 
@@ -58,6 +59,7 @@ or with the browser's voice, opens as Music only (`savedConfig`,
 | `app_version` | section 1 |
 | `a_*`, `b_*` | name, sequence and special of the top (`a`) and bottom (`b`) ball, copied out of the config so sorting and grouping never parse JSON |
 | `winner`, `margin`, `lead_changes` | `'a'`/`'b'` (NULL only if nobody finished), seconds between the two at the line, how often the lead changed: from the prediction, which is the race |
+| `texts` | a superadmin's texts for posting it (`VideoTexts` as JSON: YouTube's title, description, tags and pinned comment, the TikTok and Instagram captions and pinned comments, when they were saved); NULL until pasted (section 6). Read and replaced whole, never queried by field |
 
 **`posts`**, where a video went up: at most one per platform (`UNIQUE (video_id, platform)`).
 `platform` is `youtube`, `tiktok` or `instagram`; `url` is the link as given, made absolute;
@@ -77,17 +79,19 @@ does not exist (404 `video_not_found`), never 403, so nothing tells them apart. 
 
 | Method | Route | Does |
 | --- | --- | --- |
-| GET | `/api/videos` | the account's videos, newest first, each with its posts; no configs. Two queries, whatever the count |
+| GET | `/api/videos` | the account's videos, newest first, each with its posts and whether it has texts (`hasTexts`); no configs, no texts. Two queries, whatever the count |
 | POST | `/api/videos` | a recording (`NewVideo`) → `201 { id }`, if the plan allows it (below) |
-| GET | `/api/videos/:id` | one video with its config and posts |
+| GET | `/api/videos/:id` | one video with its config, posts and texts (null without) |
 | DELETE | `/api/videos/:id` | the video and its posts → 204 |
 | PUT | `/api/videos/:id/posts/:platform` | set or replace a link: `{ url }` → `{ post }` |
 | DELETE | `/api/videos/:id/posts/:platform` | remove a link → 204 |
+| PUT | `/api/admin/videos/:id/texts` | superadmin only (the router checks the role for `/api/admin/*`), and only the superadmin's own video: set or replace its texts, `PostTexts` → `{ texts }` with `savedAt` |
 
 | Code | When |
 | --- | --- |
 | `invalid_<field>` (400) | a body field is missing or out of range; the message names it. The page never sends one |
 | `invalid_url` (400) | not a link to a post on that platform |
+| `invalid_texts` (400) | texts missing a field or past a platform's limit ([shared/texts.ts](../shared/texts.ts)); the message says which |
 | `video_not_found`, `post_not_found`, `not_found` (404) | no such video, link, platform or route |
 | `post_taken` (409) | that post is already linked to another of the account's videos |
 | `not_in_plan` (403) | the video is longer than the plan's longest, or made with a sound, a look or a power the plan does not include |
@@ -130,7 +134,7 @@ other refusal (invalid, not in the plan, the day used, the library full) is drop
 instead of failing on every load. **A waiting save carries the account that recorded it** and
 goes only into that account, so two people signing in on one computer never post into each
 other's library; one saved before accounts existed goes only to a superadmin (they were
-Vuk's). ⚠️ The queue lives in that browser's `localStorage`: a private window, or clearing
+the owner's). ⚠️ The queue lives in that browser's `localStorage`: a private window, or clearing
 site data, loses it.
 
 The entry is built from a copy of the config taken as the file is saved: the panel edits
@@ -174,6 +178,28 @@ Same tokens, buttons and two themes as the studio ([development](./development.m
   updates only its own box and the totals, so Tab moves straight on to the next box; the
   filter applies again on the next search, filter or sort.
 - **Delete** asks first and removes the video and its links; the file in Downloads stays.
+- **A superadmin's texts for posting.** Two more icons on each row and **Paste texts** in the bar,
+  for a superadmin only (other accounts see none of it, and the route is under `/api/admin`):
+  - **Copy about** (the copy icon) puts what the video is on the clipboard, the same text the
+    sheet after a take shows a superadmin (`postPrompt` in [library.ts](../src/library.ts)): the
+    balls, the winner and margin, the look, the question on the first frame, the file and the
+    library id. It loads the video's config first (`GET /api/videos/:id`) for the colours, the
+    look, the sound and the question. It is built from the row and its config, not stored.
+  - That text goes to the `/bouncereel-post` skill (`.claude/skills/`), which answers with one
+    JSON block: `video` (the library id), `file`, and `youtube` (`title`, `description`, `tags`,
+    `pinnedComment`), `tiktok` and `instagram` (`caption`, `pinnedComment`).
+  - **The texts icon** (in the accent once the video has texts) opens a drawer on the right with
+    the video's texts, platform by platform, each with Copy, and under each platform what is the
+    same for every video (the first frame as cover and thumbnail, not made for kids, no altered
+    content, Entertainment, the video's own sound), so the skill leaves it out. Without texts it
+    gives the three steps, the first with Copy. Pasting the answer at its foot saves it for that
+    video, replacing any before; an answer naming another video is refused.
+  - **Paste texts** opens the same drawer on a paste alone: the video is the one the answer
+    names, by library id, else by file name (the newest with it), and must be in the library.
+  - The paste is read in the page (code fences stripped, the fields and each platform's limits
+    checked by [shared/texts.ts](../shared/texts.ts), which the Worker runs again before storing),
+    then sent with `PUT /api/admin/videos/:id/texts`. The drawer covers the page's toast, so it
+    says what went wrong under the paste box and a Copy says Copied.
 - **Open in studio** goes to `/app?video=<id>`: the studio loads that config through
   `savedConfig` without balancing it again (so the speeds are the recorded ones), clears the
   address, and says "Loaded “…” from Videos". A config recorded before the looks existed has no
@@ -223,3 +249,5 @@ by in a migration; `NewVideo` gets a variant per game, and `toSummary` in
 - 2026-10-21 - a save no longer counts the day (`day_used` is gone from `POST /api/videos`): Record takes the day's video as it starts.
 - 2026-10-23 - the library's answer after a recording is said in the sheet after the take (in sentences), not in a toast.
 - 2026-10-23 - a video whose last line is still the earlier default opens with today's comment line.
+- 2026-10-24 - Copy about on each row: what the video is, as text, for writing its posts.
+- 2026-10-24 - a superadmin's texts for posting: Copy about only for a superadmin, `texts` on `videos` (0007), `PUT /api/admin/videos/:id/texts`, the texts drawer and Paste texts on the Videos page.

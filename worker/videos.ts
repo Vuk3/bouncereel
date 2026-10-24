@@ -1,8 +1,8 @@
-import type { NewVideo, Platform, Post, VideoDetail, VideoSummary } from '../shared/api.ts';
+import type { NewVideo, Platform, Post, VideoDetail, VideoSummary, VideoTexts } from '../shared/api.ts';
 import type { PostLink } from '../shared/links.ts';
 
 // Every D1 query of the video library, and the mappers from rows (migrations/0001_initial.sql,
-// 0002_accounts.sql) to the API's shapes (shared/api.ts). Handlers never write SQL themselves.
+// 0002_accounts.sql, 0007_video_texts.sql) to the API's shapes (shared/api.ts). Handlers never write SQL themselves.
 //
 // Every query names the account (`user_id`): a video or link of another account is not found,
 // exactly like one that does not exist, so no answer tells one from the other.
@@ -28,6 +28,7 @@ interface VideoRow {
   winner: 'a' | 'b' | null;
   margin: number | null;
   lead_changes: number | null;
+  has_texts: number;
 }
 
 interface PostRow {
@@ -38,9 +39,13 @@ interface PostRow {
   added_at: string;
 }
 
-/** Everything but `config`, which only the single-video read needs. */
+/**
+ * Everything but `config` and `texts`, which only the single-video read needs: parsing them for
+ * every row of a long list would not fit the Worker's CPU time (worker/CLAUDE.md).
+ */
 const SUMMARY_COLUMNS = `id, game, recorded_at, title, file_name, format, seconds, stopped_early, video_length, seed,
-  app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes`;
+  app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes,
+  texts IS NOT NULL AS has_texts`;
 const POST_COLUMNS = 'video_id, platform, url, external_id, added_at';
 
 function toPost(row: PostRow): Post {
@@ -71,6 +76,7 @@ function toSummary(row: VideoRow, posts: Post[]): VideoSummary {
           }
         : null,
     posts,
+    hasTexts: row.has_texts === 1,
   };
 }
 
@@ -91,11 +97,24 @@ export async function selectVideos(db: D1Database, userId: number): Promise<Vide
 
 export async function selectVideo(db: D1Database, id: number, userId: number): Promise<VideoDetail | null> {
   const [video, posts] = await Promise.all([
-    db.prepare(`SELECT ${SUMMARY_COLUMNS}, config FROM videos WHERE id = ?1 AND user_id = ?2`).bind(id, userId).first<VideoRow & { config: string }>(),
+    db
+      .prepare(`SELECT ${SUMMARY_COLUMNS}, config, texts FROM videos WHERE id = ?1 AND user_id = ?2`)
+      .bind(id, userId)
+      .first<VideoRow & { config: string; texts: string | null }>(),
     db.prepare(`SELECT ${POST_COLUMNS} FROM posts WHERE video_id = ?1 AND user_id = ?2 ORDER BY platform`).bind(id, userId).all<PostRow>(),
   ]);
   if (!video) return null;
-  return { ...toSummary(video, posts.results.map(toPost)), config: JSON.parse(video.config) };
+  return {
+    ...toSummary(video, posts.results.map(toPost)),
+    config: JSON.parse(video.config),
+    texts: video.texts ? (JSON.parse(video.texts) as VideoTexts) : null,
+  };
+}
+
+/** Replaces a video's texts for posting; false when the account has no such video. */
+export async function updateTexts(db: D1Database, id: number, userId: number, texts: VideoTexts): Promise<boolean> {
+  const result = await db.prepare('UPDATE videos SET texts = ?1 WHERE id = ?2 AND user_id = ?3').bind(JSON.stringify(texts), id, userId).run();
+  return result.meta.changes > 0;
 }
 
 export async function videoExists(db: D1Database, id: number, userId: number): Promise<boolean> {

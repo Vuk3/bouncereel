@@ -13,7 +13,7 @@ ALTER TABLE users ADD COLUMN day_started_at TEXT;
 ALTER TABLE users ADD COLUMN day_videos INTEGER NOT NULL DEFAULT 0;
 
 -- Free: one video a day, the paper look only, and its line on the pricing page says so (unless
--- Vuk has written his own). Every other plan keeps what it gave: no daily limit. A plan stored
+-- the owner has written their own). Every other plan keeps what it gave: no daily limit. A plan stored
 -- without the key would read as the least (none a day), so none is left without it.
 UPDATE plans
    SET features    = json_set(features, '$.perDay', 1, '$.looks', json('["paper"]')),

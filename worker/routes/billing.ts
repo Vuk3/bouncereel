@@ -6,7 +6,7 @@ import type { RouteContext } from './context.ts';
 // the admin area's manual plan changes are the only way a plan changes.
 
 /**
- * TODO(vuk): true once a payment provider is connected (and the three routes below do their
+ * TODO(owner): true once a payment provider is connected (and the three routes below do their
  * job). GET /api/plans and GET /api/account send it, and every Upgrade button reads
  * "Upgrades open soon" and stays disabled while it is false.
  */

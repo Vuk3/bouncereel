@@ -1,10 +1,11 @@
-import { PLATFORM_LABELS, type CreatedResponse, type NewVideo, type PostResponse, type VideoResponse, type VideosResponse } from '../../shared/api.ts';
+import { PLATFORM_LABELS, type CreatedResponse, type NewVideo, type PostResponse, type PostTexts, type TextsResponse, type VideoResponse, type VideosResponse } from '../../shared/api.ts';
 import { SOUNDS, soundAllowed, type Features, type Look, type Sound } from '../../shared/features.ts';
 import { parsePostLink } from '../../shared/links.ts';
+import { parseTexts } from '../../shared/texts.ts';
 import { HttpError, json, noContent, readJsonObject } from '../lib/http.ts';
 import { entitlements } from '../plans.ts';
 import { parseNewVideo, platformParam, videoId } from '../validate.ts';
-import { deletePost, deleteVideo, insertVideo, postOwner, selectVideo, selectVideos, upsertPost, videoExists } from '../videos.ts';
+import { deletePost, deleteVideo, insertVideo, postOwner, selectVideo, selectVideos, updateTexts, upsertPost, videoExists } from '../videos.ts';
 import { signedIn, type RouteContext } from './context.ts';
 
 // The video library, each account its own: every handler passes the signed-in account to the
@@ -112,4 +113,25 @@ export async function removePost(context: RouteContext): Promise<Response> {
     throw new HttpError(404, 'post_not_found', `Video ${id} has no ${PLATFORM_LABELS[platform]} link.`);
   }
   return noContent();
+}
+
+/**
+ * PUT /api/admin/videos/:id/texts: what to post with one of the superadmin's own videos (the
+ * bouncereel-post skill's answer, parsed on the page first). Under /api/admin, so the router has
+ * required the role; the query still names the account, like every video query.
+ */
+export async function putTexts(context: RouteContext): Promise<Response> {
+  const { request, env, params, now } = context;
+  const id = videoId(params);
+  const body = await readJsonObject(request);
+  let texts: PostTexts;
+  try {
+    texts = parseTexts(body);
+  } catch (err) {
+    throw new HttpError(400, 'invalid_texts', err instanceof Error ? err.message : String(err));
+  }
+  const stored = { ...texts, savedAt: now.toISOString() };
+  if (!(await updateTexts(env.DB, id, signedIn(context).id, stored))) throw noVideo(id);
+  const response: TextsResponse = { texts: stored };
+  return json(response);
 }

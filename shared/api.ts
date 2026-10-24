@@ -65,11 +65,32 @@ export interface VideoSummary {
   /** null for a game that is not a ball race. */
   race: RaceSummary | null;
   posts: Post[];
+  /** Whether texts for posting it were pasted (a superadmin's, PUT /api/admin/videos/:id/texts). */
+  hasTexts: boolean;
+}
+
+/** What to post with a video on each platform: the bouncereel-post skill's answer, pasted on the Videos page. */
+export interface PostTexts {
+  youtube: { title: string; description: string; tags: string[]; pinnedComment: string };
+  tiktok: { caption: string; pinnedComment: string };
+  instagram: { caption: string; pinnedComment: string };
+}
+
+export interface VideoTexts extends PostTexts {
+  /** ISO 8601, UTC. */
+  savedAt: string;
+}
+
+/** PUT /api/admin/videos/:id/texts answers with what it stored. */
+export interface TextsResponse {
+  texts: VideoTexts;
 }
 
 export interface VideoDetail extends VideoSummary {
   /** The whole Config it was recorded with: loading it replays the same video. */
   config: unknown;
+  /** What to post with it on each platform; null until pasted. */
+  texts: VideoTexts | null;
 }
 
 /** GET /api/videos, newest first. */

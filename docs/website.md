@@ -436,7 +436,7 @@ Firefox records WebM, and Safari is not tested. No emoji in the copy.
 
 [terms.html](../terms.html), [privacy.html](../privacy.html) and [refunds.html](../refunds.html)
 are written to match what the code does, each opening with **the short version**, then a list
-of contents and numbered sections. `TODO(vuk)` comments in each mark the decisions that are
+of contents and numbered sections. `TODO(owner)` comments in each mark the decisions that are
 his: who runs the site (`OPERATOR_NAME`, `OPERATOR_PLACE` in [shared/site.ts](../shared/site.ts),
 the controller and the party to the terms), the governing law and court (Serbia, Niš proposed),
 the payment terms before paid plans open, and a lawyer's reading before taking payments.

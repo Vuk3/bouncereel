@@ -15,6 +15,7 @@ throttling, plans, subscriptions and the change log in
 | [0004_daily_videos.sql](./0004_daily_videos.sql) | the day of a plan's daily allowance on `users` (`day_started_at`, `day_videos`); `perDay` on every plan, Free at one a day in the paper look |
 | [0005_three_plans.sql](./0005_three_plans.sql) | `tone` and `badge` on `plans` (the card on the pricing page); `watermark` and `allGames` on every plan's features; Free renamed Rookie, with the watermark; Champion seeded |
 | [0006_pro_five_a_day.sql](./0006_pro_five_a_day.sql) | Pro at five videos a day; each plan's seeded description replaced by one line on who it is for |
+| [0007_video_texts.sql](./0007_video_texts.sql) | `texts` on `videos`: a superadmin's texts for posting a video, as JSON |
 
 ## Rules
 
@@ -55,4 +56,4 @@ throttling, plans, subscriptions and the change log in
 - `ALTER TABLE … ADD COLUMN` with `REFERENCES` must allow NULL (no default): that is why the
   owner columns are nullable.
 - Back up `.wrangler/state/v3/d1` before trying a risky migration on the local database. It
-  holds Vuk's real videos: delete only rows you made.
+  holds the owner's real videos: delete only rows you made.

@@ -1671,6 +1671,35 @@ a.button {
   color: var(--muted);
   font-size: 12.5px;
 }
+/* What the video is, as text to copy (library.ts postPrompt): small, scrolling past seven lines. */
+.finished-prompt {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+.finished-prompt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+.finished-prompt pre {
+  max-height: 9.5em;
+  margin: 0;
+  padding: 10px 12px;
+  overflow: auto;
+  border-radius: var(--radius);
+  background: var(--sunken);
+  color: var(--ink);
+  font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.finished-prompt small {
+  color: var(--muted);
+  font-size: 12px;
+}
 
 /*
  * A first visit's one hint (app.ts showHint): in the toolbar's column under Record from 1200 px;
@@ -1916,6 +1945,155 @@ a.button {
 }
 .library .toast {
   position: fixed;
+}
+
+/* A superadmin's texts for posting (dashboard.ts openTexts): the paste button, the row's icon once a video has them, the drawer. */
+.library-bar .paste-texts {
+  margin-left: auto;
+}
+.icon-button.has-texts {
+  color: var(--accent-text);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+/* A side sheet, not a centred one: the texts are long, and read top to bottom while posting. */
+.drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(480px, 100vw);
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.drawer[open] {
+  display: flex;
+  flex-direction: column;
+}
+.drawer::backdrop {
+  background: rgb(10 12 20 / 0.35);
+}
+.drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.drawer-head h2 {
+  font-size: 17px;
+  font-weight: 700;
+}
+.drawer-head p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.drawer-body {
+  flex: 1;
+  padding: 0 20px 16px;
+  overflow-y: auto;
+}
+.drawer-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.drawer-steps {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.text-section {
+  padding: 16px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+.text-section h3 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.text-posted {
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+.text-field {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.text-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.text-field p {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: var(--radius);
+  background: var(--sunken);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* A word, not a button's box: there are up to eight of them down the drawer. */
+.text-copy {
+  all: unset;
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.text-copy:hover {
+  text-decoration: underline;
+}
+.text-copy:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.text-settings {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.drawer-paste {
+  display: grid;
+  gap: 8px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--line);
+  background: var(--sunken);
+}
+.drawer-paste label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.drawer-paste textarea {
+  max-height: 40dvh;
+  font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.drawer-error {
+  margin: 0;
+  color: var(--rec);
+  font-size: 12.5px;
 }
 
 /* ── Shared by the pages behind the sign-in (the account page and the admin area: console.css) ── */
