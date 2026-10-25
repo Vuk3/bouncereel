@@ -13,7 +13,12 @@ export type SequenceId =
   | 'primes'
   | 'triangular'
   | 'tribonacci'
+  | 'lucas'
+  | 'catalan'
+  | 'tenfold'
+  | 'collatz'
   | 'counting'
+  | 'pi'
   | 'ones';
 
 export interface SequenceDef {
@@ -27,7 +32,7 @@ export interface SequenceDef {
   brief: string;
   /** One true, quick fact the opening can add after the two balls are introduced. */
   fact: string;
-  /** What the ball wears in the paper look: one or two characters Rubik has. */
+  /** What the ball wears in the paper look: one to three characters Rubik has. */
   mark: string;
   term(n: number): bigint;
 }
@@ -50,6 +55,28 @@ function primes(count: number): bigint[] {
 }
 
 const PRIMES = primes(LENGTH);
+
+/**
+ * The first `count` digits of pi, 3, 1, 4, 1, 5…, worked out rather than typed in: Machin's
+ * formula, pi = 16·atan(1/5) − 4·atan(1/239), in integers scaled by 10^(count + 10). Each series
+ * term is cut to a whole number, and ten guard digits hold the few hundred units that loses.
+ */
+function piDigits(count: number): bigint[] {
+  const scale = 10n ** BigInt(count + 10);
+  const atanInverse = (x: bigint) => {
+    let sum = 0n;
+    let power = scale / x;
+    for (let k = 0n; power > 0n; k++) {
+      sum += (k % 2n ? -power : power) / (2n * k + 1n);
+      power /= x * x;
+    }
+    return sum;
+  };
+  const pi = 4n * (4n * atanInverse(5n) - atanInverse(239n));
+  return [...pi.toString().slice(0, count)].map(BigInt);
+}
+
+const PI = piDigits(LENGTH);
 
 export const SEQUENCES: Record<SequenceId, SequenceDef> = {
   fibonacci: {
@@ -142,6 +169,49 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     mark: 'Tr',
     term: table((o, n) => (n < 2 ? 1n : n === 2 ? 2n : o[n - 1] + o[n - 2] + o[n - 3])),
   },
+  lucas: {
+    id: 'lucas',
+    label: 'Lucas',
+    hint: '2, 1, 3, 4, 7, 11, 18…',
+    noun: 'Lucas',
+    brief: 'adds up its last two hits, from two and one',
+    fact: "Lucas numbers follow Fibonacci's rule, but start with two and one.",
+    mark: 'L',
+    term: table((o, n) => (n === 0 ? 2n : n === 1 ? 1n : o[n - 1] + o[n - 2])),
+  },
+  catalan: {
+    id: 'catalan',
+    label: 'Catalan',
+    hint: '1, 1, 2, 5, 14, 42, 132…',
+    noun: 'Catalan',
+    brief: 'starts slow, then nearly quadruples every hit',
+    fact: 'Catalan numbers count the ways to match up pairs of brackets.',
+    mark: 'C',
+    // C(n) = C(n−1) · 2(2n−1) / (n+1), which always divides exactly.
+    term: table((o, n) => (n === 0 ? 1n : (o[n - 1] * BigInt(2 * (2 * n - 1))) / BigInt(n + 1))),
+  },
+  tenfold: {
+    id: 'tenfold',
+    label: 'Tenfold',
+    hint: '1, 10, 100, 1000…',
+    noun: 'Tenfold',
+    brief: 'adds a zero every hit',
+    fact: 'By its tenth hit, Tenfold hits for a billion.',
+    mark: '×10',
+    term: (n) => 10n ** BigInt(n),
+  },
+  collatz: {
+    id: 'collatz',
+    label: 'Collatz',
+    hint: '27, 82, 41, 124, 62, 31…',
+    noun: 'Collatz',
+    brief: 'halves its hit or triples it, so it jumps up and down',
+    fact: 'Nobody has ever proved that this halving and tripling always ends at one.',
+    mark: '3n',
+    // From 27, the famous long one: 111 steps up to 9,232 and down to 1, far past any race's hits;
+    // a ball still hitting after that goes round 4, 2, 1.
+    term: table((o, n) => (n === 0 ? 27n : o[n - 1] === 1n ? 4n : o[n - 1] % 2n ? 3n * o[n - 1] + 1n : o[n - 1] / 2n)),
+  },
   counting: {
     id: 'counting',
     label: 'Counting',
@@ -151,6 +221,17 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     fact: 'Counting looks harmless, but it never stops climbing.',
     mark: '+1',
     term: (n) => BigInt(n + 1),
+  },
+  pi: {
+    id: 'pi',
+    label: 'Digits of pi',
+    hint: '3, 1, 4, 1, 5, 9, 2…',
+    noun: 'Pi',
+    brief: 'hits with the digits of pi',
+    fact: "Pi's digits go on forever and never repeat.",
+    // Rubik's Latin set has no π.
+    mark: 'Pi',
+    term: (n) => PI[Math.min(Math.max(0, n), LENGTH - 1)],
   },
   ones: {
     id: 'ones',

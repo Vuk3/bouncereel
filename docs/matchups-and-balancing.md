@@ -9,7 +9,8 @@ generator, and the sequences, specials and built-in matchups it draws on.
 | how speeds are found, how close a photo finish is, speed bounds | [src/sim/balance.ts](../src/sim/balance.ts) `balance`, `MIN_SPEED`, `MAX_SPEED`, `PHOTO_FINISH` |
 | the finish gap slider | [app.html](../app.html), [src/app.ts](../src/app.ts) `gapLabel`, `showPrediction`; `timing.gap` in [config.ts](../src/config.ts) |
 | what the dice can produce | [src/sim/balance.ts](../src/sim/balance.ts) `randomMatchup`, `side`, `pickLayers`, `COLORS`, `HITS`, `MAX_POWER` |
-| how often the dice gives a ball a power | [src/sim/balance.ts](../src/sim/balance.ts) `POWER_CHANCE`, `BOTH_POWERED` |
+| how often the dice gives a ball a power | [src/sim/balance.ts](../src/sim/balance.ts) `POWER_CHANCE`, `BOTH_POWERED`, `POWERS` |
+| how often it gives a ball a size (Big, Tiny), which pace words names say | [src/sim/balance.ts](../src/sim/balance.ts) `SIZED`, `BIG`, `TINY`; `PACE_WORDS` |
 | the Powers in random matchups switch next to the dice | `#powers` and `#powers-hint` in [app.html](../app.html); `powers`, `loadDice` in [src/app.ts](../src/app.ts) |
 | why a matchup cannot balance, and what the page says | `balanceProblem` in [balance.ts](../src/sim/balance.ts); `rebalance`, `explainUnbalanced` and `#balance-note` in [src/app.ts](../src/app.ts) |
 | generated names | [src/sim/balance.ts](../src/sim/balance.ts) `nameFor`; nouns in [sequences.ts](../src/sim/sequences.ts) |
@@ -108,28 +109,40 @@ recording lands within a few hundredths of a second of the requested length.
 in a few milliseconds:
 
 1. **Two different sequences**, from all but `ones` (which needs a hundred hits for even
-   the smallest round layer).
+   the smallest round layer) and `pi` (4.5 a hit pairs with nothing but Counting, on one
+   layer of 100). Fourteen sequences make 65 pairs that can race.
 2. **Layers**: for each power of ten up to **10^18**, count the hits each sequence needs to
    deal it (`hitsFor`); keep powers where both need 14–80 hits and neither needs more than
    8× the other. Pick from the upper half of what fits (big numbers are half the fun), then
    2–4 layers rising to it, as round values (1, 2 or 5 × a power of ten). 10^18 is the
    cap so every value, and the damage that breaks it, fits a card as whole digits.
 3. **Colours** from `COLORS`, at least 75° apart in hue (two greens read as one team).
-4. **Now and then a power** (a special; the panel says power). Sequence against sequence
-   is the format, a power the occasional twist: with the **Powers in random matchups**
-   switch on, about one matchup in four gets one (28 to 31 of 100 in `npm run tune`), on
-   one ball, and on both one time in five; with it off (the default), never. The hint
-   under it (`#powers-hint`) says what a power does and that the video marks the ball
+4. **Often a power** (a special; the panel says power): with the **Powers in random
+   matchups** switch on, about every other matchup gets one (51 to 59 of 100 in
+   `npm run tune`), on one ball, or a different one on each ball one time in three ("one
+   splits, the other speeds up"); with it off (the default), never. Half the rolls stay
+   sequence against sequence, the format; the other half are the twist that keeps a run of
+   videos from looking alike. The hint under it (`#powers-hint`) says what a power does and that the video marks the ball
    with a ⚡ tag ([look and layout](./look-and-layout.md)). The switch is
    the dice's own setting, kept under `bouncereel:dice` and not in the config, so loading a
    classic, a file or a video does not change it; a plan without powers locks it off. The
    home page's hero rolls without powers, and plays only the classics that have none.
    Amounts: `faster` 1.5–4 %, `slower` 1–2.5 %, `grow` 3–9 px, `split` 1. Ball size
    22–28 px; 18 for growing, 16 for splitting.
-5. **A melody**, then **balance**. A combination that does not balance is skipped.
-6. **Names** from the ball's numbers: the sequence's noun, with Slow or Fast in front when
-   its speed is half or double the other's: "Fibonacci Ball", "Slow Factorial Ball". A
-   power stays out of the name ("Tiring Triangle Ball" is a word puzzle; the picture and
+5. **Now and then a size** (`SIZED`, about one matchup in three), on a ball without a power,
+   powers switch or not: one ball **Big** (34–40 px) or **Tiny** (14–16 px), or one time in
+   three a big one against a tiny one. It is a real difference, not a costume: a bigger ball
+   has less far to fall, and balancing evens it out like any other.
+6. **A melody**, then **balance**. A combination that does not balance is skipped.
+7. **Names** from the ball's numbers: the sequence's noun, with one word in front. **Big**
+   or **Tiny** for a size; else **Slow** or **Fast** when its speed is half or double the
+   other's, as far as the matchup's pace words allow (`PACE_WORDS`, drawn per matchup:
+   both, only Fast, only Slow, or neither). A fast-growing sequence against a slow one
+   balances to speeds 2× apart nearly every time, and both words every time would make two
+   rolls in three "Slow X vs Fast Y"; without a word, the narrator says the slower ball is
+   slower
+   ([sound and narration](./sound-and-narration.md)). "Fibonacci Ball", "Big Prime Ball",
+   "Fast Triangle Ball". A power stays out of the name ("Tiring Triangle Ball" is a word puzzle; the picture and
    the opening say what the ball does), and a ball that speeds up or slows down gets
    neither Slow nor Fast, since its starting speed is wrong within seconds. Named once
    before balancing (the winner line's length is part of the timing) and again after. The
@@ -161,7 +174,12 @@ floor hit, a BigInt, precomputed 400 terms deep.
 | `primes` | 2, 3, 5, 7, 11… | Prime |
 | `triangular` | 1, 3, 6, 10… | Triangle |
 | `tribonacci` | 1, 1, 2, 4, 7, 13… | Tribonacci |
+| `lucas` | 2, 1, 3, 4, 7, 11… (Fibonacci's rule from 2 and 1) | Lucas |
+| `catalan` | 1, 1, 2, 5, 14, 42… (nearly ×4 a hit once going) | Catalan |
+| `tenfold` | 1, 10, 100, 1000… (a zero a hit; races only on layers of 10^13 and up) | Tenfold |
+| `collatz` | 27, 82, 41, 124, 62… (halve when even, 3n+1 when odd: up and down, peaks at 9,232 on hit 78, reaches 1 on hit 112, then 4, 2, 1; races only on layers up to 10^4) | Collatz |
 | `counting` | 1, 2, 3, 4… | Counting |
+| `pi` | 3, 1, 4, 1, 5, 9… (the digits of pi, worked out by Machin's formula; a 0 hits for nothing; only by hand) | Pi |
 | `ones` | 1, 1, 1… | (none: "Steady Ball") |
 
 Each also has a `brief` (one clause for the opening: "adds up its last two hits"), a
@@ -198,3 +216,5 @@ the narrator, video length, finish gap and look.
 - 2026-10-20 - the winner card is planned around a winner line only when the video is narrated (`narrated`: a narrator and the Sound Narrator and music); music only and silent balance to the hold.
 - 2026-10-21 - generated names leave the power out (no more Speeding, Tiring, Growing, Multiplying in front); the dice's Powers switch starts off; the hero rolls without powers.
 - 2026-10-21 - the switch is Powers in random matchups, with a hint; `balanceProblem` says which ball keeps a matchup from balancing and why; Rebalance tries new seeds of the same matchup, then explains in the matchup card.
+- 2026-10-25 - more varied rolls: a power about every other roll with the switch on (two different ones on both balls one time in three), a Big or Tiny ball about one roll in three with or without powers, and Slow and Fast said on both, one or neither name.
+- 2026-10-25 - five more sequences: Lucas, Catalan, Tenfold and Collatz on the dice (65 pairings, from 33), Digits of pi by hand.

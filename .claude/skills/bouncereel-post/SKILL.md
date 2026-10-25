@@ -1,20 +1,23 @@
 ---
 name: bouncereel-post
-description: Writes the posts for one BounceReel video on YouTube Shorts, TikTok and Instagram Reels (title, description, tags, captions, pinned comments) as one JSON block to paste on the Videos page, from the "BounceReel ball race:" text the studio gives a superadmin after a recording (Copy on the sheet after a take, or "Copy what it is about" in the video's drawer on the Videos page). Use when the user pastes that text, asks for titles, captions or tags for a BounceReel video, or asks to redo or change them.
+description: Writes the posts for one BounceReel video on YouTube Shorts, TikTok and Instagram Reels (title, description, tags, captions, pinned comments) as one JSON block to paste on the Videos page, and saves the video's thumbnail (its first frame) next to the clip, from the "BounceReel ball race:" text the studio gives a superadmin after a recording (Copy on the sheet after a take, or "Copy what it is about" in the video's drawer on the Videos page). Use when the user pastes that text, asks for titles, captions, tags or a thumbnail for a BounceReel video, or asks to redo or change them.
 ---
 
 # Posts for a BounceReel video
 
-The user pastes a block that starts with `BounceReel ball race:`. Write the three posts from it
-and answer with **one JSON block in a ```json fence and nothing else**: no greeting, no notes, no
-alternatives. The user copies the answer whole and pastes it on the Videos page (**Paste texts**,
-or the box at the foot of the video's drawer), which strips the fence, checks every field and
-keeps the texts with the video.
+The user pastes a block that starts with `BounceReel ball race:`. Write the three posts from it,
+save the video's thumbnail next to the clip (*The thumbnail* below), and answer with **one JSON
+block in a ```json fence, then the thumbnail's path on a line of its own, and nothing else**: no
+greeting, no notes, no alternatives. The user copies the answer whole and pastes it on the Videos
+page (**Paste texts**, or the box at the foot of the video's drawer), which reads the JSON, checks
+every field and keeps the texts with the video; the path after it is ignored there.
 
 - No block pasted: ask for it, in the language the user writes in. It is on the sheet after a
   take (**Copy**) and in the video's drawer on the Videos page (**Copy what it is about**).
 - A change to one text afterwards ("shorter title", "another Instagram caption"): answer with
-  the whole JSON again, only that text changed. The page takes whole answers, never pieces.
+  the whole JSON again, only that text changed, and the thumbnail's path again under it (it is
+  made once; make it again only when its file is gone). The page takes whole answers, never
+  pieces.
 
 ## Reading the block
 
@@ -156,6 +159,11 @@ first frame's question without copying it.
 | Primes | `#primenumbers` | prime numbers |
 | Triangular | `#triangularnumbers` | triangular numbers |
 | Tribonacci | `#tribonacci` | tribonacci, tribonacci numbers |
+| Lucas | `#lucasnumbers` | lucas numbers |
+| Catalan | `#catalannumbers` | catalan numbers |
+| Tenfold | `#powersoften` | powers of ten, tenfold |
+| Collatz | `#collatz` | collatz conjecture, 3n+1 |
+| Digits of pi | `#pi` | pi, digits of pi |
 | Counting | none | counting numbers |
 | Always 1 | none | none |
 
@@ -197,6 +205,43 @@ The settings that are the same for every video (the cover and thumbnail, the aud
 content, the category, the sound) are shown on the Videos page beside the texts, so they are not
 in the JSON. Every cover is the first frame (0:00): the video opens on a title (both names large,
 a big VS, the question) made to be the frame people decide on, and loops back to it at the end.
+
+Under the JSON, after an empty line, the thumbnail's absolute path in backticks and nothing
+else:
+
+````
+```json
+{ … }
+```
+
+`/Users/…/Bounce Reel/factorial-ball-vs-tribonacci-ball-seed-914567-thumbnail.jpg`
+````
+
+## The thumbnail
+
+The video's first frame (0:00) as a JPEG, saved beside the clip as `<file name>-thumbnail.jpg`:
+the frame every platform uses as the cover, as a file to upload where one is asked for (a custom
+YouTube thumbnail, an Instagram cover from the camera roll). A JPEG at `-q:v 2` is about
+0.2–0.5 MB, under YouTube's 2 MB limit for a thumbnail.
+
+Find the clip by the block's `File:` line. A take lands in Downloads, and the user may have moved
+it (to a folder on the Desktop, say); a browser saves a second file of the same name as
+`name (1).mp4`, so take the newest match:
+
+```sh
+FILE='factorial-ball-vs-tribonacci-ball-seed-914567.mp4'   # the block's File: line
+STEM="${FILE%.mp4}"
+CLIP=$(find ~/Downloads ~/Desktop ~/Movies ~/Documents -maxdepth 3 -type f \( -name "$FILE" -o -name "$STEM (*).mp4" \) -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
+OUT="$(dirname "$CLIP")/$STEM-thumbnail.jpg"
+[ -n "$CLIP" ] && ffmpeg -v error -y -i "$CLIP" -frames:v 1 -q:v 2 "$OUT" && ls -l "$OUT"
+```
+
+Then look at it once (Read the image): it must be the title frame, both names large, VS and the
+question. A black or empty frame, or a file over 2 MB, is not a thumbnail: say so on the path's
+line instead of the path.
+
+No clip found: in the path's place, one line in the user's language saying it is not in
+Downloads, Desktop, Movies or Documents, and asking where it is. The JSON does not wait for it.
 
 ## Before answering
 

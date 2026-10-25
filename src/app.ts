@@ -1002,7 +1002,7 @@ export class App {
 
   /**
    * The first frame of this run in every look, for the thumbnails of the look picker (without the
-   * opening title, which would hide the look under its wash); then, drawn last so the still
+   * opening title, which would hide the look under its words); then, drawn last so the still
    * canvas keeps it, the current look's as the video opens, title and all, which a looping video
    * fades into at the end.
    */

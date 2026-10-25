@@ -114,7 +114,7 @@ The pieces, each used where it carries information:
   (section 4): the race board, two lanes racing to a checkered line on the race's own seconds,
   each ball glowing at the end of its bar, beside the Length and Finish gap that set it; the
   four power tags, each picking a small sketch of what it does; the narrator's real opening and a
-  player that says it; the dice's ten sequences with their first numbers; and drawings, HTML and
+  player that says it; the dice's fourteen sequences with their first numbers; and drawings, HTML and
   CSS with the site's own images, `aria-hidden` where the card's words say the same: the video's
   real first frame twice, first and last, around a loop arrow, under the zones the apps' buttons
   take, and in a phone with its two sizes; library rows with a thumbnail and, as a dot filled or
@@ -172,7 +172,7 @@ three recordings from the studio (below); what the studio does, **on the stage, 
 that say why the videos work**, each with its name and a line over one card across the width
 (the group's main drawing) and two side by side under it: **watched to the end** (close to the
 very end: the race board; a narrator who asks for a pick; a loop with no cut), **a new video
-every day** (the three looks; ten sequences, 33 pairings; powers, for a twist) and **ready to
+every day** (the three looks; fourteen sequences, 65 pairings; powers, for a twist) and **ready to
 post** (the library; clear of the buttons; 1080×1920 at 60 fps); the plans (from
 `GET /api/plans`); questions, under their heading in two columns of their own (one list on a
 phone); the last call to action on the stage; the footer. What only a paid plan makes is said
@@ -239,8 +239,8 @@ built-in matchups that have none, and rolls with powers off, so it shows the for
 sequence against sequence, with nothing the opening would have to explain. Under the phone,
 the two names and the look.
 
-- **The first paint is a still frame** ([public/hero/first-frame-2.webp](../public/hero/first-frame-2.webp),
-  540×960, 28 KB, the night look, the video's opening title over it), an `<img>` with `fetchpriority="high"`: the LCP. The engine loads after the
+- **The first paint is a still frame** ([public/hero/first-frame-3.webp](../public/hero/first-frame-3.webp),
+  540×960, 31 KB, the night look, the video's opening title over it), an `<img>` with `fetchpriority="high"`: the LCP. The engine loads after the
   page has (`requestIdleCallback`), waits for Rubik (a canvas never loads a web font itself),
   draws the same first frame over the still and fades it in, so the swap does not show.
 - It draws **at half the video's size** (540×960 under a 0.5 scale): the phone shows it at most
@@ -288,7 +288,7 @@ phone beside them plays it, replaying it until the steps change it:
 
 **The facts are the code's**: 1080×1920 at 60 fps, MP4 with H.264 and AAC; balanced to the
 length to a tenth of a second; a photo finish (0.15–1.1 s between the two) or a 1–10 s gap; the
-dice's ten sequences and 33 pairings (`SEQUENCES` has eleven: "Always 1" only by hand); the
+dice's fourteen sequences and 65 pairings (`SEQUENCES` has sixteen: "Always 1" and "Digits of pi" only by hand); the
 narrator, on the paid plans, ending on a call to pick a winner (`QUESTIONS`); three looks; the
 loop; music only or silence; the library and its links (the settings, not the file); any video
 replayed exactly. Check a claim against [recording and export](./recording-and-export.md) and
@@ -325,7 +325,7 @@ All drawn by the studio's renderer, so they are what a video looks like, by
 
 | File | What | Size |
 | --- | --- | --- |
-| [public/hero/first-frame-2.webp](../public/hero/first-frame-2.webp) | the hero's first frame, its opening title and all: Fibonacci vs Slow Factorial balanced to 30 s, night; also the first paint of the steps' phone and of step 3, whose defaults are that race. The `-2` is a new name for a frame that changed in a way that shows (the title): a browser keeps `/hero` a week, and the old name would show the old still under the new first frame | 540×960, ~28 KB |
+| [public/hero/first-frame-3.webp](../public/hero/first-frame-3.webp) | the hero's first frame, its opening title and all: Fibonacci vs Slow Factorial balanced to 30 s, night; also the first paint of the steps' phone and of step 3, whose defaults are that race. The `-3` is a new name for a frame that changed in a way that shows (the title, then its lighter wash): a browser keeps `/hero` a week, and the old name would show the old still under the new first frame | 540×960, ~31 KB |
 | [public/looks/](../public/looks/) `paper.webp`, `cards.webp`, `night.webp` | the same race 55 % of the way, the top box as the studio's look picker crops it | 480×416, 15–17 KB each |
 | [public/og.png](../public/og.png) | the Open Graph and Twitter image, as the hero: the ink, the mark and the name, the headline, one line on what it makes, and at the bottom the address (`SITE_HOST`, narrowed if it would reach the phones), then a violet rule and "Free to start"; two phones (night, paper) in the balls' light. Made again when the address changes | 1200×630, ~300 KB |
 | [brand/profile.png](../brand/profile.png) | not for the site: the profile picture for Instagram, YouTube and TikTok, the mark on the ink in the balls' light, sized to stay inside the circle each shows it in (offered at `./brand/profile.png` on the stills page) | 1080×1080, ~940 KB |
@@ -478,3 +478,5 @@ used for.
 - 2026-10-23 - the video's first frame carries its opening title, so the still, the looks, the share image and the gallery were made again: the still as `hero/first-frame-2.webp` (was `first-frame.webp`) and the gallery as `<name>-2` (0.84–1.02 MB now, with the bigger numbers and the meters).
 - 2026-10-24 - the speed measured again after the overhaul: cold and warm loads apart (FCP and LCP 0.7 s warm, 2.1 s cold, CLS 0), the engine now 45 kB, the steps' costs; a roll can be a long task on a 4× phone (about one in 25), said; Lighthouse 100/100/100 on the eight public pages.
 - 2026-10-24 - on `bouncereel.vukcvetkovic.com` for now and kept out of search: `INDEXED` off (every page `noindex, nofollow`), `X-Robots-Tag` on every file, robots.txt disallowing everything, the sitemap gone; the legal pages and the share image name the site from `SITE_URL` (`%SITE_HOST%`); the watermark answer in the questions without the address; the profile picture for the platforms on the stills page (`brand/profile.png`).
+- 2026-10-25 - the opening title made for the cover (a lighter wash, the balls and a ball's power over it, the race's labels held back; the meters 40 px further in), so the still (`hero/first-frame-3.webp`), the looks and the share image were made again. The gallery is still the 2026-10-23 recordings.
+- 2026-10-25 - the sequences card lists fourteen sequences and 65 pairings (Lucas, Catalan, Tenfold and Collatz added).

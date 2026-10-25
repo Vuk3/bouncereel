@@ -60,7 +60,7 @@ async function main(): Promise<void> {
   const first = new Renderer(document.createElement('canvas'));
   first.reset(hero);
   first.draw(createWorld(hero), hero, 0, { winner: 0, age: 0, opening: 1 });
-  offer(scaled(first.canvas, 0, 0, W, H, 540, 960), 'hero/first-frame-2.webp', 'image/webp', 0.86);
+  offer(scaled(first.canvas, 0, 0, W, H, 540, 960), 'hero/first-frame-3.webp', 'image/webp', 0.86);
 
   // 2. The three looks, the same race mid-way.
   const frames: Partial<Record<Skin, HTMLCanvasElement>> = {};

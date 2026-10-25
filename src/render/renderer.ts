@@ -55,6 +55,12 @@ const POWER_TAGS: Record<Exclude<Special, 'none'>, string> = { faster: 'SPEEDS U
 /** The power tag: the dice's gold, a power-up's colour in a game, on every look. */
 const TAG_H = 50;
 const TAG_FILL = '#ffd23f';
+/**
+ * The power tag on the opening title, alone where the name row stands: 65 px tall, as tall as
+ * that row has room for between the platforms' top bar and the card, so it reads on a profile
+ * grid's tile, where the race's own 50 px tag is a smudge.
+ */
+const OPENING_TAG = 1.3;
 /** A lightning bolt in a 1 × 1 box, at the start of the power tag. */
 const BOLT: [number, number][] = [
   [0.62, 0],
@@ -71,10 +77,11 @@ const WATERMARK = SITE_HOST;
 const COUNT = 0.15;
 /**
  * The meter beside each card (drawMeters): in the margin left of the cards, where no platform
- * puts a button (docs/look-and-layout.md §9), and left of the part of the frame the look picker
- * shows (src/app.ts THUMB, from x 60).
+ * puts a button (docs/look-and-layout.md §9), 10 px from the card's frame. Reels on a tall phone
+ * fill the screen with the video and crop about 50 px off each side, so the margin's outer half
+ * is not seen there.
  */
-const METER = { x: 40, w: 14 };
+const METER = { x: 80, w: 14 };
 /** Seconds LEAD CHANGE shows (drawLeadChange). */
 const LEAD_SHOW = 0.9;
 /** Where LEAD CHANGE ends: 20 px before the side buttons' column, which starts at x 940 from y 902 (§9). */
@@ -142,13 +149,15 @@ interface Deck {
 /**
  * The opening title's colours (drawOpening): the wash over the cards, what the names are written
  * on (for `legible`; null writes them as they are) and their outline, and the VS and the question
- * with theirs. Each look's own way with text: paper darkens on cream, cards writes the colours as
- * they are under an ink outline, night lightens on the dark.
+ * with theirs. Paper and cards write the colours as they are under an ink outline, which holds a
+ * name up on a profile grid's tile; night lightens them on the dark, where ink would not show.
+ * The wash only quiets the race under the words: heavier, and the frame people decide on reads
+ * as a faded page rather than the game.
  */
 const OPENINGS: Record<Skin, { wash: string; ground: string | null; nameOutline: string; text: string; textOutline: string }> = {
-  paper: { wash: 'rgba(236, 224, 199, 0.8)', ground: '#ece0c7', nameOutline: '#fffdf8', text: INK, textOutline: '#fffdf8' },
-  cards: { wash: 'rgba(255, 255, 255, 0.72)', ground: null, nameOutline: INK, text: INK, textOutline: WHITE },
-  night: { wash: 'rgba(9, 11, 30, 0.68)', ground: '#0b0d1c', nameOutline: '#0b0d1c', text: WHITE, textOutline: '#0b0d1c' },
+  paper: { wash: 'rgba(236, 224, 199, 0.45)', ground: null, nameOutline: INK, text: INK, textOutline: '#fffdf8' },
+  cards: { wash: 'rgba(255, 255, 255, 0.4)', ground: null, nameOutline: INK, text: INK, textOutline: WHITE },
+  night: { wash: 'rgba(9, 11, 30, 0.4)', ground: '#0b0d1c', nameOutline: '#0b0d1c', text: WHITE, textOutline: '#0b0d1c' },
 };
 
 const DECKS: Record<Exclude<Skin, 'paper'>, Deck> = {
@@ -222,6 +231,12 @@ export class Renderer {
   private lead = 0;
   private leader = -1;
   private leadAge = Infinity;
+  /**
+   * 0..1 of the race's labels (each name row, the chips or stats line): none under the opening
+   * title, which says the names itself, coming in over the second half of its fade, once the
+   * title's own power tag, standing where the row does, has gone (drawOpening).
+   */
+  private labels = 1;
 
   constructor(canvas: HTMLCanvasElement) {
     canvas.width = W;
@@ -324,6 +339,7 @@ export class Renderer {
       this.leadAge = 0;
     }
     this.leadAge += dt;
+    this.labels = Math.max(0, 1 - 2 * (overlay.opening ?? 0));
 
     ctx.globalAlpha = 1;
     ctx.drawImage(this.page(skin), 0, 0);
@@ -344,7 +360,7 @@ export class Renderer {
     this.drawLeadChange(world, skin);
     ctx.restore();
 
-    if (overlay.opening) this.drawOpening(world, cfg, overlay.opening);
+    if (overlay.opening) this.drawOpening(world, cfg, overlay.opening, sx, sy);
     if (overlay.winner > 0) {
       if (skin === 'paper') this.drawSheetWinner(world, cfg, overlay, PAPER);
       else this.drawWinner(world, cfg, overlay, DECKS[skin]);
@@ -384,21 +400,42 @@ export class Renderer {
   // ── The opening, the lead, the last layer ────────────────────────────────
 
   /**
-   * The video's first second (pacing.ts `openingShown`): over the cards at rest, a wash, each
-   * ball's name large in its colour in the empty part of its own box, a big VS between the cards,
-   * and the opening's question under the bottom name (src/audio/opening.ts). It is the
-   * frame a viewer swipes past or stays for, and the one a looping video fades back into. The
-   * words keep between the platforms' top bar and their caption and inside the side buttons'
-   * column (§9); the watermark, drawn after, stays over it.
+   * The video's first second (pacing.ts `openingShown`): over the cards at rest, a light wash, the
+   * balls over it at full strength, each ball's name large in its colour in the empty part of its
+   * own box, a ball's power as a big tag where its name row stands (the row itself waits, see
+   * `labels`), a big VS between the cards, and the opening's question under the bottom name
+   * (src/audio/opening.ts). It is the frame a viewer swipes past or stays for, every platform's
+   * cover, and the one a looping video fades back into. The words keep between the platforms' top
+   * bar and their caption and inside the side buttons' column (§9); the watermark, drawn after,
+   * stays over it. `sx`, `sy` are the frame's shake, which the balls under it move by.
    */
-  private drawOpening(world: World, cfg: Config, shown: number): void {
+  private drawOpening(world: World, cfg: Config, shown: number, sx: number, sy: number): void {
     const ctx = this.ctx;
-    const look = OPENINGS[cfg.look.skin];
+    const skin = cfg.look.skin;
+    const look = OPENINGS[skin];
     const [top, bottom] = world.teams;
     ctx.save();
     ctx.globalAlpha = shown;
     ctx.fillStyle = look.wash;
     ctx.fillRect(0, 0, W, H);
+    for (const t of world.teams) {
+      ctx.save();
+      ctx.translate(sx, sy);
+      roundRect(ctx, BOX.left, t.panel.top, BOX.right - BOX.left, finishTop(t.panel) + FINISH_H - t.panel.top, 6);
+      ctx.clip();
+      if (skin === 'paper') this.drawGlowingBalls(t, PAPER);
+      else this.drawBalls(t, DECKS[skin]);
+      ctx.restore();
+      const tag = this.powerTag(t);
+      if (!tag || shown <= 0.5) continue;
+      // Gone over the first half of the fade, before the name row comes in where it stands (`labels`).
+      ctx.save();
+      ctx.globalAlpha = 2 * shown - 1;
+      ctx.translate(W / 2, t.panel.title);
+      ctx.scale(OPENING_TAG, OPENING_TAG);
+      this.drawTag(tag, -this.tagWidth(tag) / 2, 0, skin === 'paper' ? PAPER.ink : DECKS[skin].ink, skin !== 'paper');
+      ctx.restore();
+    }
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     // The top name in the middle of its box's empty part, the bottom one high in its, the question under it.
@@ -464,10 +501,10 @@ export class Renderer {
       if (fill <= 0) continue;
       if (t.id === this.leader && lit > 0) {
         // The glow as two wider, fainter bars behind it: a canvas shadow blur costs far more, and
-        // the hero draws this on phones.
+        // the hero draws this on phones. At most 10 px wider, the gap to the card's frame.
         for (const [grow, alpha] of [
-          [14, 0.18],
-          [7, 0.32],
+          [10, 0.18],
+          [5, 0.32],
         ]) {
           ctx.fillStyle = rgba(t.color, alpha * lit);
           roundRect(ctx, METER.x - grow, bottom - fill - grow, METER.w + 2 * grow, fill + 2 * grow, METER.w / 2 + grow);
@@ -627,8 +664,13 @@ export class Renderer {
     this.drawSheetFinish(p, look);
     this.drawGlowingBalls(t, look);
     ctx.restore();
-    this.drawStats(t, cfg, look);
-    this.drawName(t, look);
+    if (this.labels > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.labels;
+      this.drawStats(t, cfg, look);
+      this.drawName(t, look);
+      ctx.restore();
+    }
   }
 
   /** Full-width glossy layers under ink seams; what a layer has lost shows as a pale track on its right. */
@@ -926,8 +968,13 @@ export class Renderer {
     this.drawBalls(t, deck);
     ctx.restore();
 
-    this.drawChips(t, cfg, deck);
-    this.drawNameRow(t, deck);
+    if (this.labels > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.labels;
+      this.drawChips(t, cfg, deck);
+      this.drawNameRow(t, deck);
+      ctx.restore();
+    }
   }
 
   /** The name pill, and the power tag beside it when the ball has one: the pair centred over the card. */
@@ -1047,12 +1094,11 @@ export class Renderer {
       ctx.lineWidth = Math.max(3, Math.min(6, b.r * 0.2));
       ctx.strokeStyle = deck.ink;
       ctx.stroke();
-      ctx.globalAlpha = 0.55;
-      ctx.fillStyle = WHITE;
+      // In the fill rather than globalAlpha, which the opening draws the balls under (drawOpening).
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
       ctx.beginPath();
       ctx.ellipse(b.x - b.r * 0.34, b.y - b.r * 0.38, b.r * 0.26, b.r * 0.18, -0.6, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
     }
   }
 
@@ -1082,11 +1128,10 @@ export class Renderer {
     ctx.fillStyle = mix(deck.box, color, 0.16);
     roundRect(ctx, left, y - CHIP_H / 2, width, CHIP_H, CHIP_H / 2);
     ctx.fill();
-    ctx.globalAlpha = 0.86;
-    ctx.fillStyle = deck.box;
+    // In the fill rather than globalAlpha, which the chips are drawn under while they fade in (`labels`).
+    ctx.fillStyle = rgba(deck.box, 0.86);
     roundRect(ctx, left + 3, y - CHIP_H / 2 + 3, width - 6, CHIP_H - 6, CHIP_H / 2 - 3);
     ctx.fill();
-    ctx.globalAlpha = 1;
     ctx.fillStyle = deck.muted;
     ctx.font = labelFont;
     ctx.letterSpacing = '1.5px';

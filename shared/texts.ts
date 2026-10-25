@@ -8,10 +8,14 @@ import type { PostTexts } from './api.ts';
 /** Each platform's own limits: YouTube's title 100 and description 5,000, its tags 500 in all; TikTok's caption 4,000; Instagram's caption and a comment 2,200. */
 const LIMITS = { title: 100, description: 5000, tags: 500, tiktok: 4000, instagram: 2200, comment: 2200 };
 
-/** The skill's JSON, given whole or in a ```json block, parsed; or why it is not JSON. */
+/**
+ * The skill's JSON, given whole or in a ```json block, parsed; or why it is not JSON. The skill's
+ * answer goes on after the JSON with the thumbnail's path, and copied as the chat shows it the
+ * fence is gone: without one, the JSON is the first brace to the last.
+ */
 export function readPasted(text: string): unknown {
   const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(text);
-  const source = (fenced ? fenced[1] : text).trim();
+  const source = (fenced ? fenced[1] : text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)).trim();
   try {
     return JSON.parse(source);
   } catch {

@@ -1271,7 +1271,8 @@
   padding: 20px 22px;
 }
 /* Worded like a number tile's label: the bars are the content. */
-.coverage h2 {
+.coverage h2,
+.balls h2 {
   color: var(--muted);
   font-size: 13.5px;
   font-weight: 400;
@@ -1282,8 +1283,23 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
 }
-.coverage .meter-label span {
+.coverage .meter-label span,
+.balls .meter-label span {
   color: var(--ink);
+}
+/* Every sequence, in as many columns as fit: sixteen bars in one column would be a page of their own. */
+.balls {
+  gap: 14px;
+  padding: 20px 22px;
+}
+.balls .meters {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 14px 24px;
+}
+.balls .meter.unused .meter-label span,
+.balls .meter.unused .meter-label strong {
+  color: var(--muted);
+  font-weight: 400;
 }
 .platform-name {
   display: inline-flex;

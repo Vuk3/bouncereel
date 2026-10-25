@@ -170,6 +170,11 @@ address, redirects here. It shows the signed-in account's videos only.
   them ("4 more fit on your plan · 1 video left today", Upgrade for more; in the warning colour
   once the library is full or the day is used); how many are not posted anywhere; and a bar per
   platform, how many of them are posted there.
+- **Balls raced**, under the totals: every sequence and how many of the races it was in, most
+  first, with a bar for its share of them (`renderBalls`); a video with the same sequence on
+  both sides counts once. The ones not used yet stay at the end as "not yet", to show what the
+  next roll could try. Counted in the page from the list it already has, so it needs no request
+  of its own; hidden while the library has no race.
 - **Search** across title, sequences, seed, file name and length; **Show**: all, not posted
   anywhere, not on YouTube / TikTok / Instagram; **sort**: newest or oldest first, title, length
   either way, closest finish. Ties stay newest first.
@@ -208,7 +213,10 @@ address, redirects here. It shows the signed-in account's videos only.
     id. It is built from the video and its config (`GET /api/videos/:id`), not stored.
   - That text goes to the `/bouncereel-post` skill (`.claude/skills/`), which answers with one
     JSON block: `video` (the library id), `file`, and `youtube` (`title`, `description`, `tags`,
-    `pinnedComment`), `tiktok` and `instagram` (`caption`, `pinnedComment`).
+    `pinnedComment`), `tiktok` and `instagram` (`caption`, `pinnedComment`); and under it the
+    path of the video's thumbnail, which it saves beside the clip it finds by the file name (in
+    Downloads, Desktop, Movies or Documents): the first frame as `<name>-thumbnail.jpg`, under
+    YouTube's 2 MB, to upload where a platform asks for a cover file.
   - The section shows the video's texts platform by platform, each field with Copy, and under
     each platform what is the same for every video (the first frame as cover and thumbnail, not
     made for kids, no altered content, Entertainment, the video's own sound), so the skill leaves
@@ -216,7 +224,8 @@ address, redirects here. It shows the signed-in account's videos only.
     that video, replacing any before; an answer naming another video is refused.
   - **Paste texts** opens the drawer on a paste alone: the video is the one the answer names, by
     library id, else by file name (the newest with it), and must be in the library.
-  - The paste is read in the page (code fences stripped, the fields and each platform's limits
+  - The paste is read in the page (the first fenced block, or without a fence the first brace to
+    the last, so the thumbnail's path after it is left out; the fields and each platform's limits
     checked by [shared/texts.ts](../shared/texts.ts), which the Worker runs again before storing),
     then sent with `PUT /api/admin/videos/:id/texts`; what is wrong is said under the box.
 
@@ -263,3 +272,5 @@ by in a migration; `NewVideo` gets a variant per game, and `toSummary` in
 - 2026-10-24 - Copy about on each row: what the video is, as text, for writing its posts.
 - 2026-10-24 - a superadmin's texts for posting: Copy about only for a superadmin, `texts` on `videos` (0007), `PUT /api/admin/videos/:id/texts`, the texts drawer and Paste texts on the Videos page.
 - 2026-10-24 - the Videos page redone as a console page (the account page's top bar and look): totals with a bar per platform, a row per video with a thumbnail in its balls' colours and a tick per platform, links, details and delete in a drawer; a post without a link (`url` NULL, 0008_posts_without_link.sql), `colors` in the list.
+- 2026-10-25 - Balls raced under the totals: how many videos each sequence was in.
+- 2026-10-25 - the skill also saves the video's thumbnail (its first frame, `<name>-thumbnail.jpg`) beside the clip and prints its path under the JSON; a paste reads the JSON from the first brace to the last when the fence was not copied.

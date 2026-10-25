@@ -174,6 +174,35 @@ function renderSummary(): void {
   room.replaceChildren(parts.join(' · '), ...(parts.length ? [' ', upgradeLink(full || dayUsed ? 'Upgrade' : 'Upgrade for more')] : []));
   room.classList.toggle('full', full || dayUsed);
   $('#coverage').replaceChildren(...PLATFORMS.map((p) => meter(p, videos.filter((v) => postOn(v, p)).length, total)));
+  renderBalls();
+}
+
+/**
+ * Every sequence and how many of the races it was in, most first, a bar for its share of them; a
+ * video with the same one on both sides counts once. The ones not used yet stay at the end, as
+ * what the next roll could try.
+ */
+function renderBalls(): void {
+  const used = new Map<string, number>(Object.keys(SEQUENCES).map((id) => [id, 0]));
+  const races = videos.filter((v) => v.race);
+  for (const v of races) {
+    for (const id of new Set([v.race!.a.sequence, v.race!.b.sequence])) if (id) used.set(id, (used.get(id) ?? 0) + 1);
+  }
+  $('#balls-card').hidden = !races.length;
+  // Sorting is stable: a tie keeps SEQUENCES' own order.
+  $('#balls').replaceChildren(...[...used].sort((a, b) => b[1] - a[1]).map(([id, count]) => ballMeter(sequenceLabel(id), count, races.length)));
+}
+
+function ballMeter(label: string, count: number, races: number): HTMLElement {
+  const box = el('div', count ? 'meter' : 'meter unused');
+  const head = el('div', 'meter-label');
+  head.append(el('span', '', label), el('strong', '', count ? `${count} ${count === 1 ? 'video' : 'videos'}` : 'not yet'));
+  const bar = el('div', 'meter-bar');
+  bar.append(el('i'));
+  bar.style.setProperty('--fill', `${races ? (count / races) * 100 : 0}%`);
+  bar.setAttribute('aria-hidden', 'true');
+  box.append(head, bar);
+  return box;
 }
 
 // ── The list ────────────────────────────────────────────────────────────

@@ -86,12 +86,31 @@ function solve(cfg: Config): { out: Config; times: [number, number]; target: num
 export const COLORS = ['#7c4dff', '#0ea5e9', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#f97316', '#2563eb', '#e11d48', '#a855f7', '#65a30d'];
 const MELODIES: MelodyId[] = ['ode', 'elise', 'twinkle', 'scale'];
 /**
- * When the dice may add powers, about one matchup in four gets one, and then mostly on
- * one ball only: sequence against sequence is the format, a power the occasional twist,
- * and one twist reads better in a short video than two.
+ * When the dice may add powers, about every other matchup gets one, on one ball or, one time
+ * in three, a different one on each: sequence against sequence on most rolls makes a run of
+ * videos look like the same one over and over.
  */
-const POWER_CHANCE = 0.25;
-const BOTH_POWERED = 0.2;
+const POWER_CHANCE = 0.5;
+const BOTH_POWERED = 0.35;
+const POWERS = ['faster', 'slower', 'grow', 'split'] as const;
+/**
+ * About one matchup in three gives a ball without a power a size that shows, with the word in
+ * its name: big or tiny, or one of each. It needs no power (a plan without powers gets it too),
+ * and a different size is a real difference, not a costume: a bigger ball has less far to fall.
+ */
+const SIZED = 0.35;
+const BIG = [34, 40] as const;
+const TINY = [14, 16] as const;
+/** The radius from which a ball is Big, and up to which one without a power is Tiny (nameFor). */
+const BIG_FROM = 32;
+const TINY_UP_TO = 16;
+/**
+ * Which of Slow and Fast the names say when one ball starts at least twice as fast as the other:
+ * both, one of them, or neither (the narrator then says the slower one is slower). Both every
+ * time would make nearly every fast-growing sequence against a slow one "Slow X vs Fast Y".
+ */
+type PaceWords = 'both' | 'fast' | 'slow' | 'none';
+const PACE_WORDS: PaceWords[] = ['both', 'fast', 'slow', 'none'];
 /** A race needs enough floor hits to have a story, and not so many that it is a blur of numbers. */
 const HITS = [14, 80] as const;
 /**
@@ -145,42 +164,45 @@ function pickLayers(rng: Rng, a: SequenceId, b: SequenceId): string | null {
     .join(', ');
 }
 
-function side(rng: Rng, sequence: SequenceId, color: string, powered: boolean): Contestant {
-  let special: Special = 'none';
-  let amount = 0;
-  if (powered) {
-    special = pick(rng, ['faster', 'slower', 'grow', 'split'] as const);
-    // Mild amounts: over ~40 hits a 4 % gain is 5× the speed, and a 2.5 % loss leaves a third.
-    amount = special === 'faster' ? Math.round(rng.range(1.5, 4) * 2) / 2 : special === 'slower' ? Math.round(rng.range(1, 2.5) * 2) / 2 : special === 'grow' ? Math.round(rng.range(3, 9)) : 1;
-  }
-  const radius = special === 'split' ? 16 : special === 'grow' ? 18 : Math.round(rng.range(22, 28));
+/** A ball: its power (`none` for none) and, for one without, a size that shows (null for the usual 22–28 px). */
+function side(rng: Rng, sequence: SequenceId, color: string, special: Special, size: 'big' | 'tiny' | null): Contestant {
+  // Mild amounts: over ~40 hits a 4 % gain is 5× the speed, and a 2.5 % loss leaves a third.
+  const amount = special === 'faster' ? Math.round(rng.range(1.5, 4) * 2) / 2 : special === 'slower' ? Math.round(rng.range(1, 2.5) * 2) / 2 : special === 'grow' ? Math.round(rng.range(3, 9)) : special === 'split' ? 1 : 0;
+  const [low, high] = size === 'big' ? BIG : size === 'tiny' ? TINY : [22, 28];
+  const radius = special === 'split' ? 16 : special === 'grow' ? 18 : Math.round(rng.range(low, high));
   return { name: '', color, sequence, speed: 600, special, amount, radius };
 }
 
 /**
- * "Fibonacci Ball", "Slow Factorial Ball"… from its numbers, with Slow or Fast when its speed
- * is half or double the other's. A power stays out of the name: "Tiring Triangle Ball" is a
- * word puzzle, while the picture and the opening already say what the ball does. A ball that
- * speeds up or slows down gets neither word, since its starting speed is wrong within seconds.
+ * "Fibonacci Ball", "Big Prime Ball", "Slow Factorial Ball"… from its numbers, with one word in
+ * front: Big or Tiny for a size that shows, else Slow or Fast when its speed is half or double
+ * the other's and `pace` says that word. A power stays out of the name: "Tiring Triangle Ball"
+ * is a word puzzle, while the picture and the opening already say what the ball does. A ball
+ * that speeds up or slows down gets neither Slow nor Fast, since its starting speed is wrong
+ * within seconds.
  */
-function nameFor(c: Contestant, other: Contestant): string {
+function nameFor(c: Contestant, other: Contestant, pace: PaceWords): string {
   const noun = SEQUENCES[c.sequence].noun;
   const changing = (c.special === 'faster' || c.special === 'slower') && c.amount > 0;
-  const pace = changing ? '' : c.speed * 2 <= other.speed ? 'Slow' : c.speed >= other.speed * 2 ? 'Fast' : '';
-  return [pace || (noun ? '' : 'Steady'), noun, 'Ball'].filter(Boolean).join(' ');
+  const size = c.radius >= BIG_FROM ? 'Big' : c.special === 'none' && c.radius <= TINY_UP_TO ? 'Tiny' : '';
+  const slow = c.speed * 2 <= other.speed && (pace === 'both' || pace === 'slow');
+  const fast = c.speed >= other.speed * 2 && (pace === 'both' || pace === 'fast');
+  const word = size || (changing ? '' : slow ? 'Slow' : fast ? 'Fast' : '');
+  return [word || (noun ? '' : 'Steady'), noun, 'Ball'].filter(Boolean).join(' ');
 }
 
 /**
- * A new matchup from a seed: two different sequences, now and then a power
- * (never, when `powers` is off), layers both can break, colours, a melody,
- * balanced to the requested length. Settings that are not about the matchup
- * (voice, volume, timing, look) come from `base`. Tries until a combination
- * balances; nearly every seed finds one within a handful of tries.
+ * A new matchup from a seed: two different sequences, often a power (never, when `powers` is
+ * off), now and then a size, layers both can break, colours, a melody, which pace words the
+ * names say, balanced to the requested length. Settings that are not about the matchup
+ * (voice, volume, timing, look) come from `base`. Tries until a combination balances; nearly
+ * every seed finds one within a handful of tries.
  */
 export function randomMatchup(seed: string, base: Config, powers = true): Config {
   const rng = createRng(`matchup:${seed}`);
-  // "Always 1" needs a hundred hits for even the smallest round layer: only by hand.
-  const sequences = (Object.keys(SEQUENCES) as SequenceId[]).filter((s) => s !== 'ones');
+  // "Always 1" needs a hundred hits for even the smallest round layer, and the digits of pi (4.5 a
+  // hit) pair with nothing but Counting, on one layer of 100: only by hand.
+  const sequences = (Object.keys(SEQUENCES) as SequenceId[]).filter((s) => s !== 'ones' && s !== 'pi');
   for (let attempt = 0; attempt < 60; attempt++) {
     const sa = pick(rng, sequences);
     const sb = pick(rng, sequences);
@@ -195,11 +217,23 @@ export function randomMatchup(seed: string, base: Config, powers = true): Config
     const powered = powers && rng.next() < POWER_CHANCE;
     const both = powered && rng.next() < BOTH_POWERED;
     const first = rng.next() < 0.5;
-    const a = side(rng, sa, ca, powered && (both || first));
-    const b = side(rng, sb, cb, powered && (both || !first));
+    // Two powers are always two different ones: "one splits, the other speeds up" is a duel.
+    const pa = pick(rng, POWERS);
+    const pb = both ? pick(rng, POWERS.filter((p) => p !== pa)) : pa;
+    const specials: [Special, Special] = [powered && (both || first) ? pa : 'none', powered && (both || !first) ? pb : 'none'];
+    // A size goes to a ball without a power: one big or tiny ball, or, one time in three, a big one against a tiny one.
+    const sizes: ('big' | 'tiny' | null)[] = [null, null];
+    if (rng.next() < SIZED) {
+      const big = rng.next() < 0.5;
+      if (rng.next() < 1 / 3) [sizes[0], sizes[1]] = big ? ['big', 'tiny'] : ['tiny', 'big'];
+      else sizes[rng.next() < 0.5 ? 0 : 1] = big ? 'big' : 'tiny';
+    }
+    const a = side(rng, sa, ca, specials[0], specials[0] === 'none' ? sizes[0] : null);
+    const b = side(rng, sb, cb, specials[1], specials[1] === 'none' ? sizes[1] : null);
+    const pace = pick(rng, PACE_WORDS);
     // Names before balancing too: the winner line's length is part of the video's length.
-    a.name = nameFor(a, a);
-    b.name = nameFor(b, b);
+    a.name = nameFor(a, a, pace);
+    b.name = nameFor(b, b, pace);
     const cfg = mergeConfig(base, {
       seed,
       a,
@@ -209,8 +243,8 @@ export function randomMatchup(seed: string, base: Config, powers = true): Config
     });
     const balanced = balance(cfg);
     if (!balanced) continue;
-    balanced.a.name = nameFor(balanced.a, balanced.b);
-    balanced.b.name = nameFor(balanced.b, balanced.a);
+    balanced.a.name = nameFor(balanced.a, balanced.b, pace);
+    balanced.b.name = nameFor(balanced.b, balanced.a, pace);
     if (balanced.a.name === balanced.b.name) balanced.b.name = `Other ${balanced.b.name}`;
     return balanced;
   }

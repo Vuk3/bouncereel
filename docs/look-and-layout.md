@@ -54,8 +54,8 @@ look draws on it:
 
 The VS sits halfway between the top card and the bottom name (y 962). The top name starts
 at 202, just below the platforms' status bar and tabs. Left of each card, in the margin no
-platform puts a button in, a 14 px meter (x 40–54) runs from the box's top to the bottom of
-its finish strip (§12).
+platform puts a button in, a 14 px meter (x 80–94, 10 px from the card's frame) runs from the
+box's top to the bottom of its finish strip (§12).
 
 ⚠️ **The box is physics.** Walls, floor and finish line in layout.ts are where balls
 bounce; a layer's top edge is drawn exactly on the floor. Changing a box height changes
@@ -186,9 +186,8 @@ the video ended on, without a cut. Off, the winner card simply holds.
 
 The first frame, the opening title over it (§11), is drawn off screen at every restart by a
 second `Renderer` (`still` in [app.ts](../src/app.ts)), which also draws the look picker's
-thumbnails: this matchup's first frame in each look without the title (whose wash would hide
-the look), cropped to the top name, its box and the VS (`THUMB`, from x 60, right of the
-meters).
+thumbnails: this matchup's first frame in each look without the title (which would hide
+the look), cropped to the top name, its box, its meter and the VS (`THUMB`, x 60–1020).
 
 A video recorded before the looks existed has no `look.skin`; opening it from the library
 or a file reads it as cards, no last line and no loop (`savedConfig` in
@@ -235,14 +234,20 @@ as in the format this follows. The opening title's words keep between the top ba
 caption and left of the column (§11); the meters sit in the left margin, where none of the
 three puts a button, and LEAD CHANGE ends 20 px before the column (§12).
 
+⚠️ **Reels on a tall phone crop the sides.** Instagram fills a 19.5:9 screen with the video
+and loses about 50 px off each side (more on a narrower phone), the outer half of the margin
+left of the cards. Nothing that matters goes there: the meters keep to its inner half, 10 px
+from the cards, and the cards' own frames start at x 104.
+
 ## 10. The power tag and the watermark
 
 **The power tag.** A generated name is the ball's numbers alone ("Fibonacci Ball"), so the
 picture says which ball has a power: a gold pill (`#ffd23f`, 50 px tall, ink outline) with
 an ink lightning bolt and what the power does, in Rubik 900 27 px: `SPEEDS UP`,
 `SLOWS DOWN`, `GROWS` or `SPLITS` (`POWER_TAGS`). It is the same gold in every look, a
-power-up's colour in a game, and it shows only when the power has an amount. The opening
-says the same in words ("…, and it speeds up").
+power-up's colour in a game, and it shows only when the power has an amount. On the opening
+title it stands alone where the name row does, 1.3 times as big (`OPENING_TAG`, §11), and the
+narrator says the same in words ("…, and it speeds up").
 
 **The watermark**, on a plan whose `watermark` feature is on
 ([accounts and billing](./accounts-and-billing.md)): the BounceReel mark (42 px) and the site's
@@ -263,25 +268,34 @@ loaded from [public/mark.svg](../public/mark.svg), so a frame never waits for an
 
 ## 11. The first second
 
-The first frame is what a viewer swipes past or stays for, so it carries a title
-(`drawOpening`): over the cards at rest, a wash in the look's colours (`OPENINGS`), each
-ball's name large in its colour in the empty part of its own box (Rubik 900, up to 124 px in
-800 px; the top one in the middle of its box above the layers, y 460, the bottom one high in
-its, y 1184), a big **VS** between the cards (120 px wide, at the VS line), and under the
-bottom name the opening's question (Rubik 800 60 px in 760 px, two lines at most, smaller if
-it takes that). The question is the narrator's last line of the opening, the seed's pick, or
+The first frame is what a viewer swipes past or stays for, and every platform's cover (a
+profile grid shows it as a tile about a third of the screen wide), so it carries a title
+(`drawOpening`): over the cards at rest, a light wash in the look's colours (`OPENINGS`); the
+balls over it at full strength, the characters, under the words; each ball's name large in its
+colour in the empty part of its own box (Rubik 900, up to 124 px in 800 px; the top one in the
+middle of its box above the layers, y 460, the bottom one high in its, y 1184); a ball's power
+tag alone where its name row stands, 1.3 times as big (§10); a big **VS** between the cards
+(120 px wide, at the VS line); and under the bottom name the opening's question (Rubik 800
+60 px in 760 px, two lines at most, smaller if it takes that).
+
+The race's own labels wait under it: the name rows (pills or names, with their tags) and the
+chips or stats line are not drawn while the title is whole, so a name is never said twice and
+`DAMAGE 1` does not clutter the cover (`labels` in the renderer). The wash is light for the
+same reason: at 70–80 % the cards, layers and balls read as a faded page on a grid, and the
+title's outlines hold the words up without it. The question is the narrator's last line of the opening, the seed's pick, or
 the creator's own last sentence when that is a short question (`openingQuestion` in
 [src/audio/opening.ts](../src/audio/opening.ts)), shown with every sound.
 
 | | wash | names | VS and question |
 | --- | --- | --- | --- |
-| paper | the page, 80 % | darkened to 3:1 on it (`legible`), cream outline | ink, cream outline |
-| cards | white, 72 % | as they are, ink outline | ink, white outline |
-| night | near-black, 68 % | lightened to 3:1 (`legible`), near-black outline | white, near-black outline |
+| paper | the page, 45 % | as they are, ink outline | ink, cream outline |
+| cards | white, 40 % | as they are, ink outline | ink, white outline |
+| night | near-black, 40 % | lightened to 3:1 (`legible`), near-black outline | white, near-black outline |
 
 It shows whole through the hold and the race's first 0.4 s, then fades out over 0.6 s
 (`openingShown` in [pacing.ts](../src/pacing.ts)): about 1.2 s with the default 0.5 s hold,
-the time its words take to read. A longer hold would take that second from every race; the
+the time its words take to read. Its power tags go over the first half of that fade and the
+labels come in over the second, so the big tag and the row it stands on never show together. A longer hold would take that second from every race; the
 race's first second is the balls dropping to their first layer, which the title fades over.
 The watermark is drawn after it, so it stays over the wash.
 
@@ -290,7 +304,8 @@ still, its looks and the share image (remade with it, [website](./website.md) §
 
 ## 12. Who is ahead
 
-**A meter per ball** (`drawMeters`): left of its card (x 40, 14 px wide, `METER`), from the
+**A meter per ball** (`drawMeters`): left of its card (x 80, 14 px wide, `METER`; clear of the
+side Reels crops on a tall phone, §9), from the
 box's top to the bottom of its finish strip, filled from the bottom by how far the ball has
 come (`world.progress`, the same measure that decides a timeout and counts lead changes), in
 the team colour on a faint track (white 12 % on night, ink 13 % on paper and cards).
@@ -337,3 +352,4 @@ can sit on it for half the race. What marks it grows with how far through it the
 - 2026-10-21 - a gold ⚡ tag beside a powered ball's name; the free plan's watermark between the cards, left of the VS; the BounceReel mark drawn on the canvas (`drawMark`).
 - 2026-10-23 - the opening title over the first frame (the names, the VS, the narrator's question); a meter per ball and LEAD CHANGE when the lead changes hands for good; the last layer glowing and hitting harder as the team nears breaking through; hits landing by their size, numbers sized by their digits and a layer's number counting down; "Won by 0.3 s" on the winner card and "Did you call it? Comment below!" as its default last line.
 - 2026-10-24 - the watermark prints the site's host (`SITE_HOST`), narrowed to fit the gap.
+- 2026-10-25 - the opening made for the cover: a lighter wash (paper 45 %, cards and night 40 %), the balls over it, a ball's power tag 1.3× where its name row stands, the name rows and chips held back under it, paper's names with an ink outline; the meters moved to x 80, out of the side Reels crops on a tall phone.

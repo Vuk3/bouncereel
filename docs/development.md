@@ -86,7 +86,7 @@ settings, then everything else in tabs. Fields in the tabs are generated from
   dice; violet while nothing is ready to record, see below); Play without voice (the race
   starts at once with all its sounds but no narrator, so nothing has to be generated; Restart
   keeps it without voice, Play and Record bring the narrator back); New race; the **Powers in random matchups** switch
-  (on: about one roll in four gives a ball a power; off, the default: never; the one-line hint
+  (on: about every other roll gives a ball a power; off, the default: never; the one-line hint
   under it says so; kept under `bouncereel:dice`, not in the config); **Classics…**, the built-in
   matchups, a select drawn as a ghost pill.
 - **Video**: Length; Finish gap (photo finish, or 1–10 s between winner and loser); Sound:
