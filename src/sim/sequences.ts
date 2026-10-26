@@ -30,8 +30,8 @@ export interface SequenceDef {
   noun: string;
   /** The narration's one-clause version, completing "<name> …". Kept short on purpose: the numbers are on screen. */
   brief: string;
-  /** One true, quick fact the opening can add after the two balls are introduced. */
-  fact: string;
+  /** True, quick facts the opening can add after the two balls are introduced; the seed picks one. */
+  facts: string[];
   /** What the ball wears in the paper look: one to three characters Rubik has. */
   mark: string;
   term(n: number): bigint;
@@ -85,7 +85,11 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 1, 2, 3, 5, 8, 13…',
     noun: 'Fibonacci',
     brief: 'adds up its last two hits',
-    fact: 'Fibonacci numbers hide in sunflowers and pine cones.',
+    facts: [
+      'Fibonacci numbers hide in sunflowers and pine cones.',
+      'Fibonacci first wrote them down to count rabbits.',
+      'Fibonacci numbers lead straight to the golden ratio.',
+    ],
     mark: 'F',
     term: table((o, n) => (n < 2 ? 1n : o[n - 1] + o[n - 2])),
   },
@@ -95,7 +99,11 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 2, 6, 24, 120, 720…',
     noun: 'Factorial',
     brief: 'multiplies by the next number',
-    fact: 'By its twentieth hit, Factorial deals over two quintillion.',
+    facts: [
+      'By its twentieth hit, Factorial deals over two quintillion.',
+      'Ten factorial is already over three and a half million.',
+      'A deck of cards can be shuffled in more ways than there are atoms on Earth.',
+    ],
     mark: 'n!',
     term: table((o, n) => (n === 0 ? 1n : o[n - 1] * BigInt(n + 1))),
   },
@@ -105,7 +113,11 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 2, 4, 8, 16, 32…',
     noun: 'Doubling',
     brief: 'doubles every hit',
-    fact: 'Doubling is the rice on a chessboard trick.',
+    facts: [
+      'Doubling is the rice on a chessboard trick.',
+      'Ten doublings turn one into over a thousand.',
+      'Computers count in powers of two.',
+    ],
     mark: '×2',
     term: table((o, n) => (n === 0 ? 1n : o[n - 1] * 2n)),
   },
@@ -115,7 +127,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 3, 9, 27, 81…',
     noun: 'Tripling',
     brief: 'triples every hit',
-    fact: 'Twenty hits in, Tripling hits for over a billion.',
+    facts: ['Twenty hits in, Tripling hits for over a billion.', 'Ten triplings turn one into almost sixty thousand.'],
     mark: '×3',
     term: table((o, n) => (n === 0 ? 1n : o[n - 1] * 3n)),
   },
@@ -125,7 +137,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 4, 9, 16, 25…',
     noun: 'Square',
     brief: 'hits with square numbers',
-    fact: 'A square number is just a number times itself.',
+    facts: ['A square number is just a number times itself.', 'Add up the odd numbers in order and you always land on a square.'],
     mark: 'n²',
     term: (n) => BigInt((n + 1) * (n + 1)),
   },
@@ -135,7 +147,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 8, 27, 64, 125…',
     noun: 'Cube',
     brief: 'hits with cube numbers',
-    fact: 'Ten hits in, a cube hits for a thousand.',
+    facts: ['Ten hits in, a cube hits for a thousand.', 'Seventeen twenty-nine is the sum of two cubes in two different ways.'],
     mark: 'n³',
     term: (n) => BigInt((n + 1) * (n + 1) * (n + 1)),
   },
@@ -145,7 +157,11 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '2, 3, 5, 7, 11, 13…',
     noun: 'Prime',
     brief: 'hits with prime numbers',
-    fact: 'A prime can only be divided by one and itself.',
+    facts: [
+      'A prime can only be divided by one and itself.',
+      'The primes never run out: there is always a bigger one.',
+      'Every whole number above one is built from primes.',
+    ],
     mark: 'P',
     term: (n) => PRIMES[Math.min(Math.max(0, n), LENGTH - 1)],
   },
@@ -155,7 +171,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 3, 6, 10, 15…',
     noun: 'Triangle',
     brief: 'hits a little harder every time',
-    fact: 'Triangular numbers stack like bowling pins.',
+    facts: ['Triangular numbers stack like bowling pins.', 'Add up one to a hundred and you land on a triangular number.'],
     mark: 'T',
     term: (n) => BigInt(((n + 1) * (n + 2)) / 2),
   },
@@ -165,7 +181,10 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 1, 2, 4, 7, 13, 24…',
     noun: 'Tribonacci',
     brief: 'adds up its last three hits',
-    fact: 'Tribonacci is Fibonacci with one more number in every sum.',
+    facts: [
+      'Tribonacci is Fibonacci with one more number in every sum.',
+      'Tribonacci counts the ways to climb stairs one, two or three steps at a time.',
+    ],
     mark: 'Tr',
     term: table((o, n) => (n < 2 ? 1n : n === 2 ? 2n : o[n - 1] + o[n - 2] + o[n - 3])),
   },
@@ -175,7 +194,10 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '2, 1, 3, 4, 7, 11, 18…',
     noun: 'Lucas',
     brief: 'adds up its last two hits, from two and one',
-    fact: "Lucas numbers follow Fibonacci's rule, but start with two and one.",
+    facts: [
+      "Lucas numbers follow Fibonacci's rule, but start with two and one.",
+      'The man behind Lucas numbers also invented the Tower of Hanoi.',
+    ],
     mark: 'L',
     term: table((o, n) => (n === 0 ? 2n : n === 1 ? 1n : o[n - 1] + o[n - 2])),
   },
@@ -185,7 +207,10 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 1, 2, 5, 14, 42, 132…',
     noun: 'Catalan',
     brief: 'starts slow, then nearly quadruples every hit',
-    fact: 'Catalan numbers count the ways to match up pairs of brackets.',
+    facts: [
+      'Catalan numbers count the ways to match up pairs of brackets.',
+      'Catalan numbers count the ways to cut a polygon into triangles.',
+    ],
     mark: 'C',
     // C(n) = C(n−1) · 2(2n−1) / (n+1), which always divides exactly.
     term: table((o, n) => (n === 0 ? 1n : (o[n - 1] * BigInt(2 * (2 * n - 1))) / BigInt(n + 1))),
@@ -196,7 +221,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 10, 100, 1000…',
     noun: 'Tenfold',
     brief: 'adds a zero every hit',
-    fact: 'By its tenth hit, Tenfold hits for a billion.',
+    facts: ['By its tenth hit, Tenfold hits for a billion.', 'A googol is just a one with a hundred zeros after it.'],
     mark: '×10',
     term: (n) => 10n ** BigInt(n),
   },
@@ -206,7 +231,10 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '27, 82, 41, 124, 62, 31…',
     noun: 'Collatz',
     brief: 'halves its hit or triples it, so it jumps up and down',
-    fact: 'Nobody has ever proved that this halving and tripling always ends at one.',
+    facts: [
+      'Nobody has ever proved that this halving and tripling always ends at one.',
+      'From twenty-seven, it climbs past nine thousand before falling to one.',
+    ],
     mark: '3n',
     // From 27, the famous long one: 111 steps up to 9,232 and down to 1, far past any race's hits;
     // a ball still hitting after that goes round 4, 2, 1.
@@ -218,7 +246,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 2, 3, 4, 5…',
     noun: 'Counting',
     brief: 'hits one harder every time',
-    fact: 'Counting looks harmless, but it never stops climbing.',
+    facts: ['Counting looks harmless, but it never stops climbing.', 'Counting is the first sequence anyone ever learns.'],
     mark: '+1',
     term: (n) => BigInt(n + 1),
   },
@@ -228,7 +256,11 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '3, 1, 4, 1, 5, 9, 2…',
     noun: 'Pi',
     brief: 'hits with the digits of pi',
-    fact: "Pi's digits go on forever and never repeat.",
+    facts: [
+      "Pi's digits go on forever and never repeat.",
+      'Pi has been worked out to trillions of digits.',
+      'Nobody knows if every digit turns up equally often in pi.',
+    ],
     // Rubik's Latin set has no π.
     mark: 'Pi',
     term: (n) => PI[Math.min(Math.max(0, n), LENGTH - 1)],
@@ -239,7 +271,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     hint: '1, 1, 1, 1…',
     noun: '',
     brief: 'always hits for one',
-    fact: 'Always one: slow, steady, and never tired.',
+    facts: ['Always one: slow, steady, and never tired.', 'One, every time: it never grows, and it never stops.'],
     mark: '1',
     term: () => 1n,
   },

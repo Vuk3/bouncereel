@@ -170,11 +170,16 @@ address, redirects here. It shows the signed-in account's videos only.
   them ("4 more fit on your plan · 1 video left today", Upgrade for more; in the warning colour
   once the library is full or the day is used); how many are not posted anywhere; and a bar per
   platform, how many of them are posted there.
-- **Balls raced**, under the totals: every sequence and how many of the races it was in, most
-  first, with a bar for its share of them (`renderBalls`); a video with the same sequence on
-  both sides counts once. The ones not used yet stay at the end as "not yet", to show what the
-  next roll could try. Counted in the page from the list it already has, so it needs no request
-  of its own; hidden while the library has no race.
+- **Who won** and **Balls raced, and won**, side by side under the totals (`renderBalls`).
+  Who won: how many races the top ball won and how many the bottom one did, each "3 of 5"
+  with a bar, and "Nobody finished" when a race timed out. Balls raced: every sequence, how
+  many of the races it was in and how many it won ("4 videos · 3 won"), most raced first,
+  with a bar for its share of the races, faint, and the share it won over it in full colour;
+  a video with the same sequence on both sides counts once. The ones not used yet stay at the
+  end as "not yet", to show what the next roll could try. Counted in the page from the list it
+  already has (`winner` has been kept with every video since the first schema), so it needs
+  no request or column of its own; hidden while the library has no race. Narrower than
+  1,100 px the two stack.
 - **Search** across title, sequences, seed, file name and length; **Show**: all, not posted
   anywhere, not on YouTube / TikTok / Instagram; **sort**: newest or oldest first, title, length
   either way, closest finish. Ties stay newest first.
@@ -203,7 +208,9 @@ address, redirects here. It shows the signed-in account's videos only.
   `look.skin` and opens as it was made: the cards look, no last line on the winner card,
   no loop ([look and layout](./look-and-layout.md#6-the-end-a-loop)). One whose last line is
   still the earlier default, "Follow for more!", opens with today's ("Did you call it? Comment
-  below!"); a line the creator wrote stays. One recorded on a plan the account no longer has
+  below!"); a line the creator wrote stays. One saved before configs kept a question keeps
+  the one its seed picked then, on the first frame and in **Copy what it is about**
+  ([sound and narration](./sound-and-narration.md) §3). One recorded on a plan the account no longer has
   opens all the same; Record says what the plan lacks.
 - **A superadmin's texts for posting**, in the drawer's last section and behind **Paste texts**
   (other accounts see none of it, and the route is under `/api/admin`):
@@ -274,3 +281,5 @@ by in a migration; `NewVideo` gets a variant per game, and `toSummary` in
 - 2026-10-24 - the Videos page redone as a console page (the account page's top bar and look): totals with a bar per platform, a row per video with a thumbnail in its balls' colours and a tick per platform, links, details and delete in a drawer; a post without a link (`url` NULL, 0008_posts_without_link.sql), `colors` in the list.
 - 2026-10-25 - Balls raced under the totals: how many videos each sequence was in.
 - 2026-10-25 - the skill also saves the video's thumbnail (its first frame, `<name>-thumbnail.jpg`) beside the clip and prints its path under the JSON; a paste reads the JSON from the first brace to the last when the fence was not copied.
+- 2026-10-26 - a video saved before configs kept a question opens with, and is described with, the question its seed picked then.
+- 2026-10-26 - Who won beside Balls raced: how many races the top and the bottom ball won, and how many each sequence won, from the `winner` the list already carries.

@@ -57,10 +57,16 @@
         </div>
       </section>
 
-      <section class="card balls" id="balls-card" aria-labelledby="balls-title" hidden>
-        <h2 id="balls-title">Balls raced</h2>
-        <div id="balls" class="meters"></div>
-      </section>
+      <div class="race-stats" id="race-stats" hidden>
+        <section class="card wins" aria-labelledby="wins-title">
+          <h2 id="wins-title">Who won</h2>
+          <div id="wins" class="meters"></div>
+        </section>
+        <section class="card balls" aria-labelledby="balls-title">
+          <h2 id="balls-title">Balls raced, and won</h2>
+          <div id="balls" class="meters"></div>
+        </section>
+      </div>
 
       <div class="filters">
         <label class="search">

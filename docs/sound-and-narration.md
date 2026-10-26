@@ -10,7 +10,8 @@ the timing that keeps the narrator from talking over itself.
 | a melody, which note a hit plays | [src/audio/music.ts](../src/audio/music.ts) |
 | which event makes which sound | [src/audio/sonify.ts](../src/audio/sonify.ts) |
 | the opening, the winner line, the line a voice says when tried | [src/audio/narration.ts](../src/audio/narration.ts) `autoScript`, `outroLine`, `previewLine`; facts and briefs in [sequences.ts](../src/sim/sequences.ts) |
-| the opening's question (also on screen in the video's first second) | [src/audio/opening.ts](../src/audio/opening.ts) `QUESTIONS`, `openingDraws`, `openingQuestion` |
+| the opening's question (also on screen in the video's first second) | [src/audio/opening.ts](../src/audio/opening.ts) `QUESTIONS`, `openingDraws`, `configQuestion`, `openingQuestion` |
+| the winner lines the dice deals | [src/config.ts](../src/config.ts) `WINNER_LINES` |
 | the voices, loading Kokoro, the clip cache | [src/audio/narration.ts](../src/audio/narration.ts) `VOICES`, `loadKokoro`, `synthesize`, `VoiceCache` |
 | when lines are said, trying a voice | [src/app.ts](../src/app.ts) `playIntro`, `sayOutroWhenFree`, `hear` |
 | the voice list and its buttons in the Voice tab | [src/app.ts](../src/app.ts) `buildVoiceBlock` |
@@ -72,8 +73,9 @@ loaded.
 
 ## 3. What the narrator says
 
-**The opening** (`autoScript`), unless one is typed in the panel: who is racing, one
-clause on what each ball does, one fact, a question. It never explains the floor, the
+**The opening** (`autoScript`), unless one is typed in the panel: who is racing (said one
+of five ways, `STARTS`: "X versus Y!", "It's X against Y!"…), one clause on what each ball
+does, one fact, a question. It never explains the floor, the
 layers or the finish line; viewers get that from the picture within a second. About 10–12
 seconds:
 
@@ -86,13 +88,19 @@ seconds:
   Slow or Fast, nor for a ball that slows down), plus its special ("and it speeds up").
 - When both share a sequence: "Both hit with Fibonacci numbers. Growing gets bigger,
   Speeding gets faster."
-- The fact is a sequence's `fact`, from a ball whose name shows its sequence; the
-  question is one of four (`QUESTIONS`). Both are picked by the seed (`opening:<seed>`,
-  `openingDraws`), so a new race of the same matchup sounds a little different.
+- The fact is one of a sequence's `facts` (two or three each), from a ball whose name shows
+  its sequence; the question is one of twenty (`QUESTIONS`), none leaning to a ball. How it
+  starts, the fact and the question are picked by the seed (`opening:<seed>`,
+  `openingDraws`), so a new race of the same matchup sounds a little different and a run of
+  videos does not keep asking the same thing.
 - **The question is on screen too**, over the video's first frame, with every sound
   (`openingQuestion`; [look and layout](./look-and-layout.md) §11): a narrated video asks it
   in the picture first and in words at the end of the opening. An opening typed in the panel
-  gives its own last sentence when that is a short question, else the seed's pick shows.
+  gives its own last sentence when that is a short question; else the config's question
+  shows (`configQuestion`): one typed under More → Video (`look.question`), or the seed's
+  pick. A config saved before `look.question` existed keeps the question its seed picked
+  then, among the first four, the only ones there were (`firstQuestion`, `savedConfig`):
+  its first frame, and the text its posts are written from, stay the video's.
   ⚠️ The questions live in [opening.ts](../src/audio/opening.ts), not in narration.ts: the
   renderer is on the home page too, and narration.ts there would bring the Kokoro loader,
   and the build would tie the home page's scripts to the 2 MB voice chunk.
@@ -102,8 +110,11 @@ and a line per break piles up: two balls breaking layers a second apart left the
 either talking over itself or saying "too" about a break it never named.
 
 **The winner line**: `voice.outro`, `{winner} wins! Did you guess right?` by default
-(`{winner}` and `{time}` are filled in). Left empty, the narrator says nothing at the end
-and the video closes on the fanfare.
+(`{winner}` and `{time}` are filled in). Each roll of the dice deals another of
+`WINNER_LINES` ([config.ts](../src/config.ts)), unless the creator wrote their own: the
+others say who won and stop ("{winner} takes it!"), since the winner card's last line is the
+question. Left empty, the narrator says nothing at the end and the video closes on the
+fanfare.
 
 ## 4. The voice
 
@@ -180,3 +191,4 @@ generate both first, then:
 - 2026-10-20 - the Sound field (narrator and music, music only, silent) decides what plays and is recorded; the narrator also needs a plan that includes it.
 - 2026-10-21 - Kokoro is the only voice (ElevenLabs, OpenAI and the browser voice removed, and with them the API keys); no call-outs, only the opening and the winner line, which may be left empty; the Voice tab lists the voices with a ▶ preview each and Hear the opening; ONNX Runtime is served from this site instead of jsDelivr.
 - 2026-10-23 - a sting when the lead changes hands for good (glassy pings, never held back by the voice cap); the last layer's notes climb to an octave at the break; the opening's question moved to opening.ts, shown on the first frame too (the openings it writes unchanged, 480 checked).
+- 2026-10-26 - more variety in the words: twenty questions (`look.question`, typed under More → Video or the seed's pick; a config saved before keeps its question), two or three facts a sequence, five ways to start the opening, and the dice deals the winner line from `WINNER_LINES`.

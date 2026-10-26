@@ -178,28 +178,50 @@ function renderSummary(): void {
 }
 
 /**
- * Every sequence and how many of the races it was in, most first, a bar for its share of them; a
- * video with the same one on both sides counts once. The ones not used yet stay at the end, as
- * what the next roll could try.
+ * Who won, top ball or bottom; then every sequence, how many of the races it was in and how many
+ * it won, most raced first, a bar for its share of the races with the share it won in full
+ * colour. A video with the same one on both sides counts once. The ones not used yet stay at the
+ * end, as what the next roll could try. Counted from the list the page has: the winner is kept
+ * with each video since the first recording.
  */
 function renderBalls(): void {
-  const used = new Map<string, number>(Object.keys(SEQUENCES).map((id) => [id, 0]));
-  const races = videos.filter((v) => v.race);
-  for (const v of races) {
-    for (const id of new Set([v.race!.a.sequence, v.race!.b.sequence])) if (id) used.set(id, (used.get(id) ?? 0) + 1);
+  const raced = new Map<string, number>(Object.keys(SEQUENCES).map((id) => [id, 0]));
+  const won = new Map<string, number>();
+  const races = videos.flatMap((v) => (v.race ? [v.race] : []));
+  for (const race of races) {
+    for (const id of new Set([race.a.sequence, race.b.sequence])) if (id) raced.set(id, (raced.get(id) ?? 0) + 1);
+    const winner = race.winner && race[race.winner].sequence;
+    if (winner) won.set(winner, (won.get(winner) ?? 0) + 1);
   }
-  $('#balls-card').hidden = !races.length;
+  $('#race-stats').hidden = !races.length;
+  const sides = [winMeter('Top ball', races.filter((r) => r.winner === 'a').length, races.length), winMeter('Bottom ball', races.filter((r) => r.winner === 'b').length, races.length)];
+  const nobody = races.filter((r) => r.winner === null).length;
+  $('#wins').replaceChildren(...sides, ...(nobody ? [winMeter('Nobody finished', nobody, races.length)] : []));
   // Sorting is stable: a tie keeps SEQUENCES' own order.
-  $('#balls').replaceChildren(...[...used].sort((a, b) => b[1] - a[1]).map(([id, count]) => ballMeter(sequenceLabel(id), count, races.length)));
+  const order = [...raced].sort((a, b) => b[1] - a[1] || (won.get(b[0]) ?? 0) - (won.get(a[0]) ?? 0));
+  $('#balls').replaceChildren(...order.map(([id, count]) => ballMeter(sequenceLabel(id), count, won.get(id) ?? 0, races.length)));
 }
 
-function ballMeter(label: string, count: number, races: number): HTMLElement {
-  const box = el('div', count ? 'meter' : 'meter unused');
+function winMeter(label: string, wins: number, races: number): HTMLElement {
+  const box = el('div', 'meter');
   const head = el('div', 'meter-label');
-  head.append(el('span', '', label), el('strong', '', count ? `${count} ${count === 1 ? 'video' : 'videos'}` : 'not yet'));
+  head.append(el('span', '', label), el('strong', '', `${wins} of ${races}`));
   const bar = el('div', 'meter-bar');
   bar.append(el('i'));
+  bar.style.setProperty('--fill', `${races ? (wins / races) * 100 : 0}%`);
+  bar.setAttribute('aria-hidden', 'true');
+  box.append(head, bar);
+  return box;
+}
+
+function ballMeter(label: string, count: number, wins: number, races: number): HTMLElement {
+  const box = el('div', count ? 'meter' : 'meter unused');
+  const head = el('div', 'meter-label');
+  head.append(el('span', '', label), el('strong', '', count ? `${count} ${count === 1 ? 'video' : 'videos'} · ${wins} won` : 'not yet'));
+  const bar = el('div', 'meter-bar');
+  bar.append(el('i'), el('i', 'won'));
   bar.style.setProperty('--fill', `${races ? (count / races) * 100 : 0}%`);
+  bar.style.setProperty('--won', `${races ? (wins / races) * 100 : 0}%`);
   bar.setAttribute('aria-hidden', 'true');
   box.append(head, bar);
   return box;

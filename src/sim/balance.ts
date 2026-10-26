@@ -1,4 +1,5 @@
-import { mergeConfig, type Config, type Contestant, type MelodyId, type Special } from '../config.ts';
+import { QUESTIONS } from '../audio/opening.ts';
+import { LAST_LINES, WINNER_LINES, mergeConfig, type Config, type Contestant, type MelodyId, type Special } from '../config.ts';
 import { raceSeconds } from '../pacing.ts';
 import { createRng, type Rng } from './rng.ts';
 import { SEQUENCES, type SequenceId } from './sequences.ts';
@@ -194,12 +195,22 @@ function nameFor(c: Contestant, other: Contestant, pace: PaceWords): string {
 /**
  * A new matchup from a seed: two different sequences, often a power (never, when `powers` is
  * off), now and then a size, layers both can break, colours, a melody, which pace words the
- * names say, balanced to the requested length. Settings that are not about the matchup
- * (voice, volume, timing, look) come from `base`. Tries until a combination balances; nearly
- * every seed finds one within a handful of tries.
+ * names say, the words around the race, balanced to the requested length. Settings that are
+ * not about the matchup (voice, volume, timing, look) come from `base`. Tries until a
+ * combination balances; nearly every seed finds one within a handful of tries.
  */
 export function randomMatchup(seed: string, base: Config, powers = true): Config {
   const rng = createRng(`matchup:${seed}`);
+  // The words, from a stream of their own so a seed's matchup stays what it was: the question
+  // goes back to the new seed's pick, the last line and the winner line are new picks. Only the
+  // dice's own words change: a line the creator wrote, or none, stays. Dealt before balancing,
+  // since the winner line's length is part of the video's.
+  const words = createRng(`words:${seed}`);
+  const deal = (line: string, pool: readonly string[]) => (pool.includes(line) ? pick(words, pool.filter((l) => l !== line)) : line);
+  const said = {
+    look: { question: QUESTIONS.includes(base.look.question) ? '' : base.look.question, cta: deal(base.look.cta, LAST_LINES) },
+    voice: { outro: deal(base.voice.outro, WINNER_LINES) },
+  };
   // "Always 1" needs a hundred hits for even the smallest round layer, and the digits of pi (4.5 a
   // hit) pair with nothing but Counting, on one layer of 100: only by hand.
   const sequences = (Object.keys(SEQUENCES) as SequenceId[]).filter((s) => s !== 'ones' && s !== 'pi');
@@ -240,6 +251,7 @@ export function randomMatchup(seed: string, base: Config, powers = true): Config
       b,
       layers,
       sound: { melody: pick(rng, MELODIES) },
+      ...said,
     });
     const balanced = balance(cfg);
     if (!balanced) continue;

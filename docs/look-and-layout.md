@@ -173,7 +173,10 @@ timeout (`marginLine`).
 
 The **last line** is `look.cta`, written in capitals, set under More → Video (empty for
 none). Its default, "Did you call it? Comment below!", answers the opening's question and
-sends viewers to the comments. A saved config whose line is still the earlier default,
+sends viewers to the comments. Each roll of the dice deals another of `LAST_LINES`
+([config.ts](../src/config.ts)), so a run of videos does not end on the same words; each
+answers any of the opening's questions, whoever won and by however much. A line the
+creator wrote stays through a roll, and so does none. A saved config whose line is still the earlier default,
 "Follow for more!" word for word, reads as today's (`savedConfig` in
 [config.ts](../src/config.ts)); a line the creator wrote stays.
 
@@ -282,9 +285,11 @@ The race's own labels wait under it: the name rows (pills or names, with their t
 chips or stats line are not drawn while the title is whole, so a name is never said twice and
 `DAMAGE 1` does not clutter the cover (`labels` in the renderer). The wash is light for the
 same reason: at 70–80 % the cards, layers and balls read as a faded page on a grid, and the
-title's outlines hold the words up without it. The question is the narrator's last line of the opening, the seed's pick, or
-the creator's own last sentence when that is a short question (`openingQuestion` in
-[src/audio/opening.ts](../src/audio/opening.ts)), shown with every sound.
+title's outlines hold the words up without it. The question is the narrator's last line of
+the opening: the creator's own last sentence when that is a short question, else the one
+typed under More → Video (`look.question`), else the seed's pick of twenty
+(`openingQuestion` in [src/audio/opening.ts](../src/audio/opening.ts);
+[sound and narration](./sound-and-narration.md) §3), shown with every sound.
 
 | | wash | names | VS and question |
 | --- | --- | --- | --- |
@@ -353,3 +358,4 @@ can sit on it for half the race. What marks it grows with how far through it the
 - 2026-10-23 - the opening title over the first frame (the names, the VS, the narrator's question); a meter per ball and LEAD CHANGE when the lead changes hands for good; the last layer glowing and hitting harder as the team nears breaking through; hits landing by their size, numbers sized by their digits and a layer's number counting down; "Won by 0.3 s" on the winner card and "Did you call it? Comment below!" as its default last line.
 - 2026-10-24 - the watermark prints the site's host (`SITE_HOST`), narrowed to fit the gap.
 - 2026-10-25 - the opening made for the cover: a lighter wash (paper 45 %, cards and night 40 %), the balls over it, a ball's power tag 1.3× where its name row stands, the name rows and chips held back under it, paper's names with an ink outline; the meters moved to x 80, out of the side Reels crops on a tall phone.
+- 2026-10-26 - the question over the first frame can be typed (`look.question`, More → Video) and is otherwise one of twenty; the dice deals the last line on the winner card from `LAST_LINES`.

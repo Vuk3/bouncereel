@@ -111,7 +111,7 @@ enough to read whole before the real work starts.
 | **special**, **power** | what else a floor hit does to the hitting ball: `faster`, `slower` (% per hit), `grow` (px of radius), `split` (new balls, up to 64). The panel calls it a power, and the video tags the ball with it: a gold ⚡ `SPEEDS UP` beside its name |
 | **look** | `look.skin`, how the video is drawn: `paper` (the default), `cards`, or `night` (the cards after dark); only the drawing, never the race ([look and layout](docs/look-and-layout.md)) |
 | **sound** | `sound.track`, what Record puts in the file and Play plays: `narrator` (and music), `music` only, `silent` (no audio track) |
-| **seed** | the text all randomness comes from: start positions, angles, who wins a balanced race, the opening's fact |
+| **seed** | the text all randomness comes from: start positions, angles, who wins a balanced race, the opening's wording and question |
 | **balance** | setting both speeds so the race fits the video length and ends close ([balance.ts](src/sim/balance.ts)) |
 | **video length** | `timing.video`, seconds; the race gets what is left after the frame around it ([pacing.ts](src/pacing.ts)) |
 | **margin** | seconds between the winner and the loser touching the line; "wins by 0.3 s" |
@@ -174,7 +174,7 @@ for it.
 **The dice is clicked.** `randomMatchup(seed, cfg, powers)` picks two different
 sequences, a power for about one matchup in four (never, with the panel's Powers in random
 matchups switch off or a plan without powers), layers both can break in 14–80 hits, two colours far apart and
-a melody, names the balls, and calls `balance()`. Balancing measures when each team
+a melody, names the balls, deals a new last line and winner line, and calls `balance()`. Balancing measures when each team
 touches the line (`finishTimes`), scales its speed so the winner lands on the race length
 and the loser the finish gap after it, repeats a few times, and rejects anything off by
 more than 0.6 s or slower than 140 / faster than 3200 px/s; the generator then tries the

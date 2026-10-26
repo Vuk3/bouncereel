@@ -1,6 +1,7 @@
-import type { Config, Special } from '../config.ts';
+import { LAST_LINES, type Config, type Special } from '../config.ts';
 import { MELODIES } from '../audio/music.ts';
 import { autoScript } from '../audio/narration.ts';
+import { configQuestion } from '../audio/opening.ts';
 import { COLORS } from '../sim/balance.ts';
 import { MAX_BALLS } from '../sim/duel.ts';
 import { SEQUENCES, formatBig, parseLayers } from '../sim/sequences.ts';
@@ -28,7 +29,7 @@ interface Base {
 export type Field =
   | (Base & { kind: 'range'; min: number; max: number; step: number; format?: (v: number) => string })
   | (Base & { kind: 'select'; options: (cfg: Config) => [value: string, label: string][] })
-  | (Base & { kind: 'text'; placeholder?: string })
+  | (Base & { kind: 'text'; placeholder?: string | ((cfg: Config) => string) })
   | (Base & { kind: 'textarea'; placeholder: (cfg: Config) => string })
   | (Base & { kind: 'color'; swatches: readonly string[] })
   | (Base & { kind: 'check' });
@@ -134,7 +135,7 @@ export const TABS: Tab[] = [
         // The voices, each with a way to hear it, are drawn above these by app.ts (buildVoiceBlock).
         fields: [
           { kind: 'textarea', path: 'voice.script', label: 'Opening (leave empty for the automatic one)', live: true, placeholder: autoScript },
-          { kind: 'text', path: 'voice.outro', label: 'Winner line', live: true, hint: '{winner} and {time} are filled in. Leave it empty for none.' },
+          { kind: 'text', path: 'voice.outro', label: 'Winner line', live: true, hint: '{winner} and {time} are filled in. The dice deals a new one unless you write your own. Leave it empty for none.' },
         ],
       },
     ],
@@ -179,7 +180,15 @@ export const TABS: Tab[] = [
         id: 'ending',
         title: 'Video',
         fields: [
-          { kind: 'text', path: 'look.cta', label: 'Last line on the winner card', placeholder: 'Did you call it? Comment below!', live: true, hint: 'Leave it empty for none' },
+          {
+            kind: 'text',
+            path: 'look.question',
+            label: 'Question on the first frame',
+            placeholder: (cfg) => configQuestion({ ...cfg, look: { ...cfg.look, question: '' } }),
+            live: true,
+            hint: 'The automatic opening ends on it too. Leave it empty for one picked with the race',
+          },
+          { kind: 'text', path: 'look.cta', label: 'Last line on the winner card', placeholder: LAST_LINES[0], live: true, hint: 'The dice deals a new one unless you write your own. Leave it empty for none' },
           { kind: 'check', path: 'look.loop', label: 'End on the first frame, so the video loops without a cut', live: true },
           { kind: 'range', path: 'timing.startDelay', label: 'Hold before the start', min: 0, max: 3, step: 0.1, format: secs, live: true },
           { kind: 'range', path: 'timing.hold', label: 'Winner card, at least', min: 1.5, max: 8, step: 0.5, format: secs, hint: 'Longer when the video length or the winner line needs it' },

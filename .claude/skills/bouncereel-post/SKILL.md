@@ -31,7 +31,7 @@ every field and keeps the texts with the video; the path after it is ignored the
 | `Lead changes: N` | a fact you may use, within the spoiler rules |
 | `Video: 45 s, paper look, narrator and music` | the length is a fact you may use; the look and the sound are not for viewers |
 | `First frame: the two names, VS and "…"` | the question the video opens on, which the narrator asks too: the posts pose the same choice |
-| `Last line on the winner card: "…"` | what the video ends on: the posts' call to comment agrees with it, without copying it |
+| `Last line on the winner card: "…"` | what the video ends on: the posts' closing question agrees with it, without copying it |
 | `Seed`, `File`, `Library id` | for the JSON only (`file`, `video`), never in a text |
 
 A block can lack lines. A video saved before configs were kept has no colours, look, first frame
@@ -87,16 +87,35 @@ that suits this block best.
 
 ### Hook first
 
-TikTok and Instagram show a caption's first line or so before "more" (Instagram about 125
-characters). That line makes sense on its own and poses the choice: both balls, by name or
-colour, and what each does. No lead-ins ("Watch this", "Wait for it", "You won't believe"), no
-promises the video does not keep.
+The feed shows only the start of a text, and that start is all most people read. How much
+shows depends on the screen; these are the working figures (creators' measurements, not
+published by the platforms):
 
-### Make people pick a side
+- **YouTube Shorts**: the title, cut at about 40 characters.
+- **TikTok**: about one line of the caption, some 90 characters.
+- **Instagram Reels**: about 55 characters before "more", far less than a feed post's 125.
 
-Every text ends on a choice between the two, made concrete with the colours when they can be
-told apart: "green or purple?" rather than "who will win?". The pinned comments ask for a pick;
-Instagram's call to comment names the two choices.
+That start makes sense on its own and poses the choice: both balls, by name, colour or
+sequence. What follows it is for search and for the few who open "more". No lead-ins ("Watch
+this", "Wait for it", "You won't believe"), no promises the video does not keep.
+
+### Words people search
+
+Search on all three reads the words of the title and captions, and hashtags weigh less than
+they did. So each text says once, in a sentence that reads naturally, what the video is: a
+ball race (or marble race) and each ball's sequence by its usual name ("Catalan numbers vs
+powers of two"). Never a list of keywords: a caption that reads as written for a machine is
+treated as one.
+
+### Ask, do not instruct
+
+The description and the captions end on a question between the two (before their hashtags),
+made concrete with the colours when they can be told apart: "green or purple?" rather than
+"who will win?". No text gives an instruction:
+no "Comment green below", "drop a 🟢", "like if", "tag a friend", "follow for more". Meta
+demotes posts that ask for a comment with a given word or emoji (comment bait), TikTok keeps
+engagement bait off the For You feed, and a real question draws the same comments. The pinned
+comments ask for a pick the same way.
 
 ### Only facts from the block
 
@@ -126,21 +145,31 @@ same numbers is fine: doubling is powers of two.
 **YouTube Shorts**
 
 - `title`: up to 60 characters, sentence case, at most one emoji, no hashtags. It carries the
-  angle alone, since outside the Shorts feed the title is all people see.
-- `description`: one or two lines (the hook, then the question), then one line of 3–6 hashtags
-  with `#shorts` first.
-- `tags`: 10–15, lowercase, no `#`, under 500 characters together: the sequences and their usual
-  names, the ball names, "ball race", "marble race", "number race", "who will win",
-  "satisfying", "math", "simulation".
+  angle alone, since outside the Shorts feed the title is all people see, and its first 40
+  characters carry it even when the rest is cut: the balls first, then the hook. When the two
+  names leave no room for the hook in those 40, name the balls by sequence or colour.
+- `description`: the Shorts feed does not show it; search reads it. One or two sentences that
+  say what the video is (*Words people search*) and end on the question, then one line of 3–5
+  hashtags: the matchup's first, since only the first three show above the title on the watch
+  page, and `#shorts` last (YouTube files a vertical clip under Shorts by itself, so the tag
+  only costs a place).
+- `tags`: 5–10, lowercase, no `#`, under 500 characters together. YouTube says tags play a
+  minimal role in finding a video and help mostly when people misspell what they search for,
+  so keep them few: the sequences' usual names, the two ball names, "ball race", "marble race",
+  and a misspelling people type for a sequence when there is a common one ("fibonnaci",
+  "tribonaci").
 
 **TikTok**
 
-- `caption`: under 150 characters including the 3–5 hashtags at its end; the hook in one go.
+- `caption`: under 250 characters with its hashtags. The hook in the first line, within 90
+  characters; then, if the hook did not already say it, what the video is (*Words people
+  search*) and the question; then 3–5 hashtags.
 
 **Instagram Reels**
 
-- `caption`: three lines: the hook (within 125 characters, so it shows before "more"), a call
-  to comment that names the choice ("Comment green or purple below."), then 3–5 hashtags.
+- `caption`: three lines. The hook, within 55 characters, so it shows before "more" on a reel;
+  then one or two sentences that say what the video is and end on the question; then 3–5
+  hashtags (Instagram takes five at most).
 
 **Pinned comments** (one per platform): a short question that asks for a pick, no spoiler. The
 three are three different questions, not one sentence with a word swapped. They may lean on the
@@ -167,9 +196,11 @@ first frame's question without copying it.
 | Counting | none | counting numbers |
 | Always 1 | none | none |
 
-A ball with a power adds `#powerup`. Each text's hashtags: the matchup's first, then a few of
-`#ballrace`, `#marblerace`, `#satisfying`, `#math`, `#numbers`, `#simulation`. Nothing outside
-these lists.
+A ball with a power adds `#powerup`. Each text's hashtags: the matchup's first, then
+`#ballrace` or `#marblerace` or both, then at most one broad one of `#satisfying`, `#math`,
+`#numbers`, `#simulation`. Narrow tags reach the people who look for this; broad ones bury it
+among millions. Nothing outside these lists: no `#fyp`, `#foryou` or `#viral`, which describe
+nothing.
 
 ## Format
 
@@ -182,7 +213,7 @@ a text is `\"`, no trailing commas.
   "file": "nova-vs-blaze-seed-k3x9.mp4",
   "youtube": {
     "title": "…",
-    "description": "…\n#shorts #ballrace …",
+    "description": "…\n#ballrace … #shorts",
     "tags": ["ball race", "…"],
     "pinnedComment": "…"
   },
@@ -191,7 +222,7 @@ a text is `\"`, no trailing commas.
     "pinnedComment": "…"
   },
   "instagram": {
-    "caption": "…\nComment … below.\n#ballrace …",
+    "caption": "…\n… green or purple?\n#ballrace …",
     "pinnedComment": "…"
   }
 }
@@ -253,16 +284,25 @@ node -e '
 const t = JSON.parse(require("fs").readFileSync(0, "utf8"));
 const n = (s) => [...s].length;
 const h = (s) => (s.match(/#\w+/g) || []).length;
+const first = (s, k) => [...s.split("\n")[0]].slice(0, k).join("");
 const check = (name, ok, got) => console.log(ok ? "ok  " : "FIX ", name, got);
+const texts = [t.youtube.title, t.youtube.description, t.youtube.pinnedComment, t.tiktok.caption, t.tiktok.pinnedComment, t.instagram.caption, t.instagram.pinnedComment];
 check("title <= 60", n(t.youtube.title) <= 60, n(t.youtube.title));
-check("youtube hashtags 3-6", h(t.youtube.description) >= 3 && h(t.youtube.description) <= 6, h(t.youtube.description));
-check("#shorts first", (t.youtube.description.match(/#\w+/) || [])[0] === "#shorts", "");
-check("tags 10-15", t.youtube.tags.length >= 10 && t.youtube.tags.length <= 15, t.youtube.tags.length);
+check("youtube hashtags 3-5", h(t.youtube.description) >= 3 && h(t.youtube.description) <= 5, h(t.youtube.description));
+check("#shorts last", (t.youtube.description.match(/#\w+/g) || []).pop() === "#shorts", "");
+check("tags 5-10", t.youtube.tags.length >= 5 && t.youtube.tags.length <= 10, t.youtube.tags.length);
 check("tags lowercase, < 500", t.youtube.tags.every((x) => x === x.toLowerCase()) && t.youtube.tags.join(",").length < 500, t.youtube.tags.join(",").length);
-check("tiktok < 150", n(t.tiktok.caption) < 150, n(t.tiktok.caption));
+check("tiktok < 250", n(t.tiktok.caption) < 250, n(t.tiktok.caption));
+check("tiktok line 1 <= 90", n(t.tiktok.caption.split("\n")[0]) <= 90, n(t.tiktok.caption.split("\n")[0]));
 check("tiktok hashtags 3-5", h(t.tiktok.caption) >= 3 && h(t.tiktok.caption) <= 5, h(t.tiktok.caption));
-check("instagram line 1 <= 125", n(t.instagram.caption.split("\n")[0]) <= 125, n(t.instagram.caption.split("\n")[0]));
+check("instagram line 1 <= 55", n(t.instagram.caption.split("\n")[0]) <= 55, n(t.instagram.caption.split("\n")[0]));
 check("instagram hashtags 3-5", h(t.instagram.caption) >= 3 && h(t.instagram.caption) <= 5, h(t.instagram.caption));
+check("no comment bait", !texts.some((s) => /\b(comment\b[^?\n]*\b(below|down)|drop (a|an|your)|tag a friend|like if|follow for)\b/i.test(s)), "");
+check("no #fyp, #foryou, #viral", !texts.some((s) => /#(fyp|foryou\w*|viral)\b/i.test(s)), "");
+console.log("\nWhat the feed shows:");
+console.log("  youtube   ", first(t.youtube.title, 40));
+console.log("  tiktok    ", first(t.tiktok.caption, 90));
+console.log("  instagram ", first(t.instagram.caption, 55));
 ' <<'EOF'
 { … }
 EOF
@@ -270,7 +310,11 @@ EOF
 
 Then read it once more for what no script sees:
 
+- what the feed shows (the script's last three lines) makes sense alone and poses the choice;
 - the winner and the margin are nowhere, and no wording leans to one ball;
 - the title and the three captions tell the same angle, and it is not the last video's;
+- the description and both captions say in words that it is a ball race and name the
+  sequences, without reading as a keyword list;
 - every fact is in the block;
+- the description and the captions end on a question, and no text tells people what to do;
 - the three pinned comments are three different questions.

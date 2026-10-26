@@ -10,7 +10,7 @@ determinism) · [matchups and balancing](../../docs/matchups-and-balancing.md).
 | Kind | Place |
 | --- | --- |
 | what happens on a bounce, a floor hit, a break, the finish | [duel.ts](./duel.ts) |
-| a new number sequence | [sequences.ts](./sequences.ts): `term`, a `noun` for generated names, a `brief` and a `fact` for the narration, a `mark` for the ball |
+| a new number sequence | [sequences.ts](./sequences.ts): `term`, a `noun` for generated names, a `brief` and `facts` for the narration, a `mark` for the ball |
 | a whole run without drawing, the finish times | [world.ts](./world.ts): `predict`, `finishTimes` |
 | balancing, random matchups | [balance.ts](./balance.ts) |
 | randomness, sine and cosine | [rng.ts](./rng.ts), [detmath.ts](./detmath.ts) |

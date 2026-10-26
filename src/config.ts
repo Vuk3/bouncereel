@@ -1,4 +1,5 @@
 import { LOOKS, type Look, type Sound } from '../shared/features.ts';
+import { firstQuestion } from './audio/opening.ts';
 import type { SequenceId } from './sim/sequences.ts';
 
 // Everything a video is made of. A Config fully determines the run, so a
@@ -60,7 +61,7 @@ export interface Config {
     voice: string;
     /** The opening narration; empty means the one written from the rules. */
     script: string;
-    /** The winner line, with {winner} and {time} filled in; empty for none. */
+    /** The winner line, with {winner} and {time} filled in; empty for none. The dice deals one of WINNER_LINES. */
     outro: string;
   };
   timing: {
@@ -80,7 +81,12 @@ export interface Config {
   };
   look: {
     skin: Skin;
-    /** The last line on the winner card ("Did you call it? Comment below!"); empty for none. */
+    /**
+     * The question over the first frame, which the automatic opening ends on too; empty for the
+     * seed's pick of QUESTIONS (src/audio/opening.ts).
+     */
+    question: string;
+    /** The last line on the winner card ("Did you call it? Comment below!"); empty for none. The dice deals one of LAST_LINES. */
     cta: string;
     /** The last half second cross-fades into the first frame, so the video loops without a visible cut. */
     loop: boolean;
@@ -89,6 +95,39 @@ export interface Config {
     safeZones: boolean;
   };
 }
+
+/**
+ * The last lines on the winner card, one dealt with every roll of the dice (randomMatchup), so a
+ * run of videos does not end on the same words; the first is the default. Each answers any of
+ * the opening's questions, whoever won and by however much.
+ */
+export const LAST_LINES = [
+  'Did you call it? Comment below!',
+  'Did you call it?',
+  'Was that your pick?',
+  'Did your pick win?',
+  'Saw that coming?',
+  'How did your pick do?',
+  'Who should race next?',
+  'Want a rematch?',
+];
+
+/**
+ * The winner lines, dealt the same way; the first is the default. The others say who won and
+ * stop: the card's last line is the question, and the narrator asking another over it doubles it.
+ */
+export const WINNER_LINES = [
+  '{winner} wins! Did you guess right?',
+  '{winner} wins!',
+  '{winner} takes it!',
+  'And the winner is {winner}!',
+  '{winner} gets there first!',
+  '{winner} wins it in {time} seconds!',
+  'Victory for {winner}!',
+  'It goes to {winner}!',
+  '{winner} does it!',
+  "That's the race: {winner} wins!",
+];
 
 const BASE: Config = {
   seed: '1',
@@ -99,10 +138,10 @@ const BASE: Config = {
   layers: '1000, 1e10, 1e15',
   physics: { gravity: 0, maxSpeed: 5000 },
   sound: { melody: 'ode', timbre: 'marimba', volume: 0.8, track: 'narrator' },
-  voice: { voice: 'af_heart', script: '', outro: '{winner} wins! Did you guess right?' },
+  voice: { voice: 'af_heart', script: '', outro: WINNER_LINES[0] },
   timing: { video: 40, gap: 0, startDelay: 0.5, hold: 3.5, maxSeconds: 150 },
-  // The last line answers the opening's question ("Who's your pick?") and sends viewers to the comments.
-  look: { skin: 'paper', cta: 'Did you call it? Comment below!', loop: true, separator: '.', safeZones: false },
+  // The last line answers the opening's question and sends viewers to the comments.
+  look: { skin: 'paper', question: '', cta: LAST_LINES[0], loop: true, separator: '.', safeZones: false },
 };
 
 /** The last line's earlier default, which savedConfig reads as today's. */
@@ -196,7 +235,9 @@ export function mergeConfig<T>(base: T, patch: unknown): T {
  * recorded. One that named no narrator, or the browser's own voice (which never reached the
  * file), was music only in effect, and opens so: the narrator is Kokoro, or none. Its last line,
  * if still the old default word for word, is today's: a default nobody chose, kept by every
- * config the studio saved, would leave the comment line to new accounts only.
+ * config the studio saved, would leave the comment line to new accounts only. One saved before
+ * configs kept a question keeps the one its seed picked then, so its first frame, and the text
+ * its posts are written from, are the video's.
  */
 export function savedConfig(saved: unknown): Config {
   const raw = typeof saved === 'object' && saved !== null ? (saved as { look?: unknown; voice?: unknown }) : {};
@@ -206,6 +247,7 @@ export function savedConfig(saved: unknown): Config {
   const provider = typeof raw.voice === 'object' && raw.voice !== null ? (raw.voice as { provider?: unknown }).provider : undefined;
   if ((provider === 'none' || provider === 'browser') && cfg.sound.track === 'narrator') cfg.sound.track = 'music';
   if (cfg.look.cta === OLD_CTA) cfg.look.cta = BASE.look.cta;
+  if (!('question' in look)) cfg.look.question = firstQuestion(cfg.seed);
   return cfg;
 }
 

@@ -91,7 +91,9 @@ export class Panel {
       const { field, input } = b;
       b.row.hidden = field.show ? !field.show(cfg) : false;
       if (field.kind === 'select') this.fillOptions(input as HTMLSelectElement, field.options(cfg));
-      if (field.kind === 'textarea') (input as HTMLTextAreaElement).placeholder = field.placeholder(cfg);
+      if (field.kind === 'textarea' || (field.kind === 'text' && typeof field.placeholder === 'function')) {
+        (input as HTMLInputElement | HTMLTextAreaElement).placeholder = typeof field.placeholder === 'function' ? field.placeholder(cfg) : '';
+      }
       const value = getPath(cfg, field.path);
       // Leave a text box alone while it is being typed in, or the caret jumps.
       const typing = document.activeElement === input && (field.kind === 'text' || field.kind === 'textarea');
@@ -183,7 +185,8 @@ export class Panel {
       case 'text': {
         const el = document.createElement('input');
         el.type = 'text';
-        el.placeholder = field.placeholder ?? '';
+        // One that depends on the config is filled in by refresh().
+        el.placeholder = typeof field.placeholder === 'string' ? field.placeholder : '';
         el.spellcheck = false;
         label.append(name, el);
         row.append(label);

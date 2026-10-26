@@ -2,7 +2,7 @@ import type { Config, Contestant } from '../config.ts';
 import { fillTemplate } from '../config.ts';
 import { SEQUENCES } from '../sim/sequences.ts';
 import type { Outcome } from '../sim/world.ts';
-import { openingDraws } from './opening.ts';
+import { configQuestion, openingDraws } from './opening.ts';
 
 // What the narrator says, and turning it into audio. Two lines: a short opening that says how
 // the matchup works, and the winner at the end; nothing while the race runs, which the picture
@@ -30,6 +30,9 @@ const OWN: Record<Contestant['special'], string> = {
   split: 'multiplies',
 };
 
+/** How the opening starts: both names, said one of these ways. */
+const STARTS = ['{a} versus {b}!', "It's {a} against {b}!", '{a} takes on {b}!', '{a} and {b}, head to head!', 'Next up: {a} versus {b}!'];
+
 /** "Fibonacci Ball" → "Fibonacci": the short form reads better mid-sentence. */
 export function shortName(name: string): string {
   return name.replace(/\s+ball$/i, '').trim() || name;
@@ -40,12 +43,12 @@ export function shortName(name: string): string {
  * The opening: who is racing, one clause on what each ball does, one fact,
  * and a question for the comments. It never explains the floor, the layers or
  * the finish line: everyone gets that from the picture within a second.
- * About 10–12 seconds read aloud. The fact and the question are picked by the
- * seed, so a new race of the same matchup sounds a little different.
+ * About 10–12 seconds read aloud. How it starts, the fact and the question are
+ * picked by the seed, so a new race of the same matchup sounds a little different.
  */
 export function autoScript(cfg: Config): string {
   const { a, b } = cfg;
-  const [factDraw, question] = openingDraws(cfg.seed);
+  const draws = openingDraws(cfg.seed);
   const pace = (c: Contestant, other: Contestant) => {
     // Not when the name or the special already says it ("Slow Factorial", a ball that slows down).
     if (/\b(slow|fast)\b/i.test(c.name) || c.special === 'slower') return '';
@@ -68,8 +71,10 @@ export function autoScript(cfg: Config): string {
   // in secret would make a fact about counting sound like it came from nowhere.
   const named = [a, b].filter((c) => SEQUENCES[c.sequence].noun && c.name.includes(SEQUENCES[c.sequence].noun));
   const pool = named.length ? named : [a, b];
-  const fact = SEQUENCES[pool[Math.floor(factDraw * pool.length)].sequence].fact;
-  return [`${a.name} versus ${b.name}!`, ...balls.filter(Boolean).map((r) => (/[.!?]$/.test(r) ? r : `${r}.`)), fact, question].join(' ');
+  const facts = SEQUENCES[pool[Math.floor(draws.ball * pool.length)].sequence].facts;
+  const fact = facts[Math.floor(draws.fact * facts.length)];
+  const start = fillTemplate(STARTS[Math.floor(draws.start * STARTS.length)], { a: a.name, b: b.name });
+  return [start, ...balls.filter(Boolean).map((r) => (/[.!?]$/.test(r) ? r : `${r}.`)), fact, configQuestion(cfg)].join(' ');
 }
 
 export function introLine(cfg: Config): string {

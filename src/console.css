@@ -1272,6 +1272,7 @@
 }
 /* Worded like a number tile's label: the bars are the content. */
 .coverage h2,
+.wins h2,
 .balls h2 {
   color: var(--muted);
   font-size: 13.5px;
@@ -1284,13 +1285,37 @@
   gap: 22px;
 }
 .coverage .meter-label span,
+.wins .meter-label span,
 .balls .meter-label span {
   color: var(--ink);
+}
+/* Who won beside the balls: two bars need a narrow column, the sixteen sequences the rest. */
+.race-stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  gap: 12px;
+}
+.wins {
+  gap: 14px;
+  padding: 20px 22px;
 }
 /* Every sequence, in as many columns as fit: sixteen bars in one column would be a page of their own. */
 .balls {
   gap: 14px;
   padding: 20px 22px;
+}
+/* The races a sequence was in, faint; the ones it won over them in full colour. */
+.balls .meter-bar {
+  position: relative;
+}
+.balls .meter-bar i {
+  opacity: 0.35;
+}
+.balls .meter-bar i.won {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--won, 0%);
+  opacity: 1;
 }
 .balls .meters {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
@@ -1538,6 +1563,9 @@
   }
   .coverage {
     grid-column: 1 / -1;
+  }
+  .race-stats {
+    grid-template-columns: minmax(0, 1fr);
   }
   .video-row {
     grid-template-columns: auto minmax(0, 1fr) auto;

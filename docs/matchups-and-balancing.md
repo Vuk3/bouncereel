@@ -149,6 +149,13 @@ in a few milliseconds:
    built-in matchups keep their own names ("Growing vs Speeding" is two Fibonacci balls
    told apart by their powers).
 
+8. **The words**, from a stream of their own (`words:<seed>`) so the matchup a seed gives
+   stays the same: the question goes back to the new seed's pick, and the winner card's
+   last line and the winner line are new picks from `LAST_LINES` and `WINNER_LINES`
+   ([config.ts](../src/config.ts)), never the one before. Only the dice's own words: a
+   line the creator wrote, or none, stays. Dealt before balancing, since the winner line's
+   length is part of the timing.
+
 Voice, volume, timing and look come from the current config; the page clears a
 hand-written opening, which would describe the old matchup.
 
@@ -182,9 +189,9 @@ floor hit, a BigInt, precomputed 400 terms deep.
 | `pi` | 3, 1, 4, 1, 5, 9… (the digits of pi, worked out by Machin's formula; a 0 hits for nothing; only by hand) | Pi |
 | `ones` | 1, 1, 1… | (none: "Steady Ball") |
 
-Each also has a `brief` (one clause for the opening: "adds up its last two hits"), a
-`fact` (one true line the opening can add: "Fibonacci numbers hide in sunflowers and pine
-cones.") and a `mark`, the one or two characters its ball wears in the paper look (F, n!,
+Each also has a `brief` (one clause for the opening: "adds up its last two hits"),
+`facts` (two or three true lines the opening can add, the seed picking one: "Fibonacci
+numbers hide in sunflowers and pine cones.") and a `mark`, the one or two characters its ball wears in the paper look (F, n!,
 ×2, n², P…; only characters Rubik's Latin set has). Adding a sequence is one
 entry with all six; the panel, the generator, the narrator and the renderer pick it up.
 
@@ -218,3 +225,4 @@ the narrator, video length, finish gap and look.
 - 2026-10-21 - the switch is Powers in random matchups, with a hint; `balanceProblem` says which ball keeps a matchup from balancing and why; Rebalance tries new seeds of the same matchup, then explains in the matchup card.
 - 2026-10-25 - more varied rolls: a power about every other roll with the switch on (two different ones on both balls one time in three), a Big or Tiny ball about one roll in three with or without powers, and Slow and Fast said on both, one or neither name.
 - 2026-10-25 - five more sequences: Lucas, Catalan, Tenfold and Collatz on the dice (65 pairings, from 33), Digits of pi by hand.
+- 2026-10-26 - the dice deals the words too (`words:<seed>`): the seed's question, a new last line and winner line, keeping a creator's own; sequences carry two or three `facts`.
