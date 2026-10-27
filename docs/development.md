@@ -83,9 +83,11 @@ settings, then everything else in tabs. Fields in the tabs are generated from
   wrong length, and, when a matchup cannot be balanced, which ball is in the way and what to
   change, until the matchup changes ([balancing](./matchups-and-balancing.md#1-balancing)).
 - **The dice** and what goes with it: Random matchup (the tallest button, with the site's
-  dice; violet while nothing is ready to record, see below); Play without voice (the race
-  starts at once with all its sounds but no narrator, so nothing has to be generated; Restart
-  keeps it without voice, Play and Record bring the narrator back); New race; the **Powers in random matchups** switch
+  dice; violet while nothing is ready to record, see below); the **Play with the narrator**
+  switch (on, the default: Play and Restart have the narrator; off: they start at once with
+  all the other sounds and nothing to generate; flipping it starts the run over in the new mode;
+  greyed out when Sound is not Narrator and music; Record follows Sound either way, not this
+  switch; not kept between visits); New race; the **Powers in random matchups** switch
   (on: about every other roll gives a ball a power; off, the default: never; the one-line hint
   under it says so; kept under `bouncereel:dice`, not in the config); **Classics…**, the built-in
   matchups, a select drawn as a ghost pill.
@@ -104,7 +106,8 @@ settings, then everything else in tabs. Fields in the tabs are generated from
     button that says this matchup's names in it; the opening (empty for the automatic one, shown
     as the placeholder); the winner line (empty for none); **Hear the opening**, in the
     picked voice ([sound and narration](./sound-and-narration.md#4-the-voice)).
-  - **Sound**: melody, instrument, volume.
+  - **Sound**: melody, instrument, volume, and **Hear the music**: the melody's first notes on
+    the instrument, without a race ([sound and narration](./sound-and-narration.md#2-what-sounds-when)).
   - **More**: Video (the last line on the winner card, the loop ending, hold before the
     start, winner card minimum, number separator, platform UI zones); Physics (both
     speeds, which balancing sets, ball sizes, gravity, speed limit); Seed and files (the
@@ -304,3 +307,4 @@ browser's Cache Storage. The videos themselves live in D1, locally in `.wrangler
 - 2026-10-23 - what the plan holds back at full contrast with a Paid plans tag and, in the accent, what the paid plans add (worded from `GET /api/plans`); a first visit's one hint (`bouncereel:hints:v1:<id>`); the recording bar and the sheet after a take, pointed to.
 - 2026-10-23 - the look thumbnails are drawn without the video's opening title.
 - 2026-10-24 - the Videos page has the console pages' head (`app:head`): no `arcade:` boot of its own, the studio's does it.
+- 2026-10-27 - the Play with the narrator switch replaces Play without voice; Hear the music in the Sound tab.

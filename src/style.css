@@ -362,7 +362,7 @@ fieldset:disabled {
   line-height: 1.45;
 }
 
-/* What the dice does, and the two ways to watch what it made. */
+/* What the dice does, a new race of the same matchup, and whether Play has the narrator. */
 .deal {
   display: grid;
   gap: 10px;
@@ -940,7 +940,7 @@ input[type='color'].swatch-any::-webkit-color-swatch {
   font-variant-numeric: tabular-nums;
 }
 
-/* An on/off setting that is not a field of the config (the dice's powers). */
+/* An on/off setting that is not a field of the config (the dice's powers, the narrator in Play). */
 .switch {
   display: inline-flex;
   align-items: center;
@@ -981,6 +981,15 @@ input[type='color'].swatch-any::-webkit-color-swatch {
 .switch input:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+/* The narrator switch with no narrator to switch (Sound is not Narrator and music): its title says why. */
+.voice-switch:has(input:disabled),
+.voice-switch input:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.voice-switch input:disabled {
+  opacity: 0.55;
 }
 
 .hint {

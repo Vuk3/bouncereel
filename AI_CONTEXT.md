@@ -192,9 +192,9 @@ lead change the prediction marked flashes LEAD CHANGE with a sting; the card say
 win every ball stops, the loser's too, and the winner line plays once the opening has ended.
 Silent plays nothing.
 
-**Play without voice is pressed.** The run restarts and plays at once with its notes,
-cracks and fanfare, but no narrator: nothing has to be generated. Play or Record starts a
-run with the narrator again.
+**Play with the narrator is switched off.** The run starts over, and Play and Restart play
+at once with the notes, cracks and fanfare but no narrator: nothing has to be generated.
+Switched on, the run starts over with the narrator. Record follows the Sound field alone.
 
 **Record is pressed.** Play is the free preview, and the race it shows is the race Record makes.
 The studio first checks the plan (length, look, sound, powers, the day's videos), warns if the

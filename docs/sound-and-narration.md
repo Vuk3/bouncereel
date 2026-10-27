@@ -13,7 +13,7 @@ the timing that keeps the narrator from talking over itself.
 | the opening's question (also on screen in the video's first second) | [src/audio/opening.ts](../src/audio/opening.ts) `QUESTIONS`, `openingDraws`, `configQuestion`, `openingQuestion` |
 | the winner lines the dice deals | [src/config.ts](../src/config.ts) `WINNER_LINES` |
 | the voices, loading Kokoro, the clip cache | [src/audio/narration.ts](../src/audio/narration.ts) `VOICES`, `loadKokoro`, `synthesize`, `VoiceCache` |
-| when lines are said, trying a voice | [src/app.ts](../src/app.ts) `playIntro`, `sayOutroWhenFree`, `hear` |
+| when lines are said, trying a voice, hearing the music | [src/app.ts](../src/app.ts) `playIntro`, `sayOutroWhenFree`, `hear`, `hearMusic` |
 | the voice list and its buttons in the Voice tab | [src/app.ts](../src/app.ts) `buildVoiceBlock` |
 
 ## 1. The engine
@@ -62,13 +62,19 @@ Für Elise (the right hand of the A section), Twinkle Twinkle, or a pentatonic s
 octaves and back (no two notes clash, so overlapping hits still sound like music). Every
 floor hit, from either box, advances one shared position in the tune.
 
+**Hear the music**, under the Sound tab's fields, plays the melody's first sixteen notes on
+the picked instrument at the set volume (`hearMusic` in [app.ts](../src/app.ts)): the same
+`note` and velocity a floor hit gets, but evenly 0.22 s apart and from the centre, so the tune
+and the instrument can be heard without playing a race. A second click starts it over.
+
 **The Sound field** (`sound.track`, the Video section) decides what plays, in the preview as
 in the file ([recording and export](./recording-and-export.md#the-sound)): **Narrator and
 music** is all of the above and the narrator; **Music only** is all of the above without the
 narrator; **Silent** plays nothing (the sonifier is not called) and the file has no sound
 track. A run has a narrator only when all three hold (`narrating` in [app.ts](../src/app.ts)):
-it was not started with Play without voice, the Sound is Narrator and music, and the
-account's plan includes the narrator. Without it nothing is generated, so Kokoro is never
+it was not started with the **Play with the narrator** switch off (Play and Restart read the
+switch as a run starts, and flipping it starts the run over; Record ignores it), the Sound is
+Narrator and music, and the account's plan includes the narrator. Without it nothing is generated, so Kokoro is never
 loaded.
 
 ## 3. What the narrator says
@@ -192,3 +198,4 @@ generate both first, then:
 - 2026-10-21 - Kokoro is the only voice (ElevenLabs, OpenAI and the browser voice removed, and with them the API keys); no call-outs, only the opening and the winner line, which may be left empty; the Voice tab lists the voices with a ▶ preview each and Hear the opening; ONNX Runtime is served from this site instead of jsDelivr.
 - 2026-10-23 - a sting when the lead changes hands for good (glassy pings, never held back by the voice cap); the last layer's notes climb to an octave at the break; the opening's question moved to opening.ts, shown on the first frame too (the openings it writes unchanged, 480 checked).
 - 2026-10-26 - more variety in the words: twenty questions (`look.question`, typed under More → Video or the seed's pick; a config saved before keeps its question), two or three facts a sequence, five ways to start the opening, and the dice deals the winner line from `WINNER_LINES`.
+- 2026-10-27 - Hear the music in the Sound tab; the Play with the narrator switch replaces Play without voice.

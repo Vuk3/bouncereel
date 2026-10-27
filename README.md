@@ -19,8 +19,8 @@ In the studio (`/app`):
 
 1. Set the **video length**, and the **finish gap**: a photo finish, or the loser 1–10 s
    behind the winner.
-2. Click **🎲 Random matchup** until you like one, and **▶ Play without voice** to watch
-   it at once (bounce sounds, no narrator to wait for). Every matchup comes balanced: it
+2. Click **🎲 Random matchup** until you like one, and **▶ Play** to watch it (with
+   **Play with the narrator** off it starts at once: bounce sounds, no narrator to wait for). Every matchup comes balanced: it
    fills the length exactly and ends as close as the finish gap asks. Most are sequence
    against sequence; with **Powers in random matchups** on, about one in four gives a ball
    a power (it speeds up, slows down, grows or splits), and the video tags that ball.

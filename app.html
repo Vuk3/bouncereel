@@ -105,10 +105,11 @@
               Random matchup
             </button>
             <div class="row">
-              <button id="voiceless" type="button" class="button ghost" title="Plays at once with the bounce sounds; skips the narrator, so nothing has to be generated">
-                <svg class="solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
-                Play without voice
-              </button>
+              <!-- What Play and Restart do about the narrator (app.ts voiceOn); Record follows Sound alone. -->
+              <label class="switch voice-switch" id="voice-switch">
+                <input id="voice-on" name="voice-on" type="checkbox" role="switch" autocomplete="off" checked />
+                <span>Play with the narrator</span>
+              </label>
               <button id="reroll" type="button" class="button ghost" title="Same matchup, a new race">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M3 7h3c2.2 0 3.4 1 4.6 3l2.8 4.5c1.1 1.8 2.3 2.5 4.4 2.5H21" />

@@ -2,6 +2,7 @@ import type { AccountResponse, DayResponse, NewVideo, PublicPlan, VideoResponse 
 import { LOOK_LABELS, soundAllowed, SOUND_LABELS, type Features, type Sound } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
 import { AudioEngine } from './audio/engine.ts';
+import { Music } from './audio/music.ts';
 import { VOICES, VoiceCache, introLine, outroLine, plannedLines, previewLine, voiceOf } from './audio/narration.ts';
 import { Sonifier } from './audio/sonify.ts';
 import { DEFAULT_CONFIG, PRESETS, SKINS, mergeConfig, savedConfig, type Config, type Skin, type Special } from './config.ts';
@@ -108,8 +109,15 @@ export class App {
   private acc = 0;
   private paused = true;
   private starting = false;
-  /** "Play without voice": bounce sounds but no narrator, so nothing to generate and the race starts at once. */
+  /**
+   * The "Play with the narrator" switch: off, Play and Restart run with every sound but the
+   * narrator, so nothing is generated and the race starts at once. Record ignores it.
+   */
+  private voiceOn = true;
+  /** This run has no narrator: set when a run starts, from the switch (or by Record), and kept while it plays. */
   private voiceless = false;
+  /** The next note of Hear the music (hearMusic). */
+  private musicTimer = 0;
   private introPlayed = false;
   /** The winner line is due but waits for the narrator to finish the line in progress. */
   private outroPending = false;
@@ -160,6 +168,7 @@ export class App {
     this.buildPresetBlock();
     this.buildLookBlock();
     this.buildSoundBlock();
+    this.buildMusicBlock();
     this.buildVoiceBlock();
     this.applyPlan();
     this.buildPlanCard();
@@ -391,23 +400,22 @@ export class App {
 
   /**
    * Starts (or resumes) playback, generating any narration it needs first. A run
-   * started `voiceless` has every sound but the narrator and generates nothing;
+   * started without `voiced` has every sound but the narrator and generates nothing;
    * resuming keeps the mode the run was started in. A run from the start holds its
    * first frame until all of that is ready, and until `ready` says yes when given:
    * Record asks the server for the day's video there, so not a frame plays before
    * the answer.
    */
-  private async play(fromStart: boolean, voiceless = false, ready?: () => Promise<boolean>): Promise<boolean> {
+  private async play(fromStart: boolean, voiced = this.voiceOn, ready?: () => Promise<boolean>): Promise<boolean> {
     if (this.starting) return false;
     this.starting = true;
     $('#start').hidden = true;
     // Every Play and Record comes through here: the first one is what the hint asked for.
     this.hintDone();
     try {
-      if (fromStart) {
-        this.voiceless = voiceless;
-        this.paused = true;
-      }
+      // A run still on its first frame (after a restart, or the page's first Play) is starting too.
+      if (fromStart || this.elapsed === 0) this.voiceless = !voiced;
+      if (fromStart) this.paused = true;
       await this.unlock();
       if (fromStart) this.restart();
       if (this.narrating()) await this.prepareVoice();
@@ -447,8 +455,8 @@ export class App {
     // The day's last video is asked about first: it cannot be had back until tomorrow.
     if (day.limit !== null && day.limit - day.used === 1 && !(await this.confirmRecord(day.limit))) return;
     // The server takes the video once the narration is ready and the sound flows, before the
-    // first frame (soundFlowing, takeVideo).
-    if (!(await this.play(true, false, async () => (await this.soundFlowing()) && this.takeVideo()))) return;
+    // first frame (soundFlowing, takeVideo). The narrator switch is Play's: Record follows Sound alone.
+    if (!(await this.play(true, true, async () => (await this.soundFlowing()) && this.takeVideo()))) return;
     try {
       // Silent: a file with no sound track at all (docs/recording-and-export.md says why).
       this.recorder = new Recorder(this.canvas, this.cfg.sound.track === 'silent' ? null : this.audio!.stream);
@@ -762,7 +770,7 @@ export class App {
   }
 
   /**
-   * Whether this run has a narrator: not started with Play without voice, the sound set to
+   * Whether this run has a narrator: not started with the narrator switch off, the sound set to
    * Narrator and music, and the plan including it.
    */
   private narrating(): boolean {
@@ -980,6 +988,12 @@ export class App {
     setText($('#track-hint'), hints[this.cfg.sound.track]);
     const off = document.querySelector<HTMLElement>('#voice-off');
     if (off) off.hidden = this.cfg.sound.track === 'narrator';
+    // The narrator switch only matters when there is a narrator to switch: said rather than left to do nothing.
+    const speaks = narrated(this.cfg) && this.features.narrator;
+    $<HTMLInputElement>('#voice-on').disabled = !speaks;
+    $('#voice-switch').title = speaks
+      ? 'On: Play has the narrator. Off: Play starts at once without it. Record follows Sound either way.'
+      : 'The narrator speaks when Sound is Narrator and music.';
   }
 
   /** The matchup card: each ball's name, colour, numbers and power, and its speed against the slower one. */
@@ -1267,6 +1281,35 @@ export class App {
     }
   }
 
+  /** Under the Music fields, a way to hear the picked melody on the picked instrument without playing a race. */
+  private buildMusicBlock(): void {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<button type="button" class="button small ghost" id="music-test">
+      <svg class="solid" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+      Hear the music
+    </button>`;
+    this.panel.body('sound').append(row);
+    $('#music-test').addEventListener('click', () => void this.hearMusic());
+  }
+
+  /**
+   * The melody's first sixteen notes on the instrument, at the volume, as floor hits play them
+   * (velocity as sonify.ts gives a hit), but evenly 0.22 s apart: a brisk race's pace, quick
+   * enough to hear the tune. A second click starts it over rather than play two at once.
+   */
+  private async hearMusic(): Promise<void> {
+    const audio = await this.unlock();
+    window.clearTimeout(this.musicTimer);
+    const music = new Music(this.cfg.sound);
+    let left = 16;
+    const next = () => {
+      audio.note(music.next(), 0.85, this.cfg.sound.timbre, 0);
+      if (--left) this.musicTimer = window.setTimeout(next, 220);
+    };
+    next();
+  }
+
   /** The three looks, each a thumbnail of this matchup's first frame. A look only changes the drawing, so the run goes on. */
   private buildLookBlock(): void {
     for (const input of document.querySelectorAll<HTMLInputElement>('.look input')) {
@@ -1335,9 +1378,17 @@ export class App {
     });
     $('#restart').addEventListener('click', () => {
       if (this.paused) this.restart();
-      else void this.play(true, this.voiceless);
+      else void this.play(true);
     });
-    $('#voiceless').addEventListener('click', () => void this.play(true, true));
+    const voiceOn = $<HTMLInputElement>('#voice-on');
+    voiceOn.addEventListener('change', () => {
+      this.voiceOn = voiceOn.checked;
+      // The opening is said from the first frame, so the run starts over in the new mode rather
+      // than go on in the old one. A start under way (generating, or Record) keeps its own.
+      if (this.starting) return;
+      if (!this.paused) void this.play(true);
+      else if (this.elapsed > 0) this.restart();
+    });
     $('#record').addEventListener('click', () => void this.record());
 
     window.addEventListener('keydown', (e) => {
