@@ -36,12 +36,15 @@ clock, said 30.0 s. A warm device moves the clock within 12–66 ms, so the wait
 
 - **While it records**, a bar over the preview (`#rec-bar`, not in the file: the recorder takes
   the canvas alone) says "Recording, 17.6 s left" and, from the first frame, "Keep this tab in
-  front: a hidden tab stops drawing"; the timeline turns red. If the tab is hidden anyway, the
-  bar says on return how long and that the file has a pause there, and offers Stop & save, and
-  Record again (dropping this take) when the day still has a video for it; doing nothing keeps
-  recording.
+  front, and do not connect or switch headphones: either spoils the take"; the timeline turns
+  red. If the tab is hidden anyway, the bar says on return how long and that the file has a
+  pause there; if the sound stalls (below), it says so as it happens, the seconds growing while
+  it lasts: "The sound stopped for 1.9 s, 18 s in: from there on it plays ahead of the
+  picture". Either way it offers Stop & save, and Record again (dropping this take) when the day
+  still has a video for it; doing nothing keeps recording.
 - **When it ends**, a sheet (`#finished`) opens once the file has downloaded and the library has
-  answered: the file's name, length and size, what the library did with it (added; refused, with
+  answered: the file's name, length and size, a stalled sound if there was one (the bar's words,
+  and to record it again), what the library did with it (added; refused, with
   the reason and a link to the plans when the plan stood in the way; or waiting to be sent), and
   Open Videos, Close and Roll the next one (the dice). It replaces the toasts. **A superadmin also
   sees what the video is as text, with Copy** (the balls and what each does, who won and by how
@@ -57,6 +60,16 @@ clock, said 30.0 s. A warm device moves the clock within 12–66 ms, so the wait
   full size whatever the window.
 - ⚠️ **Keep the tab visible.** A hidden tab stops `requestAnimationFrame`, and the video
   with it: the bar says so while it records, and what happened when the tab comes back.
+- ⚠️ **Keep the sound output as it is.** The picture runs on the wall clock and the sound on
+  the audio device's. AirPods connected mid-take stopped the audio clock for 1.9 s while the
+  picture went on; the recorder closed the gap, so the file's sound came out 48.1 s against
+  50.0 s of picture, the notes of those 1.9 s played all at once when it came back, and every
+  sound after it 1.8 s early: the fanfare and the winner line before the ball reached the line.
+  `watchSound` in [app.ts](../src/app.ts) compares the two clocks every frame of a take from
+  `startTake` and calls 0.15 s behind a stall (the audio clock moves in steps of its device's
+  buffer, tens of ms). An `AudioContext` suspended for 1.5 s mid-take makes the same file
+  (sound 1.52 s short) and the same warning, which is how it was checked. A silent take is not
+  watched: it has no sound to lose.
 - **On a plan with the watermark**, the frame Record captures carries it, as the preview
   does ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)).
 
@@ -164,6 +177,9 @@ almost all of it. Repeated, the same recording was whole, and it could not be ma
 happen on demand; a short recording of the canvas and a test tone, made without the app's
 recorder, showed it once too.
 
+The other way round, sound shorter than the picture, is a stall of the sound during the take
+(§1, "Keep the sound output as it is"): everything after it plays early by the difference.
+
 The spectrum shows narration as dense vertical bands and floor-hit notes as short
 horizontal marks: a quick way to see that the voice is in the file and where each line
 falls.
@@ -181,3 +197,4 @@ falls.
 - 2026-10-23 - Record waits for the audio clock before the first frame (a cold device had cut a fresh page's first take by 1.7 s), and the clock may jump up to 0.5 s a frame while recording (the file had run 0.15 s long); a bar over the preview while recording, a hidden tab's pause said with Stop & save or Record again; a sheet after each take in place of the toasts.
 - 2026-10-24 - the sheet after a take gives what the video is as text to copy (`postPrompt`), for writing its posts.
 - 2026-10-24 - that text only for a superadmin, with the library id.
+- 2026-10-27 - a stalled sound (the output device changing mid-take) is said on the bar as it happens and on the sheet after, with Record again; the bar asks not to connect or switch headphones.

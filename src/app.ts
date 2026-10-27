@@ -136,6 +136,11 @@ export class App {
   private fresh = false;
   /** When the tab was hidden during a take (performance.now()), 0 otherwise: the file has a pause there. */
   private hiddenAt = 0;
+  /** The wall clock and the audio clock as the take began (startTake), to see the sound stall (watchSound). */
+  private soundFrom = { wall: 0, audio: 0 };
+  /** Seconds of sound this take has lost, and how far into the take it first stalled; 0 when it has lost none. */
+  private soundLost = 0;
+  private soundLostAt = 0;
 
   /** The timeline under the preview (buildTimeline): its playhead and clock, written by syncTimeline. */
   private readonly head = $('#timeline-head');
@@ -238,6 +243,7 @@ export class App {
     this.updateStatus();
     this.syncTimeline();
     this.syncRecBar();
+    this.watchSound();
     requestAnimationFrame((t) => this.frame(t));
   }
 
@@ -469,13 +475,15 @@ export class App {
 
   /**
    * The page while a take runs: the panel off, Record as Stop & save, and over the preview the bar
-   * with what is left and the one thing that spoils a take, said from the first frame.
+   * with what is left and the two things that spoil a take, said from the first frame.
    */
   private startTake(): void {
     this.hiddenAt = 0;
+    this.soundFrom = { wall: performance.now(), audio: this.audio?.ctx.currentTime ?? 0 };
+    this.soundLost = 0;
     document.body.classList.add('recording');
     $<HTMLFieldSetElement>('#controls').disabled = true;
-    $('#rec-note').textContent = 'Keep this tab in front: a hidden tab stops drawing.';
+    $('#rec-note').textContent = 'Keep this tab in front, and do not connect or switch headphones: either spoils the take.';
     $('#rec-actions').hidden = true;
     $('#rec-bar').hidden = false;
     // Taking the day's last video turned Record off (syncDay); while recording it is Stop & save.
@@ -537,6 +545,33 @@ export class App {
     $('#rec-actions').hidden = false;
   }
 
+  /**
+   * The sound stalling during a take, said as it happens. The picture runs on the wall clock and
+   * the sound on the audio device's: when the device changes (AirPods connected mid-take, measured:
+   * 1.9 s) the audio clock stops while the picture goes on, the recorder closes the gap, and every
+   * sound after it plays that much early, the fanfare before the ball reaches the line. So each
+   * frame compares the two clocks since the take began; the audio clock moves in steps of its
+   * device's buffer (tens of ms), so only 0.15 s behind counts, and the note follows the loss
+   * in 0.05 s steps while it grows. A silent take has no sound to lose.
+   */
+  private watchSound(): void {
+    if (!this.recorder || !this.audio || this.cfg.sound.track === 'silent') return;
+    const take = (performance.now() - this.soundFrom.wall) / 1000;
+    const lost = take - (this.audio.ctx.currentTime - this.soundFrom.audio);
+    if (lost < 0.15 || lost < this.soundLost + 0.05) return;
+    if (!this.soundLost) this.soundLostAt = take - lost;
+    this.soundLost = lost;
+    const day = this.account.day;
+    $('#rec-note').textContent = `${this.soundWarning()}.`;
+    $('#rec-again').hidden = day.limit !== null && day.used >= day.limit;
+    $('#rec-actions').hidden = false;
+  }
+
+  /** What a stalled sound did to the take, for the bar while recording and the sheet after it. */
+  private soundWarning(): string {
+    return `The sound stopped for ${this.soundLost.toFixed(1)} s, ${Math.round(this.soundLostAt)} s in: from there on it plays ahead of the picture`;
+  }
+
   /** Drops the take in progress (no file, nothing saved) and starts Record again. */
   private async recordAgain(): Promise<void> {
     const rec = this.recorder;
@@ -578,6 +613,10 @@ export class App {
     $('#finished-name').textContent = name;
     const length = stoppedEarly ? `${seconds.toFixed(1)} s of ${this.cfg.timing.video} s` : `${seconds.toFixed(1)} s`;
     $('#finished-facts').textContent = `${length}, ${(bytes / 1e6).toFixed(1)} MB, in your browser's downloads`;
+    // A take may run unwatched to the end: the stall the bar said is said again here.
+    const warning = $('#finished-warning');
+    warning.hidden = !this.soundLost;
+    if (this.soundLost) warning.textContent = `${this.soundWarning()}. Record it again for a clean take.`;
     $('#finished-library').replaceChildren(saved.message, ...(saved.upgrade ? [' ', upgradeLink()] : []));
     $<HTMLDialogElement>('#finished').showModal();
   }

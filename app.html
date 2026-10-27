@@ -229,10 +229,11 @@
       </main>
     </div>
 
-    <!-- After a take (app.ts showFinished): the file, what the library did with it, and the way on; for a superadmin, what the video is about. -->
+    <!-- After a take (app.ts showFinished): the file, a stalled sound if there was one, what the library did with it, and the way on; for a superadmin, what the video is about. -->
     <dialog id="finished" class="confirm finished" aria-labelledby="finished-title">
       <h2 id="finished-title">Your video is ready</h2>
       <p class="finished-file"><b id="finished-name"></b><span id="finished-facts"></span></p>
+      <p id="finished-warning" class="finished-warning" role="alert" hidden></p>
       <p id="finished-library" class="finished-library"></p>
       <div class="finished-prompt" hidden>
         <div class="finished-prompt-head">

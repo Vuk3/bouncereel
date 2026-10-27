@@ -181,7 +181,8 @@ starts only once it has the account (`GET /api/account`).
 says that previews are free and only Record counts; beside Record, what is left of the day;
 before the day's last video, a question (`#record-confirm`) that says it is the last and when
 the next one is. Record has the server take the video as it starts. While it records, a bar over
-the preview says what is left and to keep the tab in front; when it ends, a sheet gives the file
+the preview says what is left, to keep the tab in front and the headphones as they are, and
+when the sound stalls; when it ends, a sheet gives the file
 and what the library did with it, with Open Videos and Roll the next one
 ([recording and export](./recording-and-export.md#1-making-a-recording)).
 
@@ -308,3 +309,4 @@ browser's Cache Storage. The videos themselves live in D1, locally in `.wrangler
 - 2026-10-23 - the look thumbnails are drawn without the video's opening title.
 - 2026-10-24 - the Videos page has the console pages' head (`app:head`): no `arcade:` boot of its own, the studio's does it.
 - 2026-10-27 - the Play with the narrator switch replaces Play without voice; Hear the music in the Sound tab.
+- 2026-10-27 - the recording bar asks to leave the headphones as they are and says when the sound stalls.

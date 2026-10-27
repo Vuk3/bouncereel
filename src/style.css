@@ -1483,8 +1483,8 @@ a.button {
 }
 
 /*
- * Over the preview while a take runs (app.ts startTake): the red dot and what is left, the one
- * thing that spoils a take, and after a hidden tab, what to do about the pause it left. On the
+ * Over the preview while a take runs (app.ts startTake): the red dot and what is left, the two
+ * things that spoil a take, and after a hidden tab or a stalled sound, what to do about it. On the
  * stage's tokens; the recorder takes the canvas alone, so none of it is in the file.
  */
 .rec-bar {
@@ -1678,6 +1678,15 @@ a.button {
 }
 .finished-file span {
   color: var(--muted);
+  font-size: 12.5px;
+}
+/* A take whose sound stalled (app.ts watchSound), said under the file in the warning's tone. */
+.finished .finished-warning {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
   font-size: 12.5px;
 }
 /* What the video is, as text to copy (library.ts postPrompt): small, scrolling past seven lines. */

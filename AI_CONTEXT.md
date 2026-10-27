@@ -247,8 +247,10 @@ takes effect when it passes, with nothing scheduled.
 - **A canvas never loads a web font by itself.** [app.ts](src/app.ts) and the home page's hero
   call `document.fonts.load` for Rubik before drawing; without it the video falls back to the
   system font.
-- **The tab must stay visible while recording.** A hidden tab stops
-  `requestAnimationFrame`, and the recording with it.
+- **The tab must stay visible, and the sound output unchanged, while recording.** A hidden
+  tab stops `requestAnimationFrame`, and the picture with it; a new output (headphones
+  connected) stops the audio clock, and the sound after it plays early. The bar over the
+  preview says either as it happens ([recording and export](docs/recording-and-export.md#1-making-a-recording)).
 - **The session is checked before route matching**, the role too for `/api/admin/*`, and
   **public routes are an explicit list** (signing up and in, the links in mails, the plans,
   the payment webhook). Without `SITE_URL` in production every request is a 500: it fails
