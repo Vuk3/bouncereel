@@ -41,11 +41,16 @@ function toAdminUser(row: AdminUserRow): AdminUserDetail {
 
 /**
  * Every account with its subscription and standing at ?1 (the request's time): suspended wins,
- * then a subscription whose end date has passed is `expired`, else its own status.
+ * then a subscription whose end date has passed is `expired`, else its own status. A superadmin
+ * has every feature whatever its subscription names, so it is on no plan here and always active:
+ * listed as on the default plan, the owner would read as a Rookie and turn up under its filter.
  */
 const ACCOUNTS = `SELECT u.id, u.email, u.role, u.created_at, u.last_login_at, u.email_verified_at, u.suspended_at,
-    s.plan_id, p.name AS plan_name, s.ends_at,
+    CASE WHEN u.role = 'superadmin' THEN NULL ELSE s.plan_id END AS plan_id,
+    CASE WHEN u.role = 'superadmin' THEN NULL ELSE p.name END AS plan_name,
+    CASE WHEN u.role = 'superadmin' THEN NULL ELSE s.ends_at END AS ends_at,
     CASE WHEN u.suspended_at IS NOT NULL THEN 'suspended'
+         WHEN u.role = 'superadmin' THEN 'active'
          WHEN s.user_id IS NULL OR (s.ends_at IS NOT NULL AND s.ends_at <= ?1) THEN 'expired'
          ELSE s.status END AS status
   FROM users u
@@ -100,7 +105,7 @@ export async function selectAdminUser(db: D1Database, id: number, now: string): 
   return row ? toAdminUser(row) : null;
 }
 
-/** The overview's numbers: accounts (new in 7 and 30 days), subscriptions per plan, videos. */
+/** The overview's numbers: accounts (new in 7 and 30 days), subscriptions per plan (a superadmin's in none), videos. */
 export async function selectOverview(db: D1Database, now: Date): Promise<AdminOverview> {
   const days = (n: number) => new Date(now.getTime() - n * 86_400_000).toISOString();
   const [users, plans, videos] = await db.batch<Record<string, number | string | null>>([
@@ -114,7 +119,7 @@ export async function selectOverview(db: D1Database, now: Date): Promise<AdminOv
     db
       .prepare(
         `SELECT p.id, p.name, p.archived_at, COUNT(s.user_id) AS subscribers, COALESCE(SUM(${IN_FORCE}), 0) AS in_force
-           FROM plans p LEFT JOIN subscriptions s ON s.plan_id = p.id
+           FROM plans p LEFT JOIN subscriptions s ON s.plan_id = p.id AND s.user_id IN (SELECT id FROM users WHERE role <> 'superadmin')
           GROUP BY p.id ORDER BY p.archived_at IS NOT NULL, p.sort_order, p.id`,
       )
       .bind(now.toISOString()),

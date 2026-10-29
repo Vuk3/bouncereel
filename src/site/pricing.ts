@@ -62,7 +62,7 @@ export function planEmblem(tone: PlanTone): HTMLSpanElement {
   return emblem;
 }
 
-function planCard(plan: PublicPlan, data: PlansResponse, current: number | null, heading: 'h2' | 'h3'): HTMLLIElement {
+function planCard(plan: PublicPlan, data: PlansResponse, current: number | null, member: boolean, heading: 'h2' | 'h3'): HTMLLIElement {
   // The plan's tone, set in the admin area: plain, bold (the violet, the plan the page points at) or dark (site.css).
   const li = el('li', plan.tone === 'plain' ? 'plan' : `plan tone-${plan.tone}`);
   const price = el('p', 'plan-price');
@@ -87,8 +87,8 @@ function planCard(plan: PublicPlan, data: PlansResponse, current: number | null,
     action = el('p', 'current', 'Your plan');
   } else if (plan.isDefault) {
     // The free plan stays quiet: an outline button, so the eye goes to the plan the page points at.
-    const start = el('a', 'btn btn-ghost btn-wide', current === null ? 'Start free' : 'Open studio');
-    start.href = current === null ? '/signup' : '/app';
+    const start = el('a', 'btn btn-ghost btn-wide', member ? 'Open studio' : 'Start free');
+    start.href = member ? '/app' : '/signup';
     action = start;
   } else {
     // No payment provider yet: every upgrade waits (worker/routes/billing.ts).
@@ -114,10 +114,11 @@ export async function renderPlans(): Promise<PlansResponse | null> {
       api<PlansResponse>('GET', '/api/plans'),
       member ? api<AccountResponse>('GET', '/api/account').catch(() => null) : Promise.resolve(null),
     ]);
-    const current = account ? account.plan.id : null;
+    // A superadmin has every feature whatever its plan, so no card is its own.
+    const current = account && account.account.role !== 'superadmin' ? account.plan.id : null;
     // A plan's name is one level under the heading above the list: h2 on /pricing, h3 in the home page's section.
     const heading = list.dataset.heading === 'h2' ? 'h2' : 'h3';
-    list.replaceChildren(...data.plans.map((plan) => planCard(plan, data, current, heading)));
+    list.replaceChildren(...data.plans.map((plan) => planCard(plan, data, current, account !== null, heading)));
     const note = document.querySelector<HTMLElement>('#plans-note');
     const free = data.plans.find((p) => p.isDefault);
     if (note && !data.billing && data.plans.some((p) => !p.isDefault)) {

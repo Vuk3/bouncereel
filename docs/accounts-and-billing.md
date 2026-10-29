@@ -298,7 +298,13 @@ end date to take effect:
 
 `IN_FORCE` in [worker/plans.ts](../worker/plans.ts) is that table as SQL, used by the account's
 plan, the overview's "in force now" and the users list. **A superadmin has every feature
-whatever the row says**: the owner's account always has everything.
+whatever the row says**: the owner's account always has everything. So in the admin area it is
+on no plan: its Plan reads "Everything", it is active unless suspended, no plan's count or
+filter includes it (`ACCOUNTS` in [worker/admin.ts](../worker/admin.ts), `SUBSCRIBERS` in
+[worker/plans.ts](../worker/plans.ts)), its page has no subscription form, and the pricing page
+marks no card as its own. Its row still names a plan (the default, from sign-up), and the
+foreign key keeps a plan a row names, so deleting that plan moves the row to the default plan
+in the same batch, with its log line.
 
 The admin sets a subscription by hand on a user's page: the plan (archived plans only for
 whoever has one already), the end date (a day; it ends at that day's last moment, UTC), the
@@ -339,7 +345,8 @@ with a bar of its own instead of the sidebar.
   joined, last sign-in or videos, 50 a page. **Filtering, sorting, counting and paging are all
   SQL** (`selectUsers` in [worker/admin.ts](../worker/admin.ts)): a request has 10 ms of CPU. The
   address bar keeps the filters, so a view can be shared and reloaded.
-- **One user** (`/admin/user?id=`): details, the subscription with its form, Suspend /
+- **One user** (`/admin/user?id=`): details, the subscription with its form (a superadmin's
+  page says it has everything instead, section 7), Suspend /
   Unsuspend, Send a password reset (the mail only; the link is never shown), Delete (the
   address typed out, `confirm` on the server), the history from the log, the videos read-only.
 - **Plans** (`/admin/plans`): each plan as the pricing page draws it (its card's tone and
@@ -462,3 +469,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-10-24 - mail from `bouncereel@vukcvetkovic.com`, replies to `vuk@vukcvetkovic.com`; the watermark named without the address in the plans' lists and the admin.
 - 2026-10-24 - `PUT /api/admin/videos/:id/texts`, a superadmin's texts for posting a video.
 - 2026-10-24 - the Videos page in the console look (src/console.css), with the account page's top bar; the console's selects keep their chevron; a page under the top bar is centred.
+- 2026-10-29 - a superadmin is on no plan in the admin area ("Everything", in no plan's count or filter, no subscription form) nor on the pricing page; deleting the plan its row names moves the row to the default plan.

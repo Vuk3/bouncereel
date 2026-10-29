@@ -196,6 +196,11 @@ function meter(label: Child[], value: string, used: number, of: number, note: st
   return el('div', 'meter', el('div', 'meter-label', el('span', '', ...label), el('strong', '', value)), bar, note ? el('small', '', note) : null);
 }
 
+/** The plan column: a superadmin is on none, since it has every feature whatever its plan (worker/admin.ts ACCOUNTS). */
+function planOf(u: AdminUser): string {
+  return u.role === 'superadmin' ? 'Everything' : (u.planName ?? '—');
+}
+
 function person(u: { id: number; email: string | null }): HTMLElement {
   const email = u.email ?? `account ${u.id} (deleted)`;
   return el('div', 'person', avatar(u.id, email), u.email ? link(`/admin/user?id=${u.id}`, u.email) : el('span', '', email));
@@ -244,7 +249,7 @@ async function overview(): Promise<void> {
     cardHead('Newest accounts', link('/admin/users', 'Every account', 'card-link')),
     table(
       ['Account', 'Plan', 'Status', 'Joined'],
-      newest.users.slice(0, 6).map((u) => row(person(u), u.planName ?? '—', statusPill(u.status), cell('quiet', date(u.createdAt)))),
+      newest.users.slice(0, 6).map((u) => row(person(u), planOf(u), statusPill(u.status), cell('quiet', date(u.createdAt)))),
       'Nobody has signed up yet.',
     ),
   );
@@ -355,7 +360,7 @@ function usersTable(data: AdminUsersResponse, state: { sort: UserSort; dir: stri
   const rows = data.users.map((u: AdminUser) =>
     row(
       el('td', '', el('div', 'person', avatar(u.id, u.email), link(`/admin/user?id=${u.id}`, u.email), u.role === 'superadmin' ? tag('superadmin', true) : null)),
-      u.planName ?? '—',
+      planOf(u),
       statusPill(u.status),
       cell('quiet', day(u.endsAt)),
       cell('quiet', date(u.createdAt)),
@@ -439,6 +444,8 @@ async function user(): Promise<void> {
         : button('Make it active again', 'ghost', () => ((statusSelect.value = 'active'), save.click())),
     ),
   );
+  // A superadmin has every feature whatever its subscription names: no plan to set, in place of the form.
+  const everything = el('section', 'card', cardHead('Plan'), el('p', 'card-text', 'Everything: a superadmin has every feature, whatever the plan, so there is none to set.'));
 
   // The account: what it is, suspend, a password mail.
   const account = el(
@@ -522,10 +529,10 @@ async function user(): Promise<void> {
         'div',
         'person',
         avatar(u.id, u.email, true),
-        el('div', 'titles', el('h1', '', u.email, statusPill(u.status), u.role === 'superadmin' ? tag('superadmin', true) : null), el('p', '', `On ${u.planName ?? 'no plan'}, joined ${date(u.createdAt)}`)),
+        el('div', 'titles', el('h1', '', u.email, statusPill(u.status), u.role === 'superadmin' ? tag('superadmin', true) : null), el('p', '', `${u.role === 'superadmin' ? 'Every feature' : `On ${u.planName ?? 'no plan'}`}, joined ${date(u.createdAt)}`)),
       ),
     ),
-    el('div', 'columns wide-first', subscription, account),
+    el('div', 'columns wide-first', u.role === 'superadmin' ? everything : subscription, account),
     danger,
     changes,
     videos,

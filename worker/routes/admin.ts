@@ -19,6 +19,7 @@ import { countActiveSuperadmins, deleteUser, deleteUserSessions, findUserById, s
 import { selectAdminUser, selectOverview, selectUsers } from '../admin.ts';
 import { HttpError, json, noContent, readJsonObject } from '../lib/http.ts';
 import {
+  defaultPlan,
   deletePlan,
   insertPlan,
   logChange,
@@ -27,6 +28,7 @@ import {
   selectPlan,
   selectPlans,
   selectSubscription,
+  selectSuperadminSubscriptions,
   setPlanArchived,
   setPlanOrder,
   updatePlan,
@@ -321,9 +323,21 @@ export async function removePlan(context: RouteContext): Promise<Response> {
   if (plan.subscribers > 0) {
     throw new HttpError(409, 'plan_has_subscribers', `${plan.subscribers} account${plan.subscribers === 1 ? ' has' : 's have'} this plan: archive it instead.`);
   }
+  // A superadmin's subscription is in no count, but still names its plan, and the foreign key
+  // would refuse the delete: it moves to the default plan in the same batch, logged like any change.
+  const kept = await selectSuperadminSubscriptions(env.DB, id);
+  const fallback = kept.length > 0 ? await defaultPlan(env.DB) : null;
   const nowIso = now.toISOString();
+  const actorId = signedIn(context).id;
   await env.DB.batch([
-    logChange(env.DB, { at: nowIso, actorId: signedIn(context).id, subject: 'plan', planId: id, action: 'deleted', before: planSnapshot(plan) }),
+    ...kept.flatMap((s) => {
+      const next = { planId: fallback!.id, status: s.status, endsAt: s.endsAt };
+      return [
+        updateSubscription(env.DB, s.userId, next, nowIso, actorId),
+        logChange(env.DB, { at: nowIso, actorId, subject: 'subscription', userId: s.userId, planId: next.planId, action: 'changed', before: snapshot(s), after: { ...next, plan: fallback!.name } }),
+      ];
+    }),
+    logChange(env.DB, { at: nowIso, actorId, subject: 'plan', planId: id, action: 'deleted', before: planSnapshot(plan) }),
     deletePlan(env.DB, id),
   ]);
   return noContent();

@@ -84,20 +84,23 @@ export async function selectPublicPlans(db: D1Database): Promise<PublicPlan[]> {
   return results.map(toPublicPlan);
 }
 
+/**
+ * How many subscriptions name a plan, a superadmin's left out: it has every feature whatever its
+ * plan, and counted, the owner's account would make the default plan read as taken.
+ */
+const SUBSCRIBERS = `(SELECT COUNT(*) FROM subscriptions s JOIN users u ON u.id = s.user_id WHERE s.plan_id = plans.id AND u.role <> 'superadmin') AS subscribers`;
+
 /** Every plan, archived ones last, with how many subscriptions name it. */
 export async function selectPlans(db: D1Database): Promise<AdminPlan[]> {
   const { results } = await db
-    .prepare(
-      `SELECT ${PLAN_COLUMNS}, (SELECT COUNT(*) FROM subscriptions WHERE plan_id = plans.id) AS subscribers
-         FROM plans ORDER BY archived_at IS NOT NULL, sort_order, id`,
-    )
+    .prepare(`SELECT ${PLAN_COLUMNS}, ${SUBSCRIBERS} FROM plans ORDER BY archived_at IS NOT NULL, sort_order, id`)
     .all<PlanRow & { subscribers: number }>();
   return results.map(toAdminPlan);
 }
 
 export async function selectPlan(db: D1Database, id: number): Promise<AdminPlan | null> {
   const row = await db
-    .prepare(`SELECT ${PLAN_COLUMNS}, (SELECT COUNT(*) FROM subscriptions WHERE plan_id = plans.id) AS subscribers FROM plans WHERE id = ?1`)
+    .prepare(`SELECT ${PLAN_COLUMNS}, ${SUBSCRIBERS} FROM plans WHERE id = ?1`)
     .bind(id)
     .first<PlanRow & { subscribers: number }>();
   return row ? toAdminPlan(row) : null;
@@ -157,6 +160,15 @@ const SUBSCRIPTION_SELECT = `SELECT s.user_id, s.plan_id, p.name AS plan_name, s
 export async function selectSubscription(db: D1Database, userId: number): Promise<Subscription | null> {
   const row = await db.prepare(`${SUBSCRIPTION_SELECT} WHERE s.user_id = ?1`).bind(userId).first<SubscriptionRow>();
   return row ? toSubscription(row) : null;
+}
+
+/** The superadmins' subscriptions that name a plan: in no count (SUBSCRIBERS), yet D1 keeps a plan a subscription names. */
+export async function selectSuperadminSubscriptions(db: D1Database, planId: number): Promise<(Subscription & { userId: number })[]> {
+  const { results } = await db
+    .prepare(`${SUBSCRIPTION_SELECT} JOIN users u ON u.id = s.user_id WHERE s.plan_id = ?1 AND u.role = 'superadmin'`)
+    .bind(planId)
+    .all<SubscriptionRow>();
+  return results.map((row) => ({ ...toSubscription(row), userId: row.user_id }));
 }
 
 /** A new account's subscription: active, with no end; one it already has stays as it is. */
