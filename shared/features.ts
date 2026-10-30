@@ -7,8 +7,13 @@
 export const SOUNDS = ['narrator', 'music', 'silent'] as const;
 export type Sound = (typeof SOUNDS)[number];
 
-/** The video's looks, `look.skin` in the config (src/config.ts takes its `Skin` from here). Night is the cards look after dark. */
-export const LOOKS = ['paper', 'cards', 'night'] as const;
+/**
+ * The video's looks, `look.skin` in the config (src/config.ts takes its `Skin` from here). Night is
+ * the cards look after dark. This is the order every list shows them in, night between the two
+ * light ones: the admin's plan form, a plan's words, the home page's look dialog. The tiles written
+ * out in app.html and index.html keep it by hand.
+ */
+export const LOOKS = ['paper', 'night', 'cards'] as const;
 export type Look = (typeof LOOKS)[number];
 
 /** The studio's Length slider runs 20–90 s in steps of 5 (app.html). */
@@ -150,7 +155,7 @@ export const SOUND_LABELS: Record<Sound, string> = {
   silent: 'Silent',
 };
 
-export const LOOK_LABELS: Record<Look, string> = { paper: 'Paper', cards: 'Cards', night: 'Night' };
+export const LOOK_LABELS: Record<Look, string> = { paper: 'Paper', night: 'Night', cards: 'Cards' };
 
 /** A plan's features in words, for the pricing page and the admin's plan list; `included` false reads as "not in it". */
 export function describeFeatures(f: Features): { text: string; included: boolean }[] {

@@ -20,10 +20,10 @@ anything else.
   seven built-in matchups, and how to add more.
 
 - **[Look and layout](./look-and-layout.md)** - the 1080×1920 frame and the two cards
-  built from one template, the three looks (paper, cards, and night: the cards after dark)
-  drawn over it, layers, the finish strip, balls and their trails, the power tag, the
-  winner card, the loop at the end, effects, the font, the platforms' UI zones, and the
-  free plan's watermark.
+  built from one template, the three looks (paper, night and cards; night is the cards
+  after dark) drawn over it, layers, the finish strip, balls and their trails, the power
+  tag, the winner card, the loop at the end, effects, the font, the platforms' UI zones, and
+  the free plan's watermark.
 
 - **[Sound and narration](./sound-and-narration.md)** - the synthesiser and its mixing,
   melodies, which event sounds like what, the opening and the winner line, Kokoro's

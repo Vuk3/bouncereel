@@ -96,7 +96,7 @@ generated (`startOver` in [app.ts](../src/app.ts)).
 - **Video**: Length; Finish gap (photo finish, or 1–10 s between winner and loser); Sound:
   Narrator and music, Music only or Silent, what Record puts in the file and Play plays
   ([recording and export](./recording-and-export.md#the-sound)); a change balances the race
-  again. Look: Paper, Cards or Night, each a thumbnail of this matchup's first frame in it,
+  again. Look: Paper, Night or Cards, each a thumbnail of this matchup's first frame in it,
   without the opening title, whose wash would hide the look
   ([look and layout](./look-and-layout.md) §6). A look changes only the drawing, so the run
   goes on. **Ask viewers to follow**: the follow button in the race and under the winner card,

@@ -109,7 +109,7 @@ enough to read whole before the real work starts.
 | **layer** | a bar of health under the box; the top one standing is the floor. Health is a BigInt |
 | **finish line** | the checkered strip under the last layer; touching it ends a team's race |
 | **special**, **power** | what else a floor hit does to the hitting ball: `faster`, `slower` (% per hit), `grow` (px of radius), `split` (new balls, up to 64). The panel calls it a power, and the video tags the ball with it: a gold ⚡ `SPEEDS UP` beside its name |
-| **look** | `look.skin`, how the video is drawn: `paper` (the default), `cards`, or `night` (the cards after dark); only the drawing, never the race ([look and layout](docs/look-and-layout.md)) |
+| **look** | `look.skin`, how the video is drawn: `paper` (the default), `night` (the cards after dark) or `cards`; only the drawing, never the race ([look and layout](docs/look-and-layout.md)) |
 | **sound** | `sound.track`, what Record puts in the file and Play plays: `narrator` (and music), `music` only, `silent` (no audio track) |
 | **seed** | the text all randomness comes from: start positions, angles, who wins a balanced race, the opening's wording and question |
 | **balance** | setting both speeds so the race fits the video length and ends close ([balance.ts](src/sim/balance.ts)) |

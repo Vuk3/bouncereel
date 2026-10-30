@@ -1,11 +1,12 @@
 # Look and layout
 
 The video's look: one 1080×1920 canvas, drawn every frame in one of three **looks**
-(`look.skin`) over the same geometry, offered in this order. **Paper** (the default) draws
-what the format's biggest channels draw: the name above each box, a stats line inside it,
-full-width glossy layers, glowing balls with trails. **Cards** is BounceReel's own: white
-cards with hard offset shadows, name pills and chips on a pastel page. **Night** is the
-cards after dark: the same drawing in a second palette, near-black cards on a dusk page.
+(`look.skin`) over the same geometry, offered in this order, night between the two light
+ones. **Paper** (the default) draws what the format's biggest channels draw: the name above
+each box, a stats line inside it, full-width glossy layers, glowing balls with trails.
+**Night** is BounceReel's own cards after dark: near-black cards on a dusk page. **Cards** is
+the same drawing by day, in a second palette: white cards with hard offset shadows, name pills
+and chips on a pastel page.
 
 | I need to change... | Touch |
 | --- | --- |
@@ -15,7 +16,7 @@ cards after dark: the same drawing in a second palette, near-black cards on a du
 | a cards or night colour (page, card, ink, finish, winner card) | [src/render/renderer.ts](../src/render/renderer.ts) `DECKS` |
 | a cards or night card: pills, chips, draining bars, the shadow | [src/render/renderer.ts](../src/render/renderer.ts) `drawCard` and what it calls |
 | the winner card | [src/render/renderer.ts](../src/render/renderer.ts) `drawSheetWinner` (paper), `drawWinner` (cards, night) |
-| the order of the looks, their names | `LOOKS`, `LOOK_LABELS` in [shared/features.ts](../shared/features.ts) (a plan lists the looks it includes), the tiles in [app.html](../app.html) |
+| the order of the looks, their names | `LOOKS`, `LOOK_LABELS` in [shared/features.ts](../shared/features.ts) (a plan lists the looks it includes), the tiles in [app.html](../app.html) and the home page's in [index.html](../index.html) |
 | what a ball wears (F, n!, ×2…) | `mark` in [src/sim/sequences.ts](../src/sim/sequences.ts) |
 | the ⚡ tag beside a powered ball's name | [src/render/renderer.ts](../src/render/renderer.ts) `POWER_TAGS`, `drawTag`, called from `drawName` (paper) and `drawNameRow` (cards, night) |
 | the free plan's watermark | [src/render/renderer.ts](../src/render/renderer.ts) `drawWatermark`, `WATERMARK`; `Overlay.watermark` from the plan's `watermark` in [src/app.ts](../src/app.ts) |
@@ -392,3 +393,4 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-10-25 - the opening made for the cover: a lighter wash (paper 45 %, cards and night 40 %), the balls over it, a ball's power tag 1.3× where its name row stands, the name rows and chips held back under it, paper's names with an ink outline; the meters moved to x 80, out of the side Reels crops on a tall phone.
 - 2026-10-26 - the question over the first frame can be typed (`look.question`, More → Video) and is otherwise one of twenty; the dice deals the last line on the winner card from `LAST_LINES`.
 - 2026-10-30 - the follow button (`look.follow`, on plans with `follow`): once in the race right of the VS, in follow red, and under the winner card in the winner's colour, tapped into FOLLOWING (§14).
+- 2026-10-30 - the looks come in the order paper, night, cards: in the studio, the admin's plan form, a plan's words and the home page.

@@ -192,7 +192,7 @@ again on every request, which is what protects the data.
 | `sounds` | what Record may put in the file: `narrator` (and music), `music` only, `silent` | the studio's Sound field; the server on save (`sound.track` in the config) |
 | `narrator` | the narrator in the video: Play with voice, the opening and the winner line. The `narrator` sound also needs it (`soundAllowed`) | the studio (the Voice tab's fields are locked; its voices can still be heard) |
 | `maxSeconds` | the longest video, 20–90 s | the studio's Length slider stops there; the server on save (`videoLength` and `timing.video`) |
-| `looks` | `paper`, `cards`, `night` | the studio's Look tiles; the server on save (`look.skin`) |
+| `looks` | `paper`, `night`, `cards` | the studio's Look tiles; the server on save (`look.skin`) |
 | `powers` | a ball with a power: the dice's switch, the Power field, the classics with one | the studio; Record refuses a matchup with one; the server on save |
 | `perDay` | videos a day, 1 or more; null is no limit. A day is the UTC calendar day: a new one starts at midnight UTC | the server as Record starts (`POST /api/account/day`, `claimDay`); the studio's Record button shows it |
 | `library` | videos kept; null is no limit | the server on save (inside the INSERT) |
