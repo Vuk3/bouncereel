@@ -1,5 +1,5 @@
 import type { Config, Contestant } from '../config.ts';
-import { fillTemplate } from '../config.ts';
+import { fillTemplate, spokenOutro } from '../config.ts';
 import { SEQUENCES } from '../sim/sequences.ts';
 import type { Outcome } from '../sim/world.ts';
 import { configQuestion, openingDraws } from './opening.ts';
@@ -81,9 +81,13 @@ export function introLine(cfg: Config): string {
   return cfg.voice.script.trim() || autoScript(cfg);
 }
 
-/** The winner line; '' when the Winner line field is empty, and then the narrator says nothing at the end. */
+/**
+ * The winner line, and "Follow for more!" after it when the video asks viewers to follow
+ * (spokenOutro); '' when the Winner line field is empty and it does not, and then the narrator
+ * says nothing at the end.
+ */
 export function outroLine(cfg: Config, winner: string, time: number): string {
-  return fillTemplate(cfg.voice.outro, { winner, time: time.toFixed(1) }).trim();
+  return spokenOutro(cfg, { winner, time: time.toFixed(1) });
 }
 
 /** Every line a run will say, in order: the opening, then the winner. */

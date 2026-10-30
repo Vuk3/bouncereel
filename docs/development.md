@@ -70,7 +70,9 @@ regression.
 One column, in the order the work goes: what the matchup is, a new one, the video's
 settings, then everything else in tabs. Fields in the tabs are generated from
 [fields.ts](../src/ui/fields.ts) (`TABS`): each names a path into `Config`. Fields marked
-`live` (looks, sound, words) apply to the running video; any other change restarts the run.
+`live` (looks, sound, words) apply to the running video; any other change restarts the run,
+and a run that was playing holds its first frame until the narrator's lines for it are
+generated (`startOver` in [app.ts](../src/app.ts)).
 
 - **The matchup card** ([app.html](../app.html), `syncMatchup` and `showPrediction` in
   [app.ts](../src/app.ts)) reads like the home page's race board: both balls as the video
@@ -97,7 +99,10 @@ settings, then everything else in tabs. Fields in the tabs are generated from
   again. Look: Paper, Cards or Night, each a thumbnail of this matchup's first frame in it,
   without the opening title, whose wash would hide the look
   ([look and layout](./look-and-layout.md) §6). A look changes only the drawing, so the run
-  goes on.
+  goes on. **Ask viewers to follow**: the follow button in the race and under the winner card,
+  and "Follow for more!" from the narrator ([look and layout](./look-and-layout.md) §14); off by
+  default, locked with a Paid plans tag on a plan without `follow`; a change balances the race
+  again, since the winner card stays up longer with it.
 - **Tabs** (arrow keys move between them):
   - **Balls**: top ball and bottom ball (name, colour from the dice's palette or any other,
     the numbers it hits with, its power and how much), and the layers, top first, with
@@ -310,3 +315,4 @@ browser's Cache Storage. The videos themselves live in D1, locally in `.wrangler
 - 2026-10-24 - the Videos page has the console pages' head (`app:head`): no `arcade:` boot of its own, the studio's does it.
 - 2026-10-27 - the Play with the narrator switch replaces Play without voice; Hear the music in the Sound tab.
 - 2026-10-27 - the recording bar asks to leave the headphones as they are and says when the sound stalls.
+- 2026-10-30 - the Ask viewers to follow switch under the looks; a run restarted while it plays generates its narration first.

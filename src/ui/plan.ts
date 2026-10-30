@@ -36,13 +36,14 @@ export function planChips(f: Features): { text: string; included: boolean }[] {
     { text: narrator ? 'Narrator' : 'No narrator', included: narrator },
     { text: f.powers ? 'Powers' : 'No powers', included: f.powers },
     { text: f.watermark ? 'With watermark' : 'No watermark', included: !f.watermark },
+    { text: f.follow ? 'Follow button' : 'No follow button', included: f.follow },
     { text: f.library === null ? 'Every video kept' : `${f.library} video${f.library === 1 ? '' : 's'} kept`, included: true },
   ];
 }
 
 /** Whether a plan holds anything back: one that holds nothing back needs no plan card. */
 export function planHoldsBack(f: Features): boolean {
-  return f.perDay !== null || f.maxSeconds < MAX_VIDEO_SECONDS || f.looks.length < LOOKS.length || !soundAllowed(f, 'narrator') || !f.powers || f.watermark || f.library !== null;
+  return f.perDay !== null || f.maxSeconds < MAX_VIDEO_SECONDS || f.looks.length < LOOKS.length || !soundAllowed(f, 'narrator') || !f.powers || f.watermark || !f.follow || f.library !== null;
 }
 
 /** A link to the pricing page, where the plans are compared: an invitation to look, not a demand. */

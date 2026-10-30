@@ -30,12 +30,12 @@ function soundOf(video: NewVideo): Sound {
 
 /**
  * What passes through the server is checked against the plan: the length the video was made
- * for, the sound it was recorded with, its look and its powers. The studio never sends one that
- * breaks them (it disables what the plan does not include); this is for a hand-made request or
- * a stale page.
+ * for, the sound it was recorded with, its look, its powers and the follow button. The studio
+ * never sends one that breaks them (it disables what the plan does not include); this is for a
+ * hand-made request or a stale page.
  */
 function checkPlan(video: NewVideo, features: Features): void {
-  const config = video.config as { timing?: { video?: unknown }; look?: { skin?: unknown }; a?: Ball; b?: Ball };
+  const config = video.config as { timing?: { video?: unknown }; look?: { skin?: unknown; follow?: unknown }; a?: Ball; b?: Ball };
   const length = config.timing?.video;
   if (video.videoLength > features.maxSeconds || (typeof length === 'number' && length > features.maxSeconds)) {
     throw notInPlan(`Your plan makes videos up to ${features.maxSeconds} s.`);
@@ -46,6 +46,7 @@ function checkPlan(video: NewVideo, features: Features): void {
   if (!features.powers && [config.a, config.b].some((ball) => ball?.special !== 'none' && Number(ball?.amount) > 0)) {
     throw notInPlan('Your plan does not include powers.');
   }
+  if (!features.follow && config.look?.follow === true) throw notInPlan('Your plan does not include the follow button.');
 }
 
 /** A ball as the config has it, as far as its power goes. */

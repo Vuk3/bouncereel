@@ -127,7 +127,7 @@ enough to read whole before the real work starts.
 | **account** | a user who signed up: email, password hash, role, confirmed or not, suspended or not; signed in by a session cookie ([accounts-and-billing](docs/accounts-and-billing.md)) |
 | **superadmin** | the role with every feature and the admin area; made only by `npm run admin` from the terminal, never over HTTP. Everyone else is `user` |
 | **plan** | a set of feature values with a name, an optional price, an order, visibility and a card on the pricing page (a tone and a badge), stored in D1 and edited in the admin area; Rookie (the free, default plan), Pro and Champion are seeded |
-| **feature** | one thing a plan can unlock, defined in [shared/features.ts](shared/features.ts): the sounds, the narrator, the longest video, the looks, powers, videos a day, the library size, no watermark, every game |
+| **feature** | one thing a plan can unlock, defined in [shared/features.ts](shared/features.ts): the sounds, the narrator, the longest video, the looks, powers, videos a day, the library size, no watermark, the follow button, every game |
 | **day** | the daily allowance's window: the UTC calendar day, so it comes back at midnight UTC; what it has used is kept on the account ([accounts-and-billing](docs/accounts-and-billing.md#6-plans-and-features)) |
 | **subscription** | an account's one row naming its plan, status (`active`, `canceled`), source (`manual` or a provider), optional end date; in force or not is worked out on every request, and an ended one falls back to the default plan |
 | **change log** | the append-only record of every subscription, plan and account-standing change: who, when, before, after |
@@ -205,7 +205,7 @@ silent video) starts with the first frame. The winner card
 stays until the video reaches its length (and the winner line has ended); the last half second
 fades into the run's first frame, so the video loops without a cut; then the file downloads,
 and the video (its config, the prediction's winner and margin, the file name) is posted to the
-account's library, where the Worker checks the length, the sound, the look, powers and the
+account's library, where the Worker checks the length, the sound, the look, powers, the follow button and the
 library size against the plan. A save that cannot get through waits in the browser, tagged with the account, and is
 sent on its next load.
 

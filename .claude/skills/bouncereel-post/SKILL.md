@@ -32,6 +32,7 @@ every field and keeps the texts with the video; the path after it is ignored the
 | `Video: 45 s, paper look, narrator and music` | the length is a fact you may use; the look and the sound are not for viewers |
 | `First frame: the two names, VS and "…"` | the question the video opens on, which the narrator asks too: the posts pose the same choice |
 | `Last line on the winner card: "…"` | what the video ends on: the posts' closing question agrees with it, without copying it |
+| `Asks viewers to follow: …` | the video asks for a follow itself, with a button and the narrator's "Follow for more!": the posts need not ask again |
 | `Seed`, `File`, `Library id` | for the JSON only (`file`, `video`), never in a text |
 
 A block can lack lines. A video saved before configs were kept has no colours, look, first frame

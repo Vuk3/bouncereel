@@ -12,6 +12,7 @@ The video's look, drawn on one 1080×1920 canvas every frame. Deep-dive:
 | the ⚡ power tag beside a name, the free plan's watermark, the BounceReel mark | [renderer.ts](./renderer.ts) `drawTag`, `drawWatermark`, `drawMark` |
 | floating damage numbers, debris, confetti, shake | [effects.ts](./effects.ts); how big a hit lands (flash, kick, number size) in renderer.ts `handle`, `floatDamage` |
 | the opening title over the first frame, the meters and LEAD CHANGE, the last layer's glow, a layer's number counting down | [renderer.ts](./renderer.ts) `drawOpening`, `drawMeters`, `drawLeadChange`, `finalGlow`, `count` |
+| the follow button, in the race (right of the VS, where LEAD CHANGE shows) and under the winner card | [renderer.ts](./renderer.ts) `drawRaceFollow`, `drawEndFollow`, `followAt` |
 
 ## Rules
 

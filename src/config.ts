@@ -90,6 +90,12 @@ export interface Config {
     cta: string;
     /** The last half second cross-fades into the first frame, so the video loops without a visible cut. */
     loop: boolean;
+    /**
+     * Ask viewers to follow: a follow button once in the race and under the winner card
+     * (src/render), and FOLLOW_LINE after the winner line. Only on a plan with `follow`
+     * (shared/features.ts); the studio turns it off on one without.
+     */
+    follow: boolean;
     /** Thousands separator: "1.000.000" as in the format, or "1,000,000". */
     separator: '.' | ',';
     safeZones: boolean;
@@ -129,6 +135,22 @@ export const WINNER_LINES = [
   "That's the race: {winner} wins!",
 ];
 
+/**
+ * What the narrator adds after the winner line when the video asks viewers to follow
+ * (`look.follow`), whichever line the dice dealt: each says who won, and this works after any.
+ */
+export const FOLLOW_LINE = 'Follow for more!';
+
+/**
+ * What the narrator says at the win: the winner line filled in, then FOLLOW_LINE when the video asks
+ * viewers to follow, unless a line written by hand asks already. '' when there is neither.
+ */
+export function spokenOutro(cfg: Config, vars: { winner: string; time: string }): string {
+  const line = fillTemplate(cfg.voice.outro, vars).trim();
+  // The written line, not the filled one: a ball may be called "Follower Ball".
+  return cfg.look.follow && !/\bfollow/i.test(cfg.voice.outro) ? `${line} ${FOLLOW_LINE}`.trim() : line;
+}
+
 const BASE: Config = {
   seed: '1',
   // Speeds here are only a starting point: loading a matchup balances them
@@ -141,7 +163,7 @@ const BASE: Config = {
   voice: { voice: 'af_heart', script: '', outro: WINNER_LINES[0] },
   timing: { video: 40, gap: 0, startDelay: 0.5, hold: 3.5, maxSeconds: 150 },
   // The last line answers the opening's question and sends viewers to the comments.
-  look: { skin: 'paper', question: '', cta: LAST_LINES[0], loop: true, separator: '.', safeZones: false },
+  look: { skin: 'paper', question: '', cta: LAST_LINES[0], loop: true, follow: false, separator: '.', safeZones: false },
 };
 
 /** The last line's earlier default, which savedConfig reads as today's. */

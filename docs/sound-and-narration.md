@@ -12,6 +12,7 @@ the timing that keeps the narrator from talking over itself.
 | the opening, the winner line, the line a voice says when tried | [src/audio/narration.ts](../src/audio/narration.ts) `autoScript`, `outroLine`, `previewLine`; facts and briefs in [sequences.ts](../src/sim/sequences.ts) |
 | the opening's question (also on screen in the video's first second) | [src/audio/opening.ts](../src/audio/opening.ts) `QUESTIONS`, `openingDraws`, `configQuestion`, `openingQuestion` |
 | the winner lines the dice deals | [src/config.ts](../src/config.ts) `WINNER_LINES` |
+| "Follow for more!" after the winner line | [src/config.ts](../src/config.ts) `FOLLOW_LINE`, `spokenOutro` |
 | the voices, loading Kokoro, the clip cache | [src/audio/narration.ts](../src/audio/narration.ts) `VOICES`, `loadKokoro`, `synthesize`, `VoiceCache` |
 | when lines are said, trying a voice, hearing the music | [src/app.ts](../src/app.ts) `playIntro`, `sayOutroWhenFree`, `hear`, `hearMusic` |
 | the voice list and its buttons in the Voice tab | [src/app.ts](../src/app.ts) `buildVoiceBlock` |
@@ -122,6 +123,13 @@ others say who won and stop ("{winner} takes it!"), since the winner card's last
 question. Left empty, the narrator says nothing at the end and the video closes on the
 fanfare.
 
+**Follow for more!** With **Ask viewers to follow** on (`look.follow`, beside the follow
+button in the picture, [look and layout](./look-and-layout.md) §14), the narrator says
+`FOLLOW_LINE` after the winner line, whichever the dice dealt: "Fibonacci Ball wins! Did you
+guess right? Follow for more!" (`spokenOutro` in [config.ts](../src/config.ts)). It is part of
+the winner line, one clip, so the narrator still says two lines. A winner line written by hand
+that asks for a follow already gets no second ask; an empty one, "Follow for more!" alone.
+
 ## 4. The voice
 
 The narrator is **Kokoro** ([kokoro-js](https://www.npmjs.com/package/kokoro-js), model
@@ -180,13 +188,17 @@ at a time: Kokoro has one model to share. A failed line warns in the page ("Voic
 The simulation is deterministic, so both lines a run will say are known before it
 starts: `plannedLines(cfg, outcome)` builds the opening and, from the predicted winner, the
 winner line (none when it is empty or the race times out without one). Play and Record
-generate both first, then:
+generate both first, and so does a run that starts over while it plays (a new matchup, length
+or layers: `startOver` in [app.ts](../src/app.ts) holds the first frame until they are ready),
+or its winner line, for a new winner or time, would be missing and the narrator silent at the
+end. Then:
 
 - **The opening** starts with the run.
 - **The winner line** waits for the opening to end if it is still going (a short race or
   a long opening), then plays; the winner card stays until it has ended, plus 0.4 s
   (`AFTER_OUTRO` in [pacing.ts](../src/pacing.ts)), and at least until the video reaches
-  its length.
+  its length. "Follow for more!" lengthens the line, and the card is planned for it
+  (`cardSeconds`), so balancing gives the race that much less.
 
 ## Changelog
 
@@ -199,3 +211,4 @@ generate both first, then:
 - 2026-10-23 - a sting when the lead changes hands for good (glassy pings, never held back by the voice cap); the last layer's notes climb to an octave at the break; the opening's question moved to opening.ts, shown on the first frame too (the openings it writes unchanged, 480 checked).
 - 2026-10-26 - more variety in the words: twenty questions (`look.question`, typed under More → Video or the seed's pick; a config saved before keeps its question), two or three facts a sequence, five ways to start the opening, and the dice deals the winner line from `WINNER_LINES`.
 - 2026-10-27 - Hear the music in the Sound tab; the Play with the narrator switch replaces Play without voice.
+- 2026-10-30 - "Follow for more!" after the winner line when the video asks viewers to follow; a run that starts over while it plays (a new matchup, length or layers) generates its lines before its first frame, so the winner line is never missing.

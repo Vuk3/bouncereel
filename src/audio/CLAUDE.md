@@ -24,8 +24,9 @@ words and the voices that say them. Deep-dive:
   the prediction first ([plannedLines](./narration.ts)); a line built from something the
   prediction does not know would be silent in the video.
 - **Two lines, and nothing in between.** The narrator says the opening and the winner line
-  (none when that field is empty); a line per layer break piled up and talked over
-  itself. The winner line waits for the opening to end ([app.ts](../app.ts)).
+  (none when that field is empty; "Follow for more!" is part of it, `spokenOutro`); a line
+  per layer break piled up and talked over itself. The winner line waits for the opening to
+  end ([app.ts](../app.ts)).
 - **Kokoro is the only voice.** It is free, runs in the browser and is recorded with the
   rest; do not add a paid voice or the browser's `speechSynthesis` (which never reaches
   the file) without asking. Its ONNX Runtime is served from this site (`ORT`), not from

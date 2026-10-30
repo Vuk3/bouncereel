@@ -587,7 +587,7 @@ function toggle(name: string, label: string, note: string, checked: boolean): HT
 }
 
 /** A new plan starts as the free plan does: the smallest that still makes a video, with the watermark. */
-const NEW_PLAN: Features = { sounds: ['music', 'silent'], narrator: false, maxSeconds: 30, looks: ['paper'], powers: false, perDay: 1, library: 5, watermark: true, allGames: false };
+const NEW_PLAN: Features = { sounds: ['music', 'silent'], narrator: false, maxSeconds: 30, looks: ['paper'], powers: false, perDay: 1, library: 5, watermark: true, follow: false, allGames: false };
 
 /** The editor's fields for one plan (or a new one), prices in the currency's major unit. */
 function planForm(plan: AdminPlan | null): { form: HTMLFormElement; read: () => PlanBody } {
@@ -666,6 +666,7 @@ function planForm(plan: AdminPlan | null): { form: HTMLFormElement; read: () => 
         toggle('narrator', 'The narrator', 'The Voice tab, and a voice in the video. Needs the narrator sound too.', f.narrator),
         toggle('powers', 'Powers', 'Balls that speed up, slow down, grow or split.', f.powers),
         toggle('watermark', 'Watermark', 'A small BounceReel watermark between the two cards of every video.', f.watermark),
+        toggle('follow', 'Follow button', 'The studio’s Ask viewers to follow switch: a follow button in the race and under the winner card, and “Follow for more!” from the narrator.', f.follow),
         toggle('allGames', 'Every game', 'Each game BounceReel adds, as it comes out. Ball races are the one game today.', f.allGames),
       ),
     ),
@@ -692,6 +693,7 @@ function planForm(plan: AdminPlan | null): { form: HTMLFormElement; read: () => 
         perDay: optional('perDay'),
         library: optional('library'),
         watermark: data.has('watermark'),
+        follow: data.has('follow'),
         allGames: data.has('allGames'),
       },
     };

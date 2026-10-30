@@ -197,13 +197,14 @@ again on every request, which is what protects the data.
 | `perDay` | videos a day, 1 or more; null is no limit. A day is the UTC calendar day: a new one starts at midnight UTC | the server as Record starts (`POST /api/account/day`, `claimDay`); the studio's Record button shows it |
 | `library` | videos kept; null is no limit | the server on save (inside the INSERT) |
 | `watermark` | a small BounceReel watermark (the mark and the site's host) between the two cards of every video ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)) | the studio: it draws the video, in the preview as in the file. The server cannot see the pixels; the [terms](../terms.html#licence) ask that it stays on |
+| `follow` | the follow button: the studio's Ask viewers to follow switch (`look.follow`), a follow button once in the race and under the winner card, and "Follow for more!" after the winner line ([look and layout](./look-and-layout.md#14-the-follow-button)). On every plan but Rookie (0009_follow_button.sql) | the studio (the switch is locked; a config made with it, from the library or a file, loads with it off); the server on save (`look.follow`) |
 | `allGames` | every game BounceReel makes, each new one as it comes out | nothing yet: ball races are the one game, and every plan makes it. A second game checks it before it opens |
 
 **The studio says what the plan makes, and shows what it lacks instead of hiding it.** At the
 top of the panel, a plan that holds anything back gets a card: "Your plan: Rookie" and a few
 words for each feature, a tick for what it makes and a dash for what it leaves out ("1 video a
 day", "Up to 30 s", "Paper look", "5 videos kept"; "No narrator", "No powers", "With
-watermark"), with Compare plans (`buildPlanCard`, `planChips`). A plan with nothing held back
+watermark", "No follow button"), with Compare plans (`buildPlanCard`, `planChips`). A plan with nothing held back
 has none. What the plan lacks stays in view, disabled, with a line saying so and an **Upgrade**
 link to `/pricing` (`applyPlan` in [src/app.ts](../src/app.ts), `planNote` in
 [src/ui/plan.ts](../src/ui/plan.ts)). A saved config is fitted on load where that
@@ -214,7 +215,7 @@ exactly as recorded, and Record checks it the same way.
 
 **The server checks what passes through it**: Record when the day's videos are made is a 403
 `day_used`, before anything is recorded; a save of a video longer than the plan allows, with a
-sound, a look or a power it lacks is a 403 `not_in_plan`; a save into a full library is a 403
+sound, a look, a power or the follow button it lacks is a 403 `not_in_plan`; a save into a full library is a 403
 `library_full` (counted inside the `INSERT`, so two saves at once cannot both take the last
 place). A refused save still has its file, downloaded first; the sheet after the take says why
 it is not in Videos, with a See plans link.
@@ -356,8 +357,8 @@ with a bar of its own instead of the sidebar.
   will show it, redrawn on every change (beside the fields on a wide screen, after them on a
   narrow one), then the fields in four groups: the plan (name, description, its card, its
   badge, on the pricing page), the price, the limits (videos a day, longest video, videos
-  kept) and what it includes (sounds, looks, the narrator, powers, the watermark, every
-  game). A save the server refuses keeps the drawer open with its reason.
+  kept) and what it includes (sounds, looks, the narrator, powers, the watermark, the follow
+  button, every game). A save the server refuses keeps the drawer open with its reason.
 - **Log** (`/admin/log`): every line, newest first, 50 a page, with only what changed between
   before and after.
 
@@ -470,3 +471,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-10-24 - `PUT /api/admin/videos/:id/texts`, a superadmin's texts for posting a video.
 - 2026-10-24 - the Videos page in the console look (src/console.css), with the account page's top bar; the console's selects keep their chevron; a page under the top bar is centred.
 - 2026-10-29 - a superadmin is on no plan in the admin area ("Everything", in no plan's count or filter, no subscription form) nor on the pricing page; deleting the plan its row names moves the row to the default plan.
+- 2026-10-30 - the `follow` feature (0009_follow_button.sql: on every plan but the default one): the studio's Ask viewers to follow switch, locked on a plan without it, and checked on save.

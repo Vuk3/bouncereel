@@ -10,7 +10,7 @@ game would be added.
 | what is stored for a recording | [src/app.ts](../src/app.ts) `libraryEntry`, [shared/api.ts](../shared/api.ts) `NewVideo`, [worker/validate.ts](../worker/validate.ts), [worker/videos.ts](../worker/videos.ts), a migration |
 | a table or column | a new file in [migrations/](../migrations/) ([rules](../migrations/CLAUDE.md)), then [worker/videos.ts](../worker/videos.ts) and [shared/api.ts](../shared/api.ts) |
 | a route | `ROUTES` in [worker/router.ts](../worker/router.ts), a handler in [worker/routes/videos.ts](../worker/routes/videos.ts) |
-| what a plan allows on save (length, sound, look, powers, library size) | `checkPlan` in [worker/routes/videos.ts](../worker/routes/videos.ts), the limit inside `insertVideo` in [worker/videos.ts](../worker/videos.ts); the day is taken earlier, as Record starts; the plans themselves: [accounts-and-billing](./accounts-and-billing.md#6-plans-and-features) |
+| what a plan allows on save (length, sound, look, powers, the follow button, library size) | `checkPlan` in [worker/routes/videos.ts](../worker/routes/videos.ts), the limit inside `insertVideo` in [worker/videos.ts](../worker/videos.ts); the day is taken earlier, as Record starts; the plans themselves: [accounts-and-billing](./accounts-and-billing.md#6-plans-and-features) |
 | which links are accepted | [shared/links.ts](../shared/links.ts) |
 | a platform | `PLATFORMS` in [shared/api.ts](../shared/api.ts), [shared/links.ts](../shared/links.ts), the `CHECK` on `posts.platform` (a migration), the page's filter in [app/videos.html](../app/videos.html) |
 | saving after Record, the retry queue | [src/library.ts](../src/library.ts) |
@@ -95,7 +95,7 @@ does not exist (404 `video_not_found`), never 403, so nothing tells them apart. 
 | `invalid_texts` (400) | texts missing a field or past a platform's limit ([shared/texts.ts](../shared/texts.ts)); the message says which |
 | `video_not_found`, `post_not_found`, `not_found` (404) | no such video, link, platform or route |
 | `post_taken` (409) | that post is already linked to another of the account's videos |
-| `not_in_plan` (403) | the video is longer than the plan's longest, or made with a sound, a look or a power the plan does not include |
+| `not_in_plan` (403) | the video is longer than the plan's longest, or made with a sound, a look, a power or the follow button the plan does not include |
 | `library_full` (403) | the account's library holds as many videos as its plan keeps |
 | `unauthenticated` (401) | no session ([accounts-and-billing](./accounts-and-billing.md#5-the-session-check)) |
 | `method_not_allowed` (405), `cross_origin` (403), `unsupported_media_type` (415) | as named |
@@ -104,7 +104,8 @@ does not exist (404 `video_not_found`), never 403, so nothing tells them apart. 
 balanced for (`videoLength` and the config's `timing.video`) against the plan's `maxSeconds`;
 the sound it was recorded with (`config.sound.track`, `narrator` when a config predates the
 choice) against the plan's sounds; its look (`config.look.skin`) against the plan's looks; a
-ball with a power against `powers`. Then the library limit, counted inside the `INSERT`, so two
+ball with a power against `powers`; the follow button (`config.look.follow`) against
+`follow`. Then the library limit, counted inside the `INSERT`, so two
 saves at once cannot both take the last place. The day is not counted here: Record took the
 day's video from the server as it started (`POST /api/account/day`), so a save never uses one,
 and deleting a video never gives one back. The studio disables what the plan lacks, so it only
@@ -283,3 +284,4 @@ by in a migration; `NewVideo` gets a variant per game, and `toSummary` in
 - 2026-10-25 - the skill also saves the video's thumbnail (its first frame, `<name>-thumbnail.jpg`) beside the clip and prints its path under the JSON; a paste reads the JSON from the first brace to the last when the fence was not copied.
 - 2026-10-26 - a video saved before configs kept a question opens with, and is described with, the question its seed picked then.
 - 2026-10-26 - Who won beside Balls raced: how many races the top and the bottom ball won, and how many each sequence won, from the `winner` the list already carries.
+- 2026-10-30 - the follow button (`look.follow`) checked on save; the text a superadmin copies for posts says when a video asks viewers to follow.

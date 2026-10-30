@@ -940,13 +940,17 @@ input[type='color'].swatch-any::-webkit-color-swatch {
   font-variant-numeric: tabular-nums;
 }
 
-/* An on/off setting that is not a field of the config (the dice's powers, the narrator in Play). */
+/* An on/off setting in the matchup block (the dice's powers, the narrator in Play, Ask viewers to follow). */
 .switch {
   display: inline-flex;
   align-items: center;
   gap: 9px;
   cursor: pointer;
   font-size: 13px;
+}
+/* A switch as a field of its own: its words beside it, not spread across the row as a field's label and value are. */
+.field > .switch {
+  justify-content: flex-start;
 }
 .switch input {
   appearance: none;

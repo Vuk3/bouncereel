@@ -8,7 +8,7 @@ import { Sonifier } from './audio/sonify.ts';
 import { DEFAULT_CONFIG, PRESETS, SKINS, mergeConfig, savedConfig, type Config, type Skin, type Special } from './config.ts';
 import { addToLibrary, APP_VERSION, postPrompt, retryPending, type Saved } from './library.ts';
 import { download, describeType, pickType, Recorder } from './record/recorder.ts';
-import { Renderer } from './render/renderer.ts';
+import { Renderer, followAt } from './render/renderer.ts';
 import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL, narrated, openingShown, videoSeconds } from './pacing.ts';
 import { balance, balanceProblem, randomMatchup } from './sim/balance.ts';
 import { SEQUENCES } from './sim/sequences.ts';
@@ -106,6 +106,8 @@ export class App {
   private raceAt: number | null = null;
   /** Seconds between the winner and the loser touching the line. */
   private margin = 0;
+  /** When in the race the follow button pops up (followAt), from the prediction; null for no room. */
+  private followTime: number | null = null;
   private acc = 0;
   private paused = true;
   private starting = false;
@@ -166,6 +168,7 @@ export class App {
     this.world = createWorld(this.cfg);
     this.outcome = predict(this.cfg);
     this.margin = this.measureMargin();
+    this.followTime = followAt(this.outcome.time, this.outcome.leads);
     this.renderer = new Renderer(this.canvas);
     this.renderer.reset(this.cfg);
     this.panel = new Panel($('#sections'), () => this.cfg, (field) => this.changed(field));
@@ -173,6 +176,7 @@ export class App {
     this.buildPresetBlock();
     this.buildLookBlock();
     this.buildSoundBlock();
+    this.buildFollowSwitch();
     this.buildMusicBlock();
     this.buildVoiceBlock();
     this.applyPlan();
@@ -239,6 +243,7 @@ export class App {
       opening: openingShown(this.raceAt === null ? null : this.elapsed - this.raceAt),
       leads: this.outcome.leads,
       margin: this.margin,
+      follow: this.cfg.look.follow ? { at: this.followTime } : undefined,
     });
     this.updateStatus();
     this.syncTimeline();
@@ -316,6 +321,7 @@ export class App {
     this.world = createWorld(this.cfg);
     this.outcome = predict(this.cfg);
     this.margin = this.measureMargin();
+    this.followTime = followAt(this.outcome.time, this.outcome.leads);
     this.renderer.reset(this.cfg);
     this.sonifier?.reset(this.cfg, this.outcome.leads);
     this.acc = 0;
@@ -763,14 +769,18 @@ export class App {
 
   // ── Narration ────────────────────────────────────────────────────────────
 
-  /** Generates both lines this run will say, unless they are already cached. */
+  /**
+   * Generates both lines this run will say, unless they are already cached; again while any is
+   * missing, since a change made while they generate (a new matchup, another length) starts the
+   * run over with lines of its own (startOver), which it needs before its first frame too.
+   */
   private async prepareVoice(): Promise<void> {
-    if (!this.audio) return;
-    const voice = voiceOf(this.cfg);
-    const lines = plannedLines(this.cfg, this.outcome);
-    if (!this.voices.missing(voice, lines).length) return;
+    const audio = this.audio;
+    if (!audio) return;
+    const missing = () => (this.narrating() ? this.voices.missing(voiceOf(this.cfg), plannedLines(this.cfg, this.outcome)) : []);
+    if (!missing().length) return;
     try {
-      await this.voices.prepare(this.audio.ctx, voice, lines, (s) => this.setVoiceStatus(s));
+      while (missing().length) await this.voices.prepare(audio.ctx, voiceOf(this.cfg), plannedLines(this.cfg, this.outcome), (s) => this.setVoiceStatus(s));
       this.setVoiceStatus('Voice ready');
     } catch (err) {
       this.setVoiceStatus('');
@@ -855,10 +865,13 @@ export class App {
     }
     // Dragging a slider fires dozens of changes: restart once it settles.
     window.clearTimeout(this.restartTimer);
-    this.restartTimer = window.setTimeout(() => this.restart(), 180);
+    this.restartTimer = window.setTimeout(() => this.startOver(), 180);
   }
 
   private setConfig(cfg: Config): void {
+    // A video from the library or a file made on a plan with the follow button: off on one without,
+    // where its switch cannot be turned off. The card comes out shorter, and stays up to the length.
+    if (!this.features.follow) cfg.look.follow = false;
     this.cfg = cfg;
     $('#balance-note').hidden = true;
     this.save();
@@ -866,7 +879,17 @@ export class App {
     this.syncTopBlock();
     this.syncMatchup();
     this.syncSafeZones();
-    this.restart();
+    this.startOver();
+  }
+
+  /**
+   * Starts the run over after a change. While it plays, through play, so the new run's lines are
+   * generated before its first frame: a new matchup, length or layers can bring a new winner or
+   * time, and a winner line never generated is a narrator who says nothing at the end.
+   */
+  private startOver(): void {
+    if (this.paused || this.starting || this.recorder) this.restart();
+    else void this.play(true, !this.voiceless);
   }
 
   private syncTopBlock(): void {
@@ -876,6 +899,7 @@ export class App {
     $<HTMLInputElement>('#gap').value = String(this.cfg.timing.gap);
     $('#gap-out').textContent = gapLabel(this.cfg.timing.gap);
     $<HTMLInputElement>('#powers').checked = this.powers && this.features.powers;
+    $<HTMLInputElement>('#follow').checked = this.cfg.look.follow;
     for (const input of document.querySelectorAll<HTMLInputElement>('.look input')) input.checked = input.value === this.cfg.look.skin;
     for (const input of document.querySelectorAll<HTMLInputElement>('.track input')) input.checked = input.value === this.cfg.sound.track;
     for (const input of document.querySelectorAll<HTMLInputElement>('.voices input')) input.checked = input.value === voiceOf(this.cfg);
@@ -893,6 +917,11 @@ export class App {
     const f = this.features;
     let retime = false;
     if (!f.looks.includes(cfg.look.skin)) cfg.look.skin = f.looks[0];
+    if (!f.follow && cfg.look.follow) {
+      cfg.look.follow = false;
+      // The winner card was planned with the follow button's time, and its line (pacing.ts).
+      retime = true;
+    }
     if (!soundAllowed(f, cfg.sound.track)) {
       cfg.sound.track = (['music', 'silent', 'narrator'] as Sound[]).find((s) => soundAllowed(f, s)) ?? 'silent';
       // The winner card was planned for a winner line that no longer comes (pacing.ts).
@@ -998,6 +1027,17 @@ export class App {
         select.disabled = true;
         gate(select.closest('.field')!, powersOnPaid, 'Powers on the paid plans.', 'Powers are not in your plan.');
       }
+    }
+
+    if (!f.follow) {
+      const follow = $<HTMLInputElement>('#follow');
+      follow.disabled = true;
+      const followOnPaid = (plan: Features) => plan.follow;
+      const toggle = follow.closest('.switch')!;
+      toggle.classList.add('locked');
+      toggle.querySelector('span')?.append(' ', paidTag(onPaid(followOnPaid)));
+      $('#follow-hint').hidden = true;
+      gate(toggle, followOnPaid, 'The follow button on the paid plans.', 'The follow button is not in your plan.');
     }
 
     if (!f.narrator) {
@@ -1318,6 +1358,18 @@ export class App {
         this.loadMatchup(this.cfg);
       });
     }
+  }
+
+  /**
+   * Ask viewers to follow (look.follow): the follow button and "Follow for more!". It keeps the
+   * winner card up longer (pacing.ts), so the race is balanced again, as for Sound.
+   */
+  private buildFollowSwitch(): void {
+    const follow = $<HTMLInputElement>('#follow');
+    follow.addEventListener('change', () => {
+      this.cfg.look.follow = follow.checked;
+      this.loadMatchup(this.cfg);
+    });
   }
 
   /** Under the Music fields, a way to hear the picked melody on the picked instrument without playing a race. */

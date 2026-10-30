@@ -23,6 +23,7 @@ cards after dark: the same drawing in a second palette, near-black cards on a du
 | the loop at the end | `loop` in [src/app.ts](../src/app.ts) `frame`, `END_PAD` in [src/pacing.ts](../src/pacing.ts) |
 | the opening title over the first frame (§11) | [src/render/renderer.ts](../src/render/renderer.ts) `drawOpening`, `OPENINGS`; how long it shows, `openingShown` in [src/pacing.ts](../src/pacing.ts); its question, [src/audio/opening.ts](../src/audio/opening.ts) |
 | the meters and LEAD CHANGE (§12) | [src/render/renderer.ts](../src/render/renderer.ts) `drawMeters`, `METER`, `drawLeadChange`, `LEAD_SHOW`, `LEAD_RIGHT`; which changes, `Outcome.leads` from `predict` in [src/sim/world.ts](../src/sim/world.ts) |
+| the follow button, in the race and under the winner card (§14) | [src/render/renderer.ts](../src/render/renderer.ts) `drawRaceFollow`, `drawEndFollow`, `drawFollowButton`, `followAt`, `FOLLOW_*`; `Overlay.follow` from `look.follow` in [src/app.ts](../src/app.ts); the card's least time, `FOLLOW_CARD` in [src/pacing.ts](../src/pacing.ts) |
 | the last layer's glow (§13) | [src/render/renderer.ts](../src/render/renderer.ts) `finalGlow`, `PULSE_HZ`, drawn in `drawSheetLayers` and `drawLayers` |
 | how a hit lands (flash, shake, its number's size), the layer's countdown (§4, §7) | [src/render/renderer.ts](../src/render/renderer.ts) `handle`, `floatDamage`, `KICK_GAP`; `count`, `COUNT` |
 | the look picker's thumbnails | [src/app.ts](../src/app.ts) `drawStills`, `THUMB` |
@@ -164,6 +165,8 @@ It pops in with a slight overshoot and confetti falls over it, in every look.
   in ink on its top edge (`TIME'S UP · LEADER WINS` after a timeout), the name in the team
   colour with an ink outline, "Won by 0.3 s · 22.9 s · 18 hits", "<Sequence> reached
   <damage>", and the last line.
+
+With **Ask viewers to follow** on, the follow button comes up under the card (§14).
 
 **The margin** is the seconds between the winner and the loser touching the line, as the
 studio's matchup card measures it (`measureMargin` in [app.ts](../src/app.ts); the hero
@@ -331,6 +334,7 @@ and LEAD CHANGE in its colour right of the VS, in the look's own pill (the cards
 hard shadow), popping in over 0.25 s and fading at the end. Right of the VS because its
 left is the watermark's, and ending at x 920 (`LEAD_RIGHT`), 20 px before the side buttons'
 column. The sting that goes with it is in [sound and narration](./sound-and-narration.md).
+The follow button shows in the same place once in the race (§14), never at the same time.
 
 ## 13. The last layer
 
@@ -344,6 +348,34 @@ can sit on it for half the race. What marks it grows with how far through it the
 - **Its hits land harder**: the flash at least 0.35 to full, the shake 1 to 5 px.
 - **Its notes climb**, an octave by the hit that breaks it
   ([sound and narration](./sound-and-narration.md)).
+
+## 14. The follow button
+
+With **Ask viewers to follow** on (`look.follow`, the switch under the looks, on a plan with the
+`follow` feature, [accounts and billing](./accounts-and-billing.md)), the video asks for a
+follow twice, with a button like the platforms' own: a plus and FOLLOW on a pill, which a tap
+turns into a tick and FOLLOWING on the look's card (white on paper and cards, dark on night).
+It is drawn in the look's pill, the cards' with their hard shadow, and the plus and the tick
+are lines, since Rubik has neither. It is as wide as FOLLOWING in both states, so the tap does
+not move it; the tap is a press (8 % smaller, 0.1 s either side) and a ring spreading from the
+plus over 0.4 s (ink, white on night).
+
+- **In the race**, once, in 34 px type and TikTok's and YouTube's follow red (`FOLLOW_RED`,
+  `#fe2c55`: neither team's colour, and a follow button before its word is read): right of the
+  VS, where LEAD CHANGE shows, ending at x 920 as it does. It pops in, is tapped 0.9 s in and
+  has faded by 2.4 s (`FOLLOW_SHOW`). `followAt` puts it as near 45 % of the race as LEAD
+  CHANGE allows (0.3 s clear of each marked lead change), within 30–75 % of the race: a viewer
+  still watching then is the one worth asking, the opening's question is long gone, and the
+  finish has a button of its own. With no such room (4 in 100 random 20 s videos, none at 30 s
+  and longer), the race has none. No hand here: the gap between the cards has no room for one.
+- **Under the winner card**, in 46 px type and the winner's colour, centred at y 1330
+  (`FOLLOW_Y`): clear of the tallest card's shadow, with the hand under it clear of the
+  platforms' bottom bar (§9). It pops in 0.6 s after the card (`FOLLOW_IN`), a 👆 comes up from
+  below right and taps its plus at 1.5 s (`FOLLOW_TAP`), and FOLLOWING stays to the end, under
+  the confetti. The card stays up at least 2.5 s with it (`FOLLOW_CARD` in
+  [pacing.ts](../src/pacing.ts)), so FOLLOWING is seen.
+
+The narrator's "Follow for more!" is in [sound and narration](./sound-and-narration.md).
 
 ## Changelog
 
@@ -359,3 +391,4 @@ can sit on it for half the race. What marks it grows with how far through it the
 - 2026-10-24 - the watermark prints the site's host (`SITE_HOST`), narrowed to fit the gap.
 - 2026-10-25 - the opening made for the cover: a lighter wash (paper 45 %, cards and night 40 %), the balls over it, a ball's power tag 1.3× where its name row stands, the name rows and chips held back under it, paper's names with an ink outline; the meters moved to x 80, out of the side Reels crops on a tall phone.
 - 2026-10-26 - the question over the first frame can be typed (`look.question`, More → Video) and is otherwise one of twenty; the dice deals the last line on the winner card from `LAST_LINES`.
+- 2026-10-30 - the follow button (`look.follow`, on plans with `follow`): once in the race right of the VS, in follow red, and under the winner card in the winner's colour, tapped into FOLLOWING (§14).

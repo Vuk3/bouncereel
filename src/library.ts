@@ -2,7 +2,7 @@ import type { AccountResponse, CreatedResponse, NewVideo, RaceSide, VideoSummary
 import { LOOK_LABELS, SOUND_LABELS } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
 import { openingQuestion } from './audio/opening.ts';
-import type { Config, Contestant } from './config.ts';
+import { FOLLOW_LINE, type Config, type Contestant } from './config.ts';
 import { SEQUENCES, type SequenceId } from './sim/sequences.ts';
 
 // Every finished recording goes into the account's video library (the Worker's D1). A save that
@@ -50,6 +50,7 @@ export function postPrompt(video: Pick<VideoSummary, 'title' | 'fileName' | 'vid
     lines.push(`Video: ${video.videoLength} s, ${LOOK_LABELS[cfg.look.skin].toLowerCase()} look, ${SOUND_LABELS[cfg.sound.track].toLowerCase()}`);
     lines.push(`First frame: the two names, VS and "${openingQuestion(cfg)}"`);
     if (cfg.look.cta.trim()) lines.push(`Last line on the winner card: "${cfg.look.cta.trim()}"`);
+    if (cfg.look.follow) lines.push(`Asks viewers to follow: a follow button in the race and under the winner card, and the narrator's "${FOLLOW_LINE}"`);
   } else lines.push(`Video: ${video.videoLength} s`);
   lines.push(`Seed: ${video.seed}`, `File: ${video.fileName}`);
   if (video.id) lines.push(`Library id: ${video.id}`);

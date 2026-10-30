@@ -40,6 +40,11 @@ export interface Features {
    */
   watermark: boolean;
   /**
+   * The studio's Ask viewers to follow switch (`look.follow`): a follow button once in the race
+   * and under the winner card, and "Follow for more!" after the winner line.
+   */
+  follow: boolean;
+  /**
    * Every game BounceReel makes, each new one included as it comes out. Ball races are the one
    * game today, which every plan makes; nothing checks this until there is a second.
    */
@@ -56,6 +61,7 @@ export const EVERYTHING: Features = {
   perDay: null,
   library: null,
   watermark: false,
+  follow: true,
   allGames: true,
 };
 
@@ -73,6 +79,7 @@ const LEAST: Features = {
   perDay: 0,
   library: 0,
   watermark: true,
+  follow: false,
   allGames: false,
 };
 
@@ -105,6 +112,7 @@ export function readFeatures(value: unknown): Features {
     perDay: isLimit(raw.perDay, 0, Infinity) ? raw.perDay : LEAST.perDay,
     library: isLimit(raw.library, 0, Infinity) ? raw.library : LEAST.library,
     watermark: typeof raw.watermark === 'boolean' ? raw.watermark : LEAST.watermark,
+    follow: typeof raw.follow === 'boolean' ? raw.follow : LEAST.follow,
     allGames: typeof raw.allGames === 'boolean' ? raw.allGames : LEAST.allGames,
   };
 }
@@ -120,7 +128,7 @@ export function featuresProblem(value: unknown): string | null {
     Array.isArray(raw[key]) && (raw[key] as unknown[]).every((v) => allowed.includes(v as string)) && (raw[key] as unknown[]).length > 0;
   if (!list('sounds', SOUNDS)) return `sounds must list at least one of ${SOUNDS.join(', ')}`;
   if (!list('looks', LOOKS)) return `looks must list at least one of ${LOOKS.join(', ')}`;
-  for (const key of ['narrator', 'powers', 'watermark', 'allGames']) if (typeof raw[key] !== 'boolean') return `${key} must be true or false`;
+  for (const key of ['narrator', 'powers', 'watermark', 'follow', 'allGames']) if (typeof raw[key] !== 'boolean') return `${key} must be true or false`;
   const seconds = raw.maxSeconds;
   if (typeof seconds !== 'number' || !Number.isInteger(seconds) || seconds < MIN_VIDEO_SECONDS || seconds > MAX_VIDEO_SECONDS) {
     return `maxSeconds must be a whole number from ${MIN_VIDEO_SECONDS} to ${MAX_VIDEO_SECONDS}`;
@@ -162,6 +170,7 @@ export function describeFeatures(f: Features): { text: string; included: boolean
     { text: narrator ? 'A narrator: the opening and the winner' : 'No narrator', included: narrator },
     { text: f.powers ? 'Powers: balls that speed up, grow or split' : 'No powers', included: f.powers },
     { text: f.watermark ? 'A small BounceReel watermark' : 'No watermark', included: !f.watermark },
+    { text: f.follow ? 'A follow button that asks viewers to follow you' : 'No follow button', included: f.follow },
     { text: f.library === null ? 'Every video kept in your library' : `${f.library} video${f.library === 1 ? '' : 's'} kept in your library`, included: f.library !== 0 },
   ];
 }

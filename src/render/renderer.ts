@@ -86,6 +86,27 @@ const METER = { x: 80, w: 14 };
 const LEAD_SHOW = 0.9;
 /** Where LEAD CHANGE ends: 20 px before the side buttons' column, which starts at x 940 from y 902 (§9). */
 const LEAD_RIGHT = 920;
+/**
+ * The follow button in the race (drawRaceFollow): seconds it shows, and when in that it is tapped,
+ * turning from FOLLOW to FOLLOWING. Long enough to read both words, short enough to leave the race
+ * to itself again; it shows where LEAD CHANGE does, so followAt keeps the two apart.
+ */
+const FOLLOW_SHOW = 2.4;
+const FOLLOW_RACE_TAP = 0.9;
+/**
+ * The follow button under the winner card (drawEndFollow): seconds after the card comes up that it
+ * pops in (the card has finished its own pop by then) and that a finger taps it. pacing.ts
+ * (FOLLOW_CARD) keeps the card up long enough to see FOLLOWING after the tap.
+ */
+const FOLLOW_IN = 0.6;
+const FOLLOW_TAP = 1.5;
+/** The plus (or tick) before the button's word, and the space after it, in parts of the type's size. */
+const FOLLOW_ICON = 0.62;
+const FOLLOW_GAP = 0.36;
+/** The button's centre under the winner card: clear of the tallest card's shadow (y 1239), and the hand under it clear of the platforms' bottom bar (y 1520). */
+const FOLLOW_Y = 1330;
+/** The button in the race, in the red of Follow and Subscribe on TikTok and YouTube: it belongs to neither team, and reads as a follow button before its word does. */
+const FOLLOW_RED = '#fe2c55';
 /** The last layer's pulse (finalGlow), a beat a little faster than a resting heart's double time. */
 const PULSE_HZ = 2.4;
 
@@ -206,6 +227,11 @@ export interface Overlay {
   leads?: { at: number; team: number }[];
   /** Seconds between the winner and the loser touching the line: "Won by 0.3 s" on the winner card. */
   margin?: number;
+  /**
+   * The follow button (`look.follow`), under the winner card and, `at` seconds into the race
+   * (followAt), right of the VS; null `at` for no room in the race.
+   */
+  follow?: { at: number | null };
 }
 
 export class Renderer {
@@ -358,12 +384,14 @@ export class Renderer {
     this.effects.drawPieces(ctx, false);
     this.effects.drawTexts(ctx, FONT, skin === 'paper' ? PAPER.float : DECKS[skin].box);
     this.drawLeadChange(world, skin);
+    if (overlay.follow && overlay.follow.at !== null) this.drawRaceFollow(world.time - overlay.follow.at, skin);
     ctx.restore();
 
     if (overlay.opening) this.drawOpening(world, cfg, overlay.opening, sx, sy);
     if (overlay.winner > 0) {
       if (skin === 'paper') this.drawSheetWinner(world, cfg, overlay, PAPER);
       else this.drawWinner(world, cfg, overlay, DECKS[skin]);
+      if (overlay.follow) this.drawEndFollow(world, overlay, skin);
     }
     this.effects.drawPieces(ctx, true);
     if (overlay.loop && overlay.start) {
@@ -572,6 +600,150 @@ export class Renderer {
   private finalGlow(t: Team): number {
     const pulse = 0.5 + 0.5 * Math.sin(this.clock * Math.PI * 2 * PULSE_HZ);
     return (0.25 + 0.75 * lastWorn(t)) * (0.6 + 0.4 * pulse);
+  }
+
+  // ── The follow button ────────────────────────────────────────────────────
+
+  /**
+   * The follow button in the race, `age` seconds after it pops in: right of the VS where LEAD CHANGE
+   * shows, ending where it does, before the side buttons' column. It is tapped (FOLLOW_RACE_TAP),
+   * turns to FOLLOWING and fades out. No hand here: the gap between the cards has no room for one.
+   */
+  private drawRaceFollow(age: number, skin: Skin): void {
+    if (age < 0 || age > FOLLOW_SHOW) return;
+    const ctx = this.ctx;
+    const size = 34;
+    // The pop overshoots by a tenth, as LEAD CHANGE's does: the widest stays left of the buttons.
+    const pop = easeOutBack(Math.min(1, age / 0.25));
+    ctx.save();
+    const w = this.followWidth(size);
+    ctx.globalAlpha = Math.min(1, (FOLLOW_SHOW - age) / 0.35);
+    ctx.translate(LEAD_RIGHT - w / 2, VS_Y);
+    ctx.scale(pop, pop);
+    this.drawFollowButton(size, FOLLOW_RED, age >= FOLLOW_RACE_TAP, pressed(age - FOLLOW_RACE_TAP), skin);
+    this.drawTapRing(this.followPlusX(size), 0, age - FOLLOW_RACE_TAP, size, skin);
+    ctx.restore();
+  }
+
+  /**
+   * The follow button under the winner card, in the winner's colour: it pops in after the card, a
+   * finger (👆) comes up and taps it, and it turns to FOLLOWING and stays, as a platform's own does.
+   */
+  private drawEndFollow(world: World, overlay: Overlay, skin: Skin): void {
+    const winner = world.teams.find((t) => t.id === world.winner);
+    const age = overlay.age - FOLLOW_IN;
+    if (!winner || age < 0) return;
+    const ctx = this.ctx;
+    const size = 46;
+    const sinceTap = overlay.age - FOLLOW_TAP;
+    ctx.save();
+    // The finger lands on the plus, a little low, so the hand under it hides little of the word.
+    const tapX = this.followPlusX(size);
+    const tapY = size * 0.3;
+    ctx.globalAlpha = overlay.winner;
+    ctx.translate(W / 2, FOLLOW_Y);
+    ctx.save();
+    const pop = easeOutBack(Math.min(1, age / 0.3));
+    ctx.scale(pop, pop);
+    this.drawFollowButton(size, winner.color, sinceTap >= 0, pressed(sinceTap), skin);
+    ctx.restore();
+    this.drawTapRing(tapX, tapY, sinceTap, size, skin);
+    // The hand comes up from below right over half a second, rests on the tap, and goes back down.
+    if (sinceTap > -0.5 && sinceTap < 0.75) {
+      const come = 1 - (1 - Math.min(1, (sinceTap + 0.5) / 0.42)) ** 3;
+      const go = Math.max(0, (sinceTap - 0.35) / 0.4);
+      ctx.globalAlpha = overlay.winner * Math.min(1, come * 2) * (1 - go);
+      ctx.font = `${size * 2}px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('👆', tapX + (1 - come + go) * 70, tapY - size * 0.25 + (1 - come) * 140 + go * 120);
+    }
+    ctx.restore();
+  }
+
+  /** Where the plus sits on the button, from its middle: where a finger taps it. Leaves the button's font set. */
+  private followPlusX(size: number): number {
+    this.followWidth(size);
+    return -(size * (FOLLOW_ICON + FOLLOW_GAP) + this.ctx.measureText('FOLLOW').width) / 2 + (size * FOLLOW_ICON) / 2;
+  }
+
+  /** The button's width at `size` px: as wide as FOLLOWING, so the tap does not move it. Leaves its font set. */
+  private followWidth(size: number): number {
+    const ctx = this.ctx;
+    ctx.font = `900 ${size}px ${FONT}`;
+    ctx.letterSpacing = '1px';
+    return ctx.measureText('FOLLOWING').width + size * 2;
+  }
+
+  /**
+   * The follow button centred on the origin, `size` px type: a plus and FOLLOW on `color`, or once
+   * `tapped`, a tick and FOLLOWING on the look's own card, as the platforms' buttons turn once
+   * followed; `press` 0..1 squeezes it under the finger. In the look's pill, as LEAD CHANGE: the
+   * cards' with their hard shadow.
+   */
+  private drawFollowButton(size: number, color: string, tapped: boolean, press: number, skin: Skin): void {
+    const ctx = this.ctx;
+    const ink = skin === 'paper' ? PAPER.ink : DECKS[skin].ink;
+    const fill = tapped ? (skin === 'paper' ? PAPER.card : DECKS[skin].box) : color;
+    const text = tapped ? (skin === 'paper' ? PAPER.text : DECKS[skin].text) : readableOn(color);
+    const w = this.followWidth(size);
+    const h = size * 1.7;
+    ctx.save();
+    ctx.scale(1 - 0.08 * press, 1 - 0.08 * press);
+    if (skin !== 'paper') {
+      ctx.fillStyle = ink;
+      roundRect(ctx, -w / 2 + h * 0.09, -h / 2 + h * 0.1, w, h, h / 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = fill;
+    roundRect(ctx, -w / 2, -h / 2, w, h, h / 2);
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = ink;
+    ctx.stroke();
+
+    const word = tapped ? 'FOLLOWING' : 'FOLLOW';
+    const icon = size * FOLLOW_ICON;
+    const gap = size * FOLLOW_GAP;
+    const left = -(icon + gap + ctx.measureText(word).width) / 2;
+    // The plus and the tick are drawn, not typed: Rubik has neither, and a fallback font's would not match the word.
+    ctx.strokeStyle = text;
+    ctx.lineWidth = size * 0.15;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    if (tapped) {
+      ctx.moveTo(left + icon * 0.04, size * 0.04);
+      ctx.lineTo(left + icon * 0.38, size * 0.3);
+      ctx.lineTo(left + icon, -size * 0.28);
+    } else {
+      ctx.moveTo(left, 0);
+      ctx.lineTo(left + icon, 0);
+      ctx.moveTo(left + icon / 2, -icon / 2);
+      ctx.lineTo(left + icon / 2, icon / 2);
+    }
+    ctx.stroke();
+    ctx.fillStyle = text;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(word, left + icon + gap, size * 0.06);
+    ctx.letterSpacing = '0px';
+    ctx.restore();
+  }
+
+  /** A tap's ring, spreading from (x, y) and fading over 0.4 s, `age` seconds after the tap: ink, or white on night's dark card. */
+  private drawTapRing(x: number, y: number, age: number, size: number, skin: Skin): void {
+    if (age < 0 || age > 0.4) return;
+    const ctx = this.ctx;
+    const k = age / 0.4;
+    ctx.save();
+    ctx.globalAlpha *= 1 - k;
+    ctx.strokeStyle = skin === 'night' ? WHITE : INK;
+    ctx.lineWidth = 2 + size * 0.12 * (1 - k);
+    ctx.beginPath();
+    ctx.arc(x, y, size * (0.3 + 0.9 * k), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   // ── The power tag ────────────────────────────────────────────────────────
@@ -1276,6 +1448,29 @@ function marginLine(margin: number | undefined, timedOut: boolean): string {
   if (margin === undefined || timedOut || !Number.isFinite(margin)) return '';
   if (margin < 0.005) return 'Photo finish';
   return `Won by ${margin.toFixed(margin < 0.095 ? 2 : 1)} s`;
+}
+
+/**
+ * When the follow button pops up in the race, in seconds of race (`race`, the predicted win): as
+ * near 45 % of it as LEAD CHANGE allows, which shows in the same place, with 0.3 s clear either
+ * side; null when 30–75 % of the race has no such room. Near the middle: a viewer still watching
+ * then is the one worth asking, the opening title and its question are long gone, and slow motion
+ * and the winner card, with a button of their own, are still to come.
+ */
+export function followAt(race: number, leads: { at: number }[]): number | null {
+  const clear = (t: number) => leads.every((l) => t + FOLLOW_SHOW + 0.3 <= l.at || t >= l.at + LEAD_SHOW + 0.3);
+  const mid = race * 0.45;
+  // Out from the middle a quarter second at a time, later and earlier in turn.
+  for (let k = 0; k < 120; k++) {
+    const t = mid + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 0.25;
+    if (t >= race * 0.3 && t + FOLLOW_SHOW <= race * 0.75 && clear(t)) return t;
+  }
+  return null;
+}
+
+/** 0..1, how far a button is pressed in, `since` seconds after the tap: in and out over a tenth of a second either side. */
+function pressed(since: number): number {
+  return Math.max(0, 1 - Math.abs(since) / 0.1);
 }
 
 /** `text` in lines no wider than `width` at the context's font, broken at spaces. */

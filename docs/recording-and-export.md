@@ -48,8 +48,8 @@ clock, said 30.0 s. A warm device moves the clock within 12–66 ms, so the wait
   the reason and a link to the plans when the plan stood in the way; or waiting to be sent), and
   Open Videos, Close and Roll the next one (the dice). It replaces the toasts. **A superadmin also
   sees what the video is as text, with Copy** (the balls and what each does, who won and by how
-  much, the lead changes, the length, look and sound, the question on the first frame, the library
-  id: `postPrompt` in [src/library.ts](../src/library.ts)), for the `/bouncereel-post` skill in
+  much, the lead changes, the length, look and sound, the question on the first frame, whether it
+  asks viewers to follow, the library id: `postPrompt` in [src/library.ts](../src/library.ts)), for the `/bouncereel-post` skill in
   `.claude/skills/`, whose answer is pasted on the Videos page
   ([video-library §6](./video-library.md#6-the-videos-page)).
 - **While it records, the frame loop's clock may jump up to 0.5 s a frame** (0.1 otherwise): the
@@ -198,3 +198,4 @@ falls.
 - 2026-10-24 - the sheet after a take gives what the video is as text to copy (`postPrompt`), for writing its posts.
 - 2026-10-24 - that text only for a superadmin, with the library id.
 - 2026-10-27 - a stalled sound (the output device changing mid-take) is said on the bar as it happens and on the sheet after, with Record again; the bar asks not to connect or switch headphones.
+- 2026-10-30 - the text to copy after a take says when the video asks viewers to follow.

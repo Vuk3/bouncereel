@@ -1,4 +1,4 @@
-import { fillTemplate, type Config } from './config.ts';
+import { spokenOutro, type Config } from './config.ts';
 
 // How a video is paced around the race, in one place: the page plays it this
 // way, and the balancer subtracts it from the requested video length to know
@@ -41,6 +41,12 @@ export function openingShown(sinceRace: number | null): number {
 const SPOKEN_CHARS_PER_SECOND = 11;
 /** The card stays at least this long after the winner line ends. */
 export const AFTER_OUTRO = 0.4;
+/**
+ * The card stays at least this long when the video asks viewers to follow (`look.follow`): the
+ * follow button under it is tapped 1.5 s in (src/render/renderer.ts, FOLLOW_TAP), and the
+ * FOLLOWING it turns into stays a second to be read.
+ */
+const FOLLOW_CARD = 2.5;
 
 /** Whether the video has a narrator: the sound is Narrator and music. */
 export function narrated(cfg: Config): boolean {
@@ -48,15 +54,17 @@ export function narrated(cfg: Config): boolean {
 }
 
 /**
- * How long the winner card is planned to stay up: the hold, or long enough to
- * say the winner line for the longer of the two names, whichever is more. The
- * page then stretches the card to land the video on its exact length.
+ * How long the winner card is planned to stay up: the hold (with the follow button, at
+ * least FOLLOW_CARD), or long enough to say the winner line for the longer of the two
+ * names, whichever is more. The page then stretches the card to land the video on its
+ * exact length.
  */
 export function cardSeconds(cfg: Config): number {
-  if (!narrated(cfg)) return cfg.timing.hold;
+  const hold = cfg.look.follow ? Math.max(cfg.timing.hold, FOLLOW_CARD) : cfg.timing.hold;
+  if (!narrated(cfg)) return hold;
   const longest = cfg.a.name.length >= cfg.b.name.length ? cfg.a.name : cfg.b.name;
-  const line = fillTemplate(cfg.voice.outro, { winner: longest, time: '00.0' });
-  return Math.max(cfg.timing.hold, line.length / SPOKEN_CHARS_PER_SECOND + AFTER_OUTRO);
+  const line = spokenOutro(cfg, { winner: longest, time: '00.0' });
+  return Math.max(hold, line.length / SPOKEN_CHARS_PER_SECOND + AFTER_OUTRO);
 }
 
 /** Seconds of video that are not race: everything above except the race itself. */
