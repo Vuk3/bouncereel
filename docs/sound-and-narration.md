@@ -92,7 +92,15 @@ seconds:
 
 - Each ball's clause is its sequence's `brief`, plus "but slower" / "but it's much slower"
   when its speed is under 1/1.4 or 1/2.5 of the other's (not when the name already says
-  Slow or Fast, nor for a ball that slows down), plus its special ("and it speeds up").
+  Slow or Fast, nor for a ball that slows down, nor for a crowd), plus its special ("and it
+  speeds up"). Always the same's clause says its strength: "always hits for a thousand". A
+  crowd is one subject: "Each of the 100 Millionaire Balls always hits for a million."
+- **Names as said** (`spokenName` in [config.ts](../src/config.ts)): the × in "100×
+  Millionaire Balls" is read as nothing, in the opening, the winner line and a voice's
+  preview. A crowd wins as one: "The crowd of 100 Millionaire Balls wins!", where its name
+  alone would read "100 Millionaire Balls wins" (`spokenOutro`). The winner card is planned
+  for the longer of the two winner lines as said, not the longer name (`cardSeconds`), since
+  the crowd's line is longer than its name.
 - When both share a sequence: "Both hit with Fibonacci numbers. Growing gets bigger,
   Speeding gets faster."
 - The fact is one of a sequence's `facts` (two or three each), from a ball whose name shows
@@ -212,3 +220,4 @@ end. Then:
 - 2026-10-26 - more variety in the words: twenty questions (`look.question`, typed under More → Video or the seed's pick; a config saved before keeps its question), two or three facts a sequence, five ways to start the opening, and the dice deals the winner line from `WINNER_LINES`.
 - 2026-10-27 - Hear the music in the Sound tab; the Play with the narrator switch replaces Play without voice.
 - 2026-10-30 - "Follow for more!" after the winner line when the video asks viewers to follow; a run that starts over while it plays (a new matchup, length or layers) generates its lines before its first frame, so the winner line is never missing.
+- 2026-11-02 - a crowd in the opening ("Each of the 100 Millionaire Balls always hits for a million") and at the win ("The crowd of 100 Millionaire Balls wins!"); the × in a crowd's name read as nothing; the winner card planned for the longer winner line as said; a crowd's hits one quiet note at most every 0.12 s and its walls silent, so the narrator is heard over it.

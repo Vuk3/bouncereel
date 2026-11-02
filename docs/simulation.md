@@ -18,6 +18,12 @@ rests on.
 
 - Each **team** has its own box: team 0 (`a`) the top card, team 1 (`b`) the bottom one.
   Teams never meet; their races only run side by side.
+- A team is one ball, or a **crowd** from the start (`Contestant.count`, up to `MAX_CROWD`,
+  200): every ball at the team's speed and size, all sharing its one sequence and hit
+  counter, as a splitting team's do. Balls never touch one another, a crowd's included. The
+  studio makes a crowd of Always the same alone (`savedConfig` makes any other ball one).
+- **A hit deals its term times the ball's strength** (`Contestant.strength`, `hitOf`): 1 for
+  every sequence but Always the same, whose one number it is, 1 to a million.
 - A ball bounces off the side walls and the ceiling for nothing (a `wall` event).
 - **A hit on the floor scores.** The floor is the top standing layer; the hit takes the
   team's current `damage` off it, then `hits` goes up by one and `damage` becomes
@@ -44,7 +50,9 @@ Layer health is a list, top first, parsed by `parseLayers`: `1000, 1e10, 1e15`, 
   flies in a straight line at constant speed, like the DVD logo.
 - **Start**: from the seed, a random point in the open box, a launch angle 30–60° off
   horizontal (flatter takes forever to reach the floor, steeper looks like it only bounces
-  up and down), any of the four diagonals, at the team's speed.
+  up and down), any of the four diagonals, at the team's speed. A crowd's other balls start
+  the same way, each from a stream of its own (`<seed>:crowd:<team>`), so a team's first ball
+  starts where it always did, crowd or not.
 - **Bounces are mirrored**: a ball that passed a wall during a step is put back inside by
   the same distance, as if it had bounced at the exact moment, and its velocity flips. No
   time is lost per bounce, so **a ball k times faster runs exactly the same path k times
@@ -69,7 +77,9 @@ What a floor hit also does to the ball that made it (`special`, `amount`):
 
 A split team shares one sequence and one hit counter: more balls means more hits, not
 bigger ones. A box full of balls is chaotic (a newborn's path depends on the exact step
-it was born in), which balancing tolerates with a wider margin.
+it was born in), which balancing tolerates with a wider margin. A crowd past 64 never
+splits. A crowd is not chaotic in that way: its balls never change, so it scales with its
+speed like a single ball.
 
 ## 4. Events
 
@@ -131,3 +141,4 @@ line was generated for the ball that wins, and balancing measures the race that 
 - 2026-10-23 - the prediction lists the lead changes the video marks (`Outcome.leads`) and
   counts the winner passing at the line, which no sample saw; read only, nothing in a race
   moves (`npm run tune` unchanged).
+- 2026-11-02 - crowds: a team may start with up to 200 balls (`count`), its extra balls from a stream of their own; a hit is its term times the ball's strength (Always the same at 1 to a million); the golden ratio (exact, as the Lucas numbers).

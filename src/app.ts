@@ -5,13 +5,13 @@ import { AudioEngine } from './audio/engine.ts';
 import { Music } from './audio/music.ts';
 import { VOICES, VoiceCache, introLine, outroLine, plannedLines, previewLine, voiceOf } from './audio/narration.ts';
 import { Sonifier } from './audio/sonify.ts';
-import { DEFAULT_CONFIG, PRESETS, SKINS, mergeConfig, savedConfig, type Config, type Skin, type Special } from './config.ts';
+import { DEFAULT_CONFIG, PRESETS, SKINS, mergeConfig, savedConfig, type Config, type Contestant, type Skin, type Special } from './config.ts';
 import { addToLibrary, APP_VERSION, postPrompt, retryPending, type Saved } from './library.ts';
 import { download, describeType, pickType, Recorder } from './record/recorder.ts';
 import { Renderer, followAt } from './render/renderer.ts';
 import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL, narrated, openingShown, videoSeconds } from './pacing.ts';
-import { balance, balanceProblem, randomMatchup } from './sim/balance.ts';
-import { SEQUENCES } from './sim/sequences.ts';
+import { KEEP_ALL, balance, balanceProblem, diceName, keptWhole, plainName, randomMatchup, relayer, sizeFor, type Keep } from './sim/balance.ts';
+import { SEQUENCES, formatBig } from './sim/sequences.ts';
 import { STEP } from './sim/types.ts';
 import { createWorld, finishTimes, predict, type Outcome, type World } from './sim/world.ts';
 import type { Field } from './ui/fields.ts';
@@ -41,6 +41,9 @@ const HINTS_KEY = 'bouncereel:hints:v1';
 const THUMB = { x: 60, y: 168, w: 960, h: 832 };
 
 /** A power as the matchup card names it. */
+/** The lock's icon, open or closed by its checkbox (style.css): beside each ball in the matchup card, and under its Balls and Hit strength. */
+const LOCK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" /><path class="open" d="M8.5 10.5V7.5a3.5 3.5 0 0 1 6.8-1.2" /><path class="closed" d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" /></svg>';
+
 const POWER_WORDS: Record<Special, (amount: number) => string> = {
   none: () => '',
   faster: (n) => `Speeds up ${n} %`,
@@ -92,6 +95,14 @@ export class App {
    * (see loadDice). Off until someone turns it on: sequence against sequence is the format.
    */
   private powers = false;
+  /**
+   * What the dice keeps of each ball: the ball (the lock beside it in the matchup card), how many
+   * it is and how hard it hits (the locks under its Balls and Hit strength). Off on every visit.
+   */
+  private locks: Record<'a' | 'b', Keep> = { a: { ball: false, count: false, strength: false }, b: { ball: false, count: false, strength: false } };
+  /** Each ball as it was before its last change: whether its name was one the dice gave is a question about that ball. */
+  private before: Record<'a' | 'b', Contestant> | null = null;
+  private balanceTimer = 0;
   private audio: AudioEngine | null = null;
   private sonifier: Sonifier | null = null;
   private recorder: Recorder | null = null;
@@ -164,6 +175,7 @@ export class App {
     this.features = account.features;
     this.plans = plans;
     this.cfg = this.fitPlan(this.load());
+    this.before = { a: structuredClone(this.cfg.a), b: structuredClone(this.cfg.b) };
     this.powers = this.loadDice();
     this.world = createWorld(this.cfg);
     this.outcome = predict(this.cfg);
@@ -851,6 +863,11 @@ export class App {
     this.save();
     this.syncMatchup();
     if (field.path === 'sound.volume' && this.audio) this.audio.volume = this.cfg.sound.volume;
+    // A ball changed in what it is: its name and size follow, and the race is balanced again.
+    const ball = /^([ab])\.(sequence|count|strength|special|amount)$/.exec(field.path);
+    if (ball) this.reshape(ball[1] as 'a' | 'b', ball[2]);
+    this.before = { a: structuredClone(this.cfg.a), b: structuredClone(this.cfg.b) };
+    if (ball) this.syncMatchup();
     if (field.path === 'look.safeZones') this.syncSafeZones();
     if (field.live) {
       // A look change shows in the running video at once, and so does the opening's question in its
@@ -863,9 +880,31 @@ export class App {
       if (field.path.startsWith('timing.') || field.path === 'look.loop') this.buildTimeline();
       return;
     }
-    // Dragging a slider fires dozens of changes: restart once it settles.
+    // Dragging a slider fires dozens of changes: restart once it settles. A ball changed in what it
+    // is gets balanced again instead, on new layers when its old ones cannot make the race: a ball
+    // made a hundred balls hitting for a thousand would otherwise never fit its old layers.
     window.clearTimeout(this.restartTimer);
-    this.restartTimer = window.setTimeout(() => this.startOver(), 180);
+    window.clearTimeout(this.balanceTimer);
+    if (ball) this.balanceTimer = window.setTimeout(() => this.rebalance(ball[1] as 'a' | 'b'), 300);
+    else this.restartTimer = window.setTimeout(() => this.startOver(), 180);
+  }
+
+  /**
+   * A ball changed in what it is (its numbers, balls, strength or power): a whole-number strength
+   * (the panel's select gives text), a crowd's size for its count (sizeFor), Always the same made a
+   * crowd of a hundred (one ball alone needs a hundred hits for the smallest layer) and any other
+   * numbers one ball, and, when the dice gave the name it had, the name for what it is now
+   * ("100× Thousand Balls"). The panel writes them back after the change.
+   */
+  private reshape(key: 'a' | 'b', part: string): void {
+    const ball = this.cfg[key];
+    const was = this.before?.[key] ?? ball;
+    ball.strength = Math.max(1, Math.round(Number(ball.strength) || 1));
+    // A crowd is Always the same's alone; numbers that grow are one ball.
+    if (ball.sequence !== 'ones') ball.count = 1;
+    else if (part === 'sequence' && ball.count <= 1) ball.count = 100;
+    ball.radius = sizeFor(ball.radius, ball.count);
+    if (!was.name.trim() || diceName(was)) ball.name = plainName(ball);
   }
 
   private setConfig(cfg: Config): void {
@@ -873,6 +912,7 @@ export class App {
     // where its switch cannot be turned off. The card comes out shorter, and stays up to the length.
     if (!this.features.follow) cfg.look.follow = false;
     this.cfg = cfg;
+    this.before = { a: structuredClone(cfg.a), b: structuredClone(cfg.b) };
     $('#balance-note').hidden = true;
     this.save();
     this.panel.refresh();
@@ -1083,14 +1123,20 @@ export class App {
       const sequence = SEQUENCES[ball.sequence];
       document.documentElement.style.setProperty(`--team-${key}`, ball.color);
       setText($(`#name-${key}`), ball.name || (key === 'a' ? 'Top ball' : 'Bottom ball'));
-      const rule: (string | HTMLElement)[] = [Object.assign(document.createElement('span'), { textContent: sequence.label }), sequence.hint];
+      // Always the same says how hard and how many in its chips, not in the hint.
+      const rule: (string | HTMLElement)[] = [Object.assign(document.createElement('span'), { textContent: sequence.label }), ...(ball.sequence === 'ones' ? [] : [sequence.hint])];
       const power = ball.amount ? POWER_WORDS[ball.special](ball.amount) : '';
+      if (ball.sequence === 'ones')
+        rule.push(Object.assign(document.createElement('span'), { className: 'power', textContent: `${formatBig(BigInt(ball.strength), this.cfg.look.separator)} a hit` }));
+      if (ball.count > 1) rule.push(Object.assign(document.createElement('span'), { className: 'power', textContent: `${ball.count} balls` }));
       if (power) rule.push(Object.assign(document.createElement('span'), { className: 'power', textContent: power }));
       $(`#rule-${key}`).replaceChildren(...rule);
       const speed = $(`#speed-${key}`);
       setText(speed, `${(ball.speed / slower).toFixed(1)}×`);
       speed.title = `Starts at ${Math.round(ball.speed)} px/s, against ${Math.round(slower)} for the slower ball`;
     }
+    // What the dice will do depends on the balls too: Always the same has a strength to roll.
+    this.syncDice();
   }
 
   /**
@@ -1170,15 +1216,38 @@ export class App {
   }
 
   /**
-   * Rebalance (or Make it close): this race first, then new races of the same matchup, since a
-   * seed's starting angles can decide whether the finish lands; then, if none does, why not.
+   * Rebalance (or Make it close, or a ball changed in what it is): this race first, then new races
+   * of the same matchup, since a seed's starting angles can decide whether the finish lands; then
+   * new layers for the same two balls, when the ones they have cannot make the race at all; for a
+   * ball just changed (`edited`), then a new opponent for it, unless the opponent is locked, when no
+   * layers suit the two (a hundred balls hitting for a thousand against Factorial); then, if
+   * nothing does, why not.
    */
-  private rebalance(): void {
+  private rebalance(edited?: 'a' | 'b'): void {
     for (let i = 0; i < 9; i++) {
       const balanced = balance(i ? { ...this.cfg, seed: String(1 + Math.floor(Math.random() * 999_999)) } : this.cfg);
       if (balanced) {
         this.setConfig(balanced);
         if (i) this.flash('Balanced as a new race of the same matchup: this race could not land on time.');
+        return;
+      }
+    }
+    const relayered = relayer(this.cfg, String(1 + Math.floor(Math.random() * 999_999)));
+    if (relayered) {
+      this.setConfig(relayered);
+      this.flash('New layers: these two balls could not race on the old ones.');
+      return;
+    }
+    const other = edited === 'a' ? 'b' : 'a';
+    const locked = this.locks[other].ball || this.locks[other].count || this.locks[other].strength;
+    if (edited && !locked) {
+      const keep = { [edited]: KEEP_ALL, [other]: this.locks[other] } as Record<'a' | 'b', Keep>;
+      const next = randomMatchup(String(1 + Math.floor(Math.random() * 999_999)), this.cfg, { powers: this.powers && this.features.powers, keep });
+      if (next) {
+        const was = this.cfg[other].name || 'The other ball';
+        next.voice.script = '';
+        this.setConfig(next);
+        this.flash(`A new opponent: ${was} could not race ${next[edited].name} on any layers.`);
         return;
       }
     }
@@ -1207,9 +1276,73 @@ export class App {
     this.flash(text);
   }
 
-  /** The dice: a brand-new matchup, balanced to the video length; a power now and then, if allowed. */
+  /**
+   * The locks as the dice will use them: the matchup card's beside a ball is closed while anything of
+   * it is kept; the ones under its Balls and Hit strength as they are. Then what the dice button
+   * will do: a new matchup, a new opponent for the locked ball, new layers for two balls kept whole,
+   * or the rest of two kept balls rolled.
+   */
+  private syncDice(): void {
+    const held = (key: 'a' | 'b') => this.locks[key].ball || this.locks[key].count || this.locks[key].strength;
+    for (const key of ['a', 'b'] as const) {
+      $<HTMLInputElement>(`#lock-${key}`).checked = held(key);
+      for (const part of ['count', 'strength'] as const) {
+        const box = document.querySelector<HTMLInputElement>(`#lock-${key}-${part}`);
+        if (box) box.checked = this.locks[key][part];
+      }
+    }
+    const whole = (key: 'a' | 'b') => keptWhole(this.cfg[key], this.locks[key]);
+    const one = held('a') ? 'top' : 'bottom';
+    const [label, title] =
+      held('a') && held('b')
+        ? whole('a') && whole('b')
+          ? ['New layers', 'Keeps both balls as they are, and gives them new layers and a new race, balanced to the video length']
+          : ['Roll the rest', 'Keeps what is locked of both balls, and rolls what is not (how many balls, how hard they hit) with new layers, balanced to the video length']
+        : held('a') || held('b')
+          ? ['New opponent', `Keeps the ${one} ball and what is locked of it, and finds it a new opponent and layers, balanced to the video length`]
+          : ['Random matchup', 'A brand-new matchup, balanced to the video length'];
+    setText($('#dice-label'), label);
+    $('#dice').title = title;
+  }
+
+  /**
+   * A lock under a ball's Balls or Hit strength in the Balls tab: the dice keeps that, and so the
+   * ball too, whose it is. It hides with its field (Hit strength is Always the same's alone).
+   */
+  private addFieldLock(key: 'a' | 'b', part: 'count' | 'strength'): void {
+    const row = document.querySelector(`[name="${key}.${part}"]`)?.closest('.field');
+    if (!row) return;
+    const toggle = document.createElement('label');
+    toggle.className = 'field-lock';
+    toggle.innerHTML = `<input type="checkbox" id="lock-${key}-${part}" autocomplete="off" />${LOCK_ICON}<span>${part === 'count' ? 'Keep how many balls on a roll' : 'Keep how hard it hits on a roll'}</span>`;
+    row.append(toggle);
+    const box = toggle.querySelector('input') as HTMLInputElement;
+    box.addEventListener('change', () => {
+      this.locks[key][part] = box.checked;
+      this.syncDice();
+    });
+  }
+
+  /**
+   * The dice: a brand-new matchup, balanced to the video length, a power or a crowd now and then
+   * if allowed. A locked ball stays as it is and gets a new opponent; with both locked, the two
+   * get new layers and a new race. Says why when nothing fits the locked balls.
+   */
   private randomize(): void {
-    const next = randomMatchup(String(1 + Math.floor(Math.random() * 999_999)), this.cfg, this.powers && this.features.powers);
+    const keep = structuredClone(this.locks);
+    const next = randomMatchup(String(1 + Math.floor(Math.random() * 999_999)), this.cfg, { powers: this.powers && this.features.powers, keep });
+    if (!next) {
+      const held = (k: Keep) => k.ball || k.count || k.strength;
+      const one = held(keep.a) ? this.cfg.a : this.cfg.b;
+      const note = $('#balance-note');
+      note.textContent =
+        held(keep.a) && held(keep.b)
+          ? 'No round layers suit these two balls: their hits are too far apart. Unlock one, or let the dice roll how many balls or how hard they hit.'
+          : `Nothing the dice makes races ${one.name || 'this ball'}: it needs too many hits, or too few, for any layers. Give it more balls, change its numbers, or unlock it.`;
+      note.hidden = false;
+      this.flash(note.textContent);
+      return;
+    }
     next.voice.script = '';
     this.setConfig(next);
   }
@@ -1293,6 +1426,16 @@ export class App {
       this.loadMatchup(next);
     });
     $('#dice').addEventListener('click', () => this.randomize());
+    for (const key of ['a', 'b'] as const) {
+      const lock = $<HTMLInputElement>(`#lock-${key}`);
+      lock.addEventListener('change', () => {
+        // Closed, the ball is kept; opened, nothing of it is: its count and strength are the ball's.
+        this.locks[key] = { ball: lock.checked, count: false, strength: false };
+        this.syncDice();
+      });
+      for (const part of ['count', 'strength'] as const) this.addFieldLock(key, part);
+    }
+    this.syncDice();
     const powers = $<HTMLInputElement>('#powers');
     powers.addEventListener('change', () => {
       this.powers = powers.checked;

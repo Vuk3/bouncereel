@@ -14,6 +14,7 @@ export type SequenceId =
   | 'triangular'
   | 'tribonacci'
   | 'lucas'
+  | 'golden'
   | 'catalan'
   | 'tenfold'
   | 'collatz'
@@ -32,7 +33,7 @@ export interface SequenceDef {
   brief: string;
   /** True, quick facts the opening can add after the two balls are introduced; the seed picks one. */
   facts: string[];
-  /** What the ball wears in the paper look: one to three characters Rubik has. */
+  /** What the ball wears in the paper look: one to three characters Rubik has, or φ, which the renderer draws itself (Rubik has no Greek). */
   mark: string;
   term(n: number): bigint;
 }
@@ -77,6 +78,9 @@ function piDigits(count: number): bigint[] {
 }
 
 const PI = piDigits(LENGTH);
+
+/** Fibonacci's rule from 2 and 1. From the second on, they are the golden ratio's powers rounded (`golden`). */
+const LUCAS = table((o, n) => (n === 0 ? 2n : n === 1 ? 1n : o[n - 1] + o[n - 2]));
 
 export const SEQUENCES: Record<SequenceId, SequenceDef> = {
   fibonacci: {
@@ -199,7 +203,24 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       'The man behind Lucas numbers also invented the Tower of Hanoi.',
     ],
     mark: 'L',
-    term: table((o, n) => (n === 0 ? 2n : n === 1 ? 1n : o[n - 1] + o[n - 2])),
+    term: LUCAS,
+  },
+  golden: {
+    id: 'golden',
+    label: 'Golden ratio (×1.618)',
+    hint: '1, 2, 3, 4, 7, 11, 18, 29…',
+    noun: 'Golden Ratio',
+    brief: 'hits 1.618 times harder every time',
+    facts: [
+      'The golden ratio is about 1.618, and adding one to it gives its square.',
+      'Divide a Fibonacci number by the one before it and you get closer and closer to the golden ratio.',
+      "Round the golden ratio's powers and out come the Lucas numbers.",
+    ],
+    mark: 'φ',
+    // The golden ratio's powers, rounded, so each hit is 1.618 times the last: 1, 1.618 → 2, 2.618 → 3,
+    // 4.236 → 4… From the second power on, that is exactly the Lucas numbers (φⁿ + ψⁿ is a whole
+    // number and |ψⁿ| < 0.5), so the terms are exact however far they go.
+    term: (n) => (n === 0 ? 1n : n === 1 ? 2n : LUCAS(n)),
   },
   catalan: {
     id: 'catalan',
@@ -267,15 +288,53 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
   },
   ones: {
     id: 'ones',
-    label: 'Always 1',
-    hint: '1, 1, 1, 1…',
+    label: 'Always the same',
+    hint: 'the same hit every time, as strong as you set it',
     noun: '',
     brief: 'always hits for one',
-    facts: ['Always one: slow, steady, and never tired.', 'One, every time: it never grows, and it never stops.'],
+    facts: ['The same hit every time: slow, steady, and never tired.', 'It never grows, and it never stops.'],
     mark: '1',
     term: () => 1n,
   },
 };
+
+// ── How hard a ball hits ────────────────────────────────────────────────────
+
+/**
+ * What every hit is multiplied by (Contestant.strength): 1, or for Always the same the one
+ * number it hits with, from 1 to a million, in powers of ten so the layers the dice picks (1, 2
+ * or 5 times a power of ten) suit it.
+ */
+export const STRENGTHS = [1, 10, 100, 1000, 10_000, 100_000, 1_000_000] as const;
+
+const STRENGTH_WORDS: Record<number, [said: string, noun: string, mark: string]> = {
+  1: ['one', 'One', '1'],
+  10: ['ten', 'Ten', '10'],
+  100: ['a hundred', 'Hundred', '100'],
+  1000: ['a thousand', 'Thousand', '1K'],
+  10_000: ['ten thousand', 'Ten Thousand', '10K'],
+  100_000: ['a hundred thousand', 'Hundred Thousand', ''],
+  // The format's own word for a crowd hitting for a million: "100× Millionaire Balls".
+  1_000_000: ['a million', 'Millionaire', '1M'],
+};
+
+/** A strength as the narrator says it: "a thousand". */
+export function strengthSaid(strength: number): string {
+  return STRENGTH_WORDS[strength]?.[0] ?? formatBig(BigInt(Math.round(strength)), ',');
+}
+
+/** What an Always the same ball is called by its strength: "Thousand Ball", "100× Millionaire Balls". */
+export function strengthNoun(strength: number): string {
+  return STRENGTH_WORDS[strength]?.[1] ?? 'Steady';
+}
+
+/** Its mark in the paper look: "1K"; none where that would not fit a ball. */
+export function strengthMark(strength: number): string {
+  return STRENGTH_WORDS[strength]?.[2] ?? '';
+}
+
+/** Every noun an Always the same ball may have had, the one before strengths (Steady) too: for telling a name the dice gave. */
+export const STRENGTH_NOUNS = [...STRENGTHS.map(strengthNoun), 'Steady'];
 
 // ── Numbers on screen and in speech ─────────────────────────────────────────
 

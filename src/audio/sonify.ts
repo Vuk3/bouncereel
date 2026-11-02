@@ -5,6 +5,15 @@ import type { AudioEngine } from './engine.ts';
 import { Music } from './music.ts';
 
 /**
+ * A crowd's notes (Contestant.count): a hundred balls hit about a hundred times a second, and three
+ * notes a frame of that is a wall of sound the narrator drowns in. At most one note this often (race
+ * seconds), this much quieter than a lone ball's, and nothing for its bounces off the walls; a
+ * layer breaking still cracks.
+ */
+const CROWD_NOTE_GAP = 0.12;
+const CROWD_VELOCITY = 0.4;
+
+/**
  * Turns simulation events into sound, once per rendered frame with that
  * frame's events, so sound and picture land on the same frame. Only floor
  * hits play the melody (they are what scores); walls are a quiet tick.
@@ -15,6 +24,8 @@ export class Sonifier {
   /** The lead changes the video marks (Outcome.leads), and the next one to reach. */
   private leads: Outcome['leads'];
   private lead = 0;
+  /** Per team, the race time a crowd's last note played (CROWD_NOTE_GAP). */
+  private crowdNote = [-Infinity, -Infinity];
 
   constructor(audio: AudioEngine, cfg: Config, leads: Outcome['leads']) {
     this.audio = audio;
@@ -26,6 +37,7 @@ export class Sonifier {
     this.music = new Music(cfg.sound);
     this.leads = leads;
     this.lead = 0;
+    this.crowdNote = [-Infinity, -Infinity];
   }
 
   /** A frame's events from `world`, and the sting when the race reaches a lead change the picture marks. */
@@ -36,14 +48,20 @@ export class Sonifier {
     let notes = 0;
     let ticks = 0;
     for (const e of events) {
+      const crowd = e.type !== 'timeout' && world.teams[e.team].rule.count > 1;
       switch (e.type) {
-        case 'hit':
-          // The bottom box an octave lower: two voices of one tune, told apart by ear.
-          if (notes++ < 3) this.audio.note(this.music.next() - (e.team === 1 ? 12 : 0) + climb(world, e), 0.85, cfg.sound.timbre, e.team === 0 ? -0.15 : 0.15);
+        case 'hit': {
           if (e.broken) this.audio.crack(1, true, 0);
+          if (crowd) {
+            if (world.time - this.crowdNote[e.team] < CROWD_NOTE_GAP) break;
+            this.crowdNote[e.team] = world.time;
+          }
+          // The bottom box an octave lower: two voices of one tune, told apart by ear.
+          if (notes++ < 3) this.audio.note(this.music.next() - (e.team === 1 ? 12 : 0) + climb(world, e), crowd ? CROWD_VELOCITY : 0.85, cfg.sound.timbre, e.team === 0 ? -0.15 : 0.15);
           break;
+        }
         case 'wall':
-          if (ticks++ < 2) this.audio.tick(0.5, 0);
+          if (!crowd && ticks++ < 2) this.audio.tick(0.5, 0);
           break;
         case 'finish':
           if (e.place === 1) this.audio.fanfare();

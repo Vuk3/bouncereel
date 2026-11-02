@@ -210,7 +210,7 @@ fieldset:disabled {
 .contender {
   --team: var(--team-a);
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px 12px;
   padding: 14px 16px;
@@ -267,6 +267,119 @@ fieldset:disabled {
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
+}
+/*
+ * The lock beside a ball: a real checkbox under an icon, open while the dice may change the ball,
+ * closed and ink (a selection, as everywhere in the panel) once it keeps it.
+ */
+.contender-lock {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--faint);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background-color 0.15s;
+}
+.contender-lock:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.contender-lock input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.contender-lock svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.contender-lock .closed,
+.contender-lock:has(input:checked) .open {
+  display: none;
+}
+.contender-lock:has(input:checked) .closed {
+  display: inline;
+}
+.contender-lock:has(input:checked) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+.contender-lock:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/*
+ * The same lock, as a line under a ball's Balls and Hit strength in the Balls tab: keep that on a
+ * roll. A label in a field's row, so it says `.field > label` to stand over the field's own labels.
+ */
+.field > label.field-lock {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  padding: 4px 11px 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background-color 0.15s;
+}
+.field > label.field-lock:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.field > label.field-lock input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.field > label.field-lock svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.field > label.field-lock .closed,
+.field > label.field-lock:has(input:checked) .open {
+  display: none;
+}
+.field > label.field-lock:has(input:checked) .closed {
+  display: inline;
+}
+.field > label.field-lock:has(input:checked) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+.field > label.field-lock:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 /*
  * The ball's lane under its name (showPrediction sets --w): to the checkered line on the right

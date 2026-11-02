@@ -3,8 +3,8 @@ import { MELODIES } from '../audio/music.ts';
 import { autoScript } from '../audio/narration.ts';
 import { configQuestion } from '../audio/opening.ts';
 import { COLORS } from '../sim/balance.ts';
-import { MAX_BALLS } from '../sim/duel.ts';
-import { SEQUENCES, formatBig, parseLayers } from '../sim/sequences.ts';
+import { MAX_BALLS, MAX_CROWD } from '../sim/duel.ts';
+import { SEQUENCES, STRENGTHS, formatBig, parseLayers } from '../sim/sequences.ts';
 
 // The control panel's tabs, as data. Each field names a path into Config; the
 // panel builds the inputs from this list. The matchup block above the tabs
@@ -82,6 +82,28 @@ function ball(key: 'a' | 'b', title: string): Section {
         label: 'Damage per floor hit',
         options: () => Object.values(SEQUENCES).map((s) => [s.id, s.label]),
         hint: (c) => SEQUENCES[c[key].sequence].hint,
+      },
+      {
+        kind: 'select',
+        path: `${key}.strength`,
+        label: 'Hit strength',
+        show: (c) => c[key].sequence === 'ones',
+        options: (c) => STRENGTHS.map((s): [string, string] => [String(s), `${formatBig(BigInt(s), c.look.separator)} every hit`]),
+      },
+      {
+        kind: 'range',
+        path: `${key}.count`,
+        label: 'Balls',
+        min: 1,
+        max: MAX_CROWD,
+        step: 1,
+        format: (v) => (v > 1 ? `${v} balls` : 'One ball'),
+        // Only the same hit every time makes a crowd: a hundred balls of growing numbers would break every layer within seconds.
+        show: (c) => c[key].sequence === 'ones',
+        hint: (c) =>
+          c[key].count > 1
+            ? 'A crowd: every ball hits the same, all at one speed, as in “100× Millionaire Balls”'
+            : 'The same hit every time needs a crowd: one ball alone needs a hundred hits for the smallest layer',
       },
       { kind: 'select', path: `${key}.special`, label: 'Power', options: () => SPECIAL_LABELS },
       {

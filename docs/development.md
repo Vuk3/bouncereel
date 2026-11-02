@@ -76,8 +76,9 @@ generated (`startOver` in [app.ts](../src/app.ts)).
 
 - **The matchup card** ([app.html](../app.html), `syncMatchup` and `showPrediction` in
   [app.ts](../src/app.ts)) reads like the home page's race board: both balls as the video
-  stacks them, each with its colour, name, numbers (and power), its starting speed against
-  the slower one ("4.4×") and its lane to a checkered line, the winner's full and the
+  stacks them, each with its colour, name, numbers (its crowd, "100 balls", and its power),
+  its starting speed against the slower one ("4.4×"), its **lock** (open on every visit;
+  closed and ink, the dice keeps the ball as it is) and its lane to a checkered line, the winner's full and the
   loser's as far as it had got when the winner finished (`outcome.runnerUp`), so a photo
   finish is two bars almost level (a race nobody finishes has no lanes). Under them, on a
   strip of finish-line squares, how it ends ("X wins by 0.3 s", "The video runs 40 s"), with
@@ -85,7 +86,9 @@ generated (`startOver` in [app.ts](../src/app.ts)).
   wrong length, and, when a matchup cannot be balanced, which ball is in the way and what to
   change, until the matchup changes ([balancing](./matchups-and-balancing.md#1-balancing)).
 - **The dice** and what goes with it: Random matchup (the tallest button, with the site's
-  dice; violet while nothing is ready to record, see below); the **Play with the narrator**
+  dice; violet while nothing is ready to record, see below; **New opponent** with one ball
+  locked, **New layers** with both kept whole, **Roll the rest** with both kept and something
+  of them left to roll, `syncDice`); the **Play with the narrator**
   switch (on, the default: Play and Restart have the narrator; off: they start at once with
   all the other sounds and nothing to generate; flipping it starts the run over in the new mode;
   greyed out when Sound is not Narrator and music; Record follows Sound either way, not this
@@ -316,3 +319,4 @@ browser's Cache Storage. The videos themselves live in D1, locally in `.wrangler
 - 2026-10-27 - the Play with the narrator switch replaces Play without voice; Hear the music in the Sound tab.
 - 2026-10-27 - the recording bar asks to leave the headphones as they are and says when the sound stalls.
 - 2026-10-30 - the Ask viewers to follow switch under the looks; a run restarted while it plays generates its narration first.
+- 2026-11-02 - a lock beside each ball in the matchup card and under its Balls and Hit strength, and the dice button saying what a roll will do (New opponent, New layers, Roll the rest); the Balls and Hit strength fields for Always the same; a ball changed by hand renamed and balanced again by itself.

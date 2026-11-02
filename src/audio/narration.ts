@@ -1,6 +1,6 @@
 import type { Config, Contestant } from '../config.ts';
-import { fillTemplate, spokenOutro } from '../config.ts';
-import { SEQUENCES } from '../sim/sequences.ts';
+import { fillTemplate, spokenName, spokenOutro } from '../config.ts';
+import { SEQUENCES, strengthSaid } from '../sim/sequences.ts';
 import type { Outcome } from '../sim/world.ts';
 import { configQuestion, openingDraws } from './opening.ts';
 
@@ -50,30 +50,35 @@ export function autoScript(cfg: Config): string {
   const { a, b } = cfg;
   const draws = openingDraws(cfg.seed);
   const pace = (c: Contestant, other: Contestant) => {
-    // Not when the name or the special already says it ("Slow Factorial", a ball that slows down).
-    if (/\b(slow|fast)\b/i.test(c.name) || c.special === 'slower') return '';
+    // Not when the name or the special already says it ("Slow Factorial", a ball that slows down),
+    // nor for a crowd, whose number is the story.
+    if (/\b(slow|fast)\b/i.test(c.name) || c.special === 'slower' || c.count > 1) return '';
     const ratio = other.speed / c.speed;
     return ratio >= 2.5 ? ", but it's much slower" : ratio >= 1.4 ? ', but slower' : '';
   };
   const hasSpecial = (c: Contestant) => c.special !== 'none' && c.amount > 0;
+  // What a ball does, in one clause: its sequence's brief; Always the same, as hard as it hits.
+  const brief = (c: Contestant) => (c.sequence === 'ones' ? `always hits for ${strengthSaid(c.strength)}` : SEQUENCES[c.sequence].brief);
+  // A crowd is one subject for its sentence: "Each of the 100 Millionaire Balls hits for a million".
+  const who = (c: Contestant) => (c.count > 1 ? `Each of the ${spokenName(c.name)}` : shortName(spokenName(c.name)));
   const balls =
     a.sequence === b.sequence
       ? [
           `Both hit with ${SEQUENCES[a.sequence].label} numbers.`,
           [a, b]
             .filter(hasSpecial)
-            .map((c) => `${shortName(c.name)} ${OWN[c.special]}`)
+            .map((c) => `${shortName(spokenName(c.name))} ${OWN[c.special]}`)
             .join(', ')
             .replace(/^(.)/, (m) => m.toUpperCase()),
         ]
-      : [a, b].map((c, i) => `${shortName(c.name)} ${SEQUENCES[c.sequence].brief}${pace(c, i ? a : b)}${hasSpecial(c) ? SPECIALS[c.special] : ''}.`);
+      : [a, b].map((c, i) => `${who(c)} ${brief(c)}${pace(c, i ? a : b)}${hasSpecial(c) ? SPECIALS[c.special] : ''}.`);
   // A fact about a ball whose name says its numbers ("Fibonacci Ball"); a "Multiplying Ball" counting
   // in secret would make a fact about counting sound like it came from nowhere.
   const named = [a, b].filter((c) => SEQUENCES[c.sequence].noun && c.name.includes(SEQUENCES[c.sequence].noun));
   const pool = named.length ? named : [a, b];
   const facts = SEQUENCES[pool[Math.floor(draws.ball * pool.length)].sequence].facts;
   const fact = facts[Math.floor(draws.fact * facts.length)];
-  const start = fillTemplate(STARTS[Math.floor(draws.start * STARTS.length)], { a: a.name, b: b.name });
+  const start = fillTemplate(STARTS[Math.floor(draws.start * STARTS.length)], { a: spokenName(a.name), b: spokenName(b.name) });
   return [start, ...balls.filter(Boolean).map((r) => (/[.!?]$/.test(r) ? r : `${r}.`)), fact, configQuestion(cfg)].join(' ');
 }
 
@@ -98,7 +103,7 @@ export function plannedLines(cfg: Config, outcome: Outcome): string[] {
 
 /** What a voice says when it is tried in the Voice tab: this matchup's names, as an opening starts. */
 export function previewLine(cfg: Config): string {
-  return `${cfg.a.name} versus ${cfg.b.name}! Who do you think wins?`;
+  return `${spokenName(cfg.a.name)} versus ${spokenName(cfg.b.name)}! Who do you think wins?`;
 }
 
 // ── Voices ─────────────────────────────────────────────────────────────────

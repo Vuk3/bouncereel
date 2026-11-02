@@ -104,7 +104,10 @@ enough to read whole before the real work starts.
 | Term | Meaning |
 | --- | --- |
 | **matchup** | the two balls (name, colour, sequence, speed, special, size), the layers and the melody: everything but voice and timing |
-| **team**, `a` / `b` | one side of the race: the top card is `a`, team 0; the bottom card is `b`, team 1. A team is one ball, or many after splitting |
+| **team**, `a` / `b` | one side of the race: the top card is `a`, team 0; the bottom card is `b`, team 1. A team is one ball, or many after splitting, or a crowd |
+| **crowd** | a team that starts with many balls (`count`, up to 200), all at one speed, hitting the same every time: Always the same at its strength, "100× Millionaire Balls". The only kind of ball that is ever more than one; the dice makes one about a roll in four |
+| **strength** | what every hit is multiplied by: 1, except Always the same, whose one number it is (1 to a million) |
+| **lock** | what the dice keeps: a ball (the lock beside it in the matchup card), its count and its strength (the locks under Balls and Hit strength); the rest is rolled (New opponent, New layers, Roll the rest) |
 | **sequence**, **term** | the numbers a team hits with; `term(n)` is the damage of its (n+1)-th floor hit, a BigInt |
 | **floor hit** | a ball touching the floor of its box; the only thing that scores |
 | **layer** | a bar of health under the box; the top one standing is the floor. Health is a BigInt |

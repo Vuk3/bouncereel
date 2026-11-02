@@ -74,6 +74,14 @@
                 <span id="rule-a" class="contender-rule"></span>
               </div>
               <span id="speed-a" class="contender-speed"></span>
+              <label class="contender-lock" title="Lock the top ball: the dice keeps it as it is">
+                <input id="lock-a" name="lock-a" type="checkbox" autocomplete="off" aria-label="Lock the top ball" />
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="5" y="10.5" width="14" height="10" rx="2.5" />
+                  <path class="open" d="M8.5 10.5V7.5a3.5 3.5 0 0 1 6.8-1.2" />
+                  <path class="closed" d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" />
+                </svg>
+              </label>
               <span class="contender-lane" aria-hidden="true"><i id="lane-a"></i></span>
             </div>
             <div class="versus" aria-hidden="true">vs</div>
@@ -84,6 +92,14 @@
                 <span id="rule-b" class="contender-rule"></span>
               </div>
               <span id="speed-b" class="contender-speed"></span>
+              <label class="contender-lock" title="Lock the bottom ball: the dice keeps it as it is">
+                <input id="lock-b" name="lock-b" type="checkbox" autocomplete="off" aria-label="Lock the bottom ball" />
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="5" y="10.5" width="14" height="10" rx="2.5" />
+                  <path class="open" d="M8.5 10.5V7.5a3.5 3.5 0 0 1 6.8-1.2" />
+                  <path class="closed" d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" />
+                </svg>
+              </label>
               <span class="contender-lane" aria-hidden="true"><i id="lane-b"></i></span>
             </div>
             <div id="prediction" class="verdict" aria-live="polite">
@@ -102,7 +118,7 @@
                 <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
                 <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" stroke="none" />
               </svg>
-              Random matchup
+              <span id="dice-label">Random matchup</span>
             </button>
             <div class="row">
               <!-- What Play and Restart do about the narrator (app.ts voiceOn); Record follows Sound alone. -->

@@ -235,7 +235,7 @@ recorded video goes: the hold, the race, slow motion into the win, the winner ca
 into the first frame; then it fades into the next built-in matchup **in the next look**
 (`HERO_LOOKS`: night, paper, cards). **Roll a new matchup** calls the studio's dice
 (`randomMatchup`, balanced like any roll). Both stay without powers: the hero plays only the
-built-in matchups that have none, and rolls with powers off, so it shows the format itself,
+built-in matchups that have none (nor a crowd), and rolls with powers and crowds off, so it shows the format itself,
 sequence against sequence, with nothing the opening would have to explain. Under the phone,
 the two names and the look.
 
@@ -482,3 +482,4 @@ used for.
 - 2026-10-25 - the opening title made for the cover (a lighter wash, the balls and a ball's power over it, the race's labels held back; the meters 40 px further in), so the still (`hero/first-frame-3.webp`), the looks and the share image were made again. The gallery is still the 2026-10-23 recordings.
 - 2026-10-25 - the sequences card lists fourteen sequences and 65 pairings (Lucas, Catalan, Tenfold and Collatz added).
 - 2026-10-29 - a superadmin sees "Your plan" on no pricing card, and Open studio on the free one.
+- 2026-11-02 - the sequences card lists fifteen sequences and 79 pairings (Golden ratio added); the hero rolls and plays no crowds.

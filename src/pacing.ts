@@ -55,16 +55,15 @@ export function narrated(cfg: Config): boolean {
 
 /**
  * How long the winner card is planned to stay up: the hold (with the follow button, at
- * least FOLLOW_CARD), or long enough to say the winner line for the longer of the two
- * names, whichever is more. The page then stretches the card to land the video on its
- * exact length.
+ * least FOLLOW_CARD), or long enough to say the longer of the two winner lines, whichever is
+ * more. The lines, not the names: a crowd wins as "the crowd of 100 Millionaire Balls", longer
+ * than its name. The page then stretches the card to land the video on its exact length.
  */
 export function cardSeconds(cfg: Config): number {
   const hold = cfg.look.follow ? Math.max(cfg.timing.hold, FOLLOW_CARD) : cfg.timing.hold;
   if (!narrated(cfg)) return hold;
-  const longest = cfg.a.name.length >= cfg.b.name.length ? cfg.a.name : cfg.b.name;
-  const line = spokenOutro(cfg, { winner: longest, time: '00.0' });
-  return Math.max(hold, line.length / SPOKEN_CHARS_PER_SECOND + AFTER_OUTRO);
+  const longest = Math.max(...[cfg.a.name, cfg.b.name].map((winner) => spokenOutro(cfg, { winner, time: '00.0' }).length));
+  return Math.max(hold, longest / SPOKEN_CHARS_PER_SECOND + AFTER_OUTRO);
 }
 
 /** Seconds of video that are not race: everything above except the race itself. */

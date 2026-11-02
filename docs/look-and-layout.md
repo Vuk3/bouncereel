@@ -73,8 +73,9 @@ Cream boxes in 6 px ink frames on a paper page (`#ece0c7` to `#e2d3b3`), the pal
   3 px tracking. `legible` darkens it just until it has 3:1 contrast on the paper, so
   amber stays readable and still the team's colour. A ball with a power has its tag
   (§10) 18 px after the name, without a shadow, and the pair is centred.
-- **Stats line** at the top left inside the box: `DAMAGE: 2.584  |  SPEED: 3.0x`, plus
-  `BALLS: 12` for a splitting ball or `SIZE: 1.4x` for a growing one. SPEED is the ball's
+- **Stats line** at the top left inside the box: `NEXT HIT: 2.584  |  SPEED: 3.0x` (what the
+  next hit deals, in the format's own words), plus `BALLS: 12` for a splitting ball or a
+  crowd, or `SIZE: 1.4x` for a growing one. SPEED is the ball's
   speed now over the slower of the two starting speeds, which is what a viewer weighs
   against the damage; a finished team keeps its last speed. It is outlined in the box's
   colour, or a ball of the same colour passing under it would swallow it.
@@ -87,11 +88,12 @@ Cream boxes in 6 px ink frames on a paper page (`#ece0c7` to `#e2d3b3`), the pal
 - **Finish strip**: the seam, then two rows of squares. One row between the seam and the
   frame read as a film strip.
 - **Balls**: a glossy sphere with an ink edge; a glow in the team colour that reaches
-  further as the damage grows (1.5 to 3.2 radii, by the damage's digits); a comet trail
-  over the last 9 frames, narrowing and fading toward the oldest (slow motion shortens it
-  by itself); and the sequence's `mark` (F, n!, ×2…) on balls of at least 18 px. A box of
-  more than 8 balls drops the marks and dims glow and trails, which would melt into one
-  blur.
+  further as the damage grows (1.5 to 3.2 radii, by the damage's digits); the afterglow
+  behind it (§7); and the sequence's `mark` (F, n!, ×2…) on balls of at least 18 px, Always
+  the same's its strength (1, 1K, 1M: `strengthMark`), the golden ratio's φ drawn as a ring and
+  a stroke (`drawPhi`), since Rubik has no Greek. A box
+  of more than 8 balls drops the marks and dims glow and afterglow, which would melt into
+  one blur; a crowd of more than 24 is plain balls (below).
 - **VS**: plain Rubik 900, 66 px, in ink.
 
 ## 3. Cards and night
@@ -124,10 +126,11 @@ Drawn back to front:
    (brighter the bigger the hit, §7), an ink outline, and the health centred in white with
    an ink outline (the top layer's counting down, §4); the last layer ringed in the team's
    colour (§13); the finish strip (two rows of ~16 px squares under a 5 px ink line); the
-   balls.
-4. **Chips** over the top of the box, 16 px from its top and sides: `DAMAGE` and the
-   next hit's damage on the left; on the right, for a special, `SPEED`, `SIZE` or `BALLS`.
-   Drawn after the balls, so a full box never hides them.
+   balls, flat in the team colour with an ink ring and a highlight, each with its afterglow
+   under it (§7), brighter on night's dark cards.
+4. **Chips** over the top of the box, 16 px from its top and sides: `NEXT HIT` and what
+   the next hit deals on the left; on the right `BALLS` for a crowd or a splitting ball, else
+   for a special `SPEED` or `SIZE`. Drawn after the balls, so a full box never hides them.
 5. **Name pill** above the card: the team colour, ink outline, its own hard shadow; ink
    text on light colours (lime, amber), white otherwise (`readableOn`). A ball with a
    power has its tag (§10) 14 px after the pill, with the same hard shadow, and the pair
@@ -216,8 +219,17 @@ so they never affect the simulation:
   0.3 for a 1, full from 10^15 (and on the last layer at least 0.35 to full, by §13).
 - **Confetti**: 240 pieces in the winner's colour, white, gold and ink, drawn above the
   winner card.
+- **The afterglow** behind every ball, in every look (`drawAfterglow`): a soft tail in the
+  team colour along its last positions, no longer than 3.2 radii however fast it goes
+  (`AFTERGLOW`), narrowing to a fifth of the ball and fading to nothing, as the format's balls
+  leave one; two passes, a wide faint one under a narrower one, give it a soft edge without a
+  canvas blur. Dimmed in a box of more than 8 balls; none in a swarm.
+- **A swarm**, a crowd of more than 24 balls (`SWARM`), is drawn plain in every look, the
+  colour in an ink ring with a highlight, all in one path, with no glow, so 200 balls still
+  draw at 60 fps (`drawPlainBalls`). Only a crowd, which is one from the start: a box of split
+  balls (up to 64) keeps its drawing, which changing as its 25th was born would read as a glitch.
 
-Trails and glow are the renderer's own (it keeps each ball's last positions); they are
+The afterglow and glow are the renderer's own (it keeps each ball's last positions); they are
 just as visual and never touch the simulation.
 
 ## 8. Background and font
@@ -287,7 +299,7 @@ tag alone where its name row stands, 1.3 times as big (§10); a big **VS** betwe
 
 The race's own labels wait under it: the name rows (pills or names, with their tags) and the
 chips or stats line are not drawn while the title is whole, so a name is never said twice and
-`DAMAGE 1` does not clutter the cover (`labels` in the renderer). The wash is light for the
+`NEXT HIT 1` does not clutter the cover (`labels` in the renderer). The wash is light for the
 same reason: at 70–80 % the cards, layers and balls read as a faded page on a grid, and the
 title's outlines hold the words up without it. The question is the narrator's last line of
 the opening: the creator's own last sentence when that is a short question, else the one
@@ -408,4 +420,5 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-10-26 - the question over the first frame can be typed (`look.question`, More → Video) and is otherwise one of twenty; the dice deals the last line on the winner card from `LAST_LINES`.
 - 2026-10-30 - the follow button (`look.follow`, on plans with `follow`): once in the race right of the VS, in follow red, and under the winner card in the winner's colour, tapped into FOLLOWING (§14).
 - 2026-11-02 - the follow button's tap: Microsoft's 3D 👆 (public/hand/) that strikes, presses and lets go, in the race too; a ripple, the words rolling to FOLLOWING, a bounce and a burst instead of the ring.
+- 2026-11-02 - a soft afterglow behind every ball in every look (paper's comet trail gone); NEXT HIT for DAMAGE on the chips and the stats line; BALLS for a crowd; a crowd of more than 24 drawn plain; the golden ratio ball's φ.
 - 2026-10-30 - the looks come in the order paper, night, cards: in the studio, the admin's plan form, a plan's words and the home page.

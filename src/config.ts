@@ -1,6 +1,6 @@
 import { LOOKS, type Look, type Sound } from '../shared/features.ts';
 import { firstQuestion } from './audio/opening.ts';
-import type { SequenceId } from './sim/sequences.ts';
+import { SEQUENCES, type SequenceId } from './sim/sequences.ts';
 
 // Everything a video is made of. A Config fully determines the run, so a
 // preset is a Config and sharing a matchup is sharing this JSON.
@@ -29,6 +29,18 @@ export interface Contestant {
   /** faster / slower: % per hit · grow: px of radius per hit · split: balls added per hit. */
   amount: number;
   radius: number;
+  /**
+   * Balls the team starts with: 1, or a crowd of up to MAX_CROWD (src/sim/duel.ts), every one at
+   * the team's speed, sharing its one sequence and hit counter: a hundred balls hitting for a
+   * million each, against one ball whose hits grow.
+   */
+  count: number;
+  /**
+   * Every hit times this. 1, except for Always the same, where it is the number the ball hits with
+   * (one of STRENGTHS in src/sim/sequences.ts, 1 to a million): a hundred balls hitting for a
+   * thousand each are "100× Thousand Balls".
+   */
+  strength: number;
 }
 
 export interface Config {
@@ -141,12 +153,22 @@ export const WINNER_LINES = [
  */
 export const FOLLOW_LINE = 'Follow for more!';
 
+/** A ball's name as the narrator says it: the sign in "100× Millionaire Balls" is read as nothing. */
+export function spokenName(name: string): string {
+  return name.replace(/(\d)\s*×\s*/g, '$1 ');
+}
+
 /**
  * What the narrator says at the win: the winner line filled in, then FOLLOW_LINE when the video asks
- * viewers to follow, unless a line written by hand asks already. '' when there is neither.
+ * viewers to follow, unless a line written by hand asks already. '' when there is neither. A crowd
+ * wins as one: "The crowd of 100 Millionaire Balls wins!", where its name alone would read
+ * "100 Millionaire Balls wins".
  */
 export function spokenOutro(cfg: Config, vars: { winner: string; time: string }): string {
-  const line = fillTemplate(cfg.voice.outro, vars).trim();
+  const crowd = [cfg.a, cfg.b].some((c) => c.name === vars.winner && c.count > 1);
+  const winner = `${crowd ? 'the crowd of ' : ''}${spokenName(vars.winner)}`;
+  const filled = fillTemplate(cfg.voice.outro, { ...vars, winner }).trim();
+  const line = filled.charAt(0).toUpperCase() + filled.slice(1);
   // The written line, not the filled one: a ball may be called "Follower Ball".
   return cfg.look.follow && !/\bfollow/i.test(cfg.voice.outro) ? `${line} ${FOLLOW_LINE}`.trim() : line;
 }
@@ -155,8 +177,8 @@ const BASE: Config = {
   seed: '1',
   // Speeds here are only a starting point: loading a matchup balances them
   // (src/sim/balance.ts) so the race fits the video length and ends close.
-  a: { name: 'Fibonacci Ball', color: '#7c4dff', sequence: 'fibonacci', speed: 1300, special: 'none', amount: 0, radius: 26 },
-  b: { name: 'Slow Factorial Ball', color: '#0ea5e9', sequence: 'factorial', speed: 300, special: 'none', amount: 0, radius: 26 },
+  a: { name: 'Fibonacci Ball', color: '#7c4dff', sequence: 'fibonacci', speed: 1300, special: 'none', amount: 0, radius: 26, count: 1, strength: 1 },
+  b: { name: 'Slow Factorial Ball', color: '#0ea5e9', sequence: 'factorial', speed: 300, special: 'none', amount: 0, radius: 26, count: 1, strength: 1 },
   layers: '1000, 1e10, 1e15',
   physics: { gravity: 0, maxSpeed: 5000 },
   sound: { melody: 'ode', timbre: 'marimba', volume: 0.8, track: 'narrator' },
@@ -228,6 +250,22 @@ export const PRESETS: Preset[] = [
     layers: '1000, 1e9, 1e14',
     sound: { melody: 'ode', timbre: 'pluck' },
   }),
+  preset('golden-vs-tripling', 'Golden Ratio vs Tripling', {
+    seed: '3',
+    // 1.618 times a hit against 3 times: tripling is ahead on every hit, so the golden ball has to be quick.
+    a: { name: 'Golden Ratio Ball', color: '#f59e0b', sequence: 'golden', speed: 1200 },
+    b: { name: 'Tripling Ball', color: '#0ea5e9', sequence: 'tripling', speed: 600 },
+    layers: '50000, 4e9, 3e15',
+    sound: { melody: 'twinkle' },
+  }),
+  preset('millionaires-vs-doubling', '100× Millionaire Balls vs Doubling', {
+    seed: '5',
+    // Spam against skill: a hundred balls hitting for a million each, against one ball that doubles from one.
+    a: { name: '100× Millionaire Balls', color: '#10b981', sequence: 'ones', speed: 500, radius: 11, count: 100, strength: 1_000_000 },
+    b: { name: 'Doubling Ball', color: '#ef4444', sequence: 'doubling', speed: 600 },
+    layers: '1e6, 1e9, 2e9',
+    sound: { melody: 'scale', timbre: 'chip' },
+  }),
 ];
 
 export const DEFAULT_CONFIG = PRESETS[0].config;
@@ -270,7 +308,27 @@ export function savedConfig(saved: unknown): Config {
   if ((provider === 'none' || provider === 'browser') && cfg.sound.track === 'narrator') cfg.sound.track = 'music';
   if (cfg.look.cta === OLD_CTA) cfg.look.cta = BASE.look.cta;
   if (!('question' in look)) cfg.look.question = firstQuestion(cfg.seed);
+  for (const ball of [cfg.a, cfg.b]) fitBall(ball);
   return cfg;
+}
+
+/**
+ * The numbers a config's ball hits with, as the studio has them now. Always 100, Always 1,000 and
+ * Always a million were sequences of their own for a while before they were one, Always the same
+ * with a strength; a sequence the studio no longer has (or never had) races as Fibonacci rather
+ * than not at all; a strength that is not a whole number of at least one is 1; and only Always the
+ * same is a crowd, any other ball one.
+ */
+function fitBall(ball: Contestant): void {
+  const before: Record<string, number> = { hundreds: 100, thousands: 1000, million: 1_000_000 };
+  const was = String(ball.sequence);
+  if (was in before) {
+    ball.sequence = 'ones';
+    ball.strength = before[was];
+  } else if (!(was in SEQUENCES)) ball.sequence = 'fibonacci';
+  ball.strength = Number.isFinite(Number(ball.strength)) && Number(ball.strength) >= 1 ? Math.round(Number(ball.strength)) : 1;
+  // A crowd is Always the same's alone.
+  ball.count = ball.sequence === 'ones' && Number.isFinite(ball.count) && ball.count >= 1 ? Math.round(ball.count) : 1;
 }
 
 /** Fills {winner}, {time}… in a line. */

@@ -8,14 +8,16 @@ import type { Body, SimEvent } from './types.ts';
 // Two teams, each in its own box, top and bottom. A ball flies in a straight
 // line and bounces off the walls and ceiling for nothing; only a hit on the
 // floor counts. The floor is the top layer, and each floor hit takes the next
-// term of the team's sequence off it: Fibonacci 1, 1, 2, 3, 5…, factorial
-// 1, 2, 6, 24… Damage left over when a layer breaks is lost. When a layer
+// term of the team's sequence off it, times the ball's strength: Fibonacci
+// 1, 1, 2, 3, 5…, factorial 1, 2, 6, 24…, Always the same at a thousand
+// 1000, 1000… Damage left over when a layer breaks is lost. When a layer
 // breaks, the box grows down to the next one; with every layer gone the floor
 // is the finish line, and the first ball to touch it wins for its team.
 //
 // A special can change the hitting ball on every floor hit: faster, slower,
 // bigger, or a new ball split off it. A splitting team shares one sequence,
-// so more balls means more hits, not bigger ones.
+// so more balls means more hits, not bigger ones; so does a crowd, a team
+// that starts with many balls (Contestant.count).
 //
 // The box is convex and every ball is put back inside it each step, so no
 // speed can carry a ball through a wall. Sub-steps only keep the moment of
@@ -46,8 +48,18 @@ export interface Team {
   finished: boolean;
 }
 
+/** What a ball's (n+1)-th hit deals: its sequence's term, times its strength (Contestant.strength). */
+function hitOf(rule: Contestant, n: number): bigint {
+  return SEQUENCES[rule.sequence].term(n) * BigInt(Math.max(1, Math.round(rule.strength || 1)));
+}
+
 /** More than this many balls in a box is a blur, and the hit rate stops meaning much. */
 export const MAX_BALLS = 64;
+/**
+ * The most balls a crowd starts with (Contestant.count): a swarm that still draws at 60 fps and
+ * balances in about a second. A crowd past MAX_BALLS never splits.
+ */
+export const MAX_CROWD = 200;
 const MIN_SPEED = 40;
 
 export class DuelWorld {
@@ -97,10 +109,31 @@ export class DuelWorld {
         layers: health.map((hp) => ({ hp, max: hp })),
         broken: 0,
         hits: 0,
-        damage: SEQUENCES[rule.sequence].term(0),
+        damage: hitOf(rule, 0),
         finished: false,
       };
     });
+    // A crowd's other balls, each from a random point at its own angle, from a stream of their own:
+    // the first ball of each team starts where it always did, crowd or not.
+    for (const t of this.teams) {
+      const extra = Math.min(MAX_CROWD, Math.max(1, Math.round(t.rule.count))) - 1;
+      if (extra <= 0) continue;
+      const crowd = createRng(`${cfg.seed}:crowd:${t.id}`);
+      const first = t.bodies[0];
+      const speed = Math.sqrt(first.vx * first.vx + first.vy * first.vy);
+      for (let k = 0; k < extra; k++) {
+        const angle = crowd.range(0.52, 1.05);
+        const sx = crowd.next() < 0.5 ? -1 : 1;
+        const sy = crowd.next() < 0.5 ? -1 : 1;
+        t.bodies.push({
+          x: crowd.range(BOX.left + first.r, BOX.right - first.r),
+          y: crowd.range(t.panel.top + first.r, t.panel.floor - first.r),
+          vx: sx * dcos(angle) * speed,
+          vy: sy * dsin(angle) * speed,
+          r: first.r,
+        });
+      }
+    }
   }
 
   /** A grown ball stays a ball in a box: at most a third of the starting box height across. */
@@ -210,7 +243,7 @@ export class DuelWorld {
     }
     this.events.push({ type: 'hit', team: t.id, x: b.x, y, damage, layer: index, broken, last: broken && t.broken === t.layers.length });
     t.hits++;
-    t.damage = SEQUENCES[t.rule.sequence].term(t.hits);
+    t.damage = hitOf(t.rule, t.hits);
     this.special(t, b);
   }
 

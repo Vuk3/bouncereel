@@ -47,10 +47,10 @@ export function heroConfig(config: Config, skin: Skin = HERO_LOOKS[0]): Config |
 
 /**
  * The built-in matchups the hero plays, in order: the still frame in the page is the first
- * one's. Only those without powers: the hero shows the format itself, sequence against
+ * one's. Only those without powers or crowds: the hero shows the format itself, sequence against
  * sequence, and a power would need the opening to explain it.
  */
-const CLASSICS = PRESETS.map((p) => p.config).filter((c) => [c.a, c.b].every((ball) => ball.special === 'none' || !ball.amount));
+const CLASSICS = PRESETS.map((p) => p.config).filter((c) => [c.a, c.b].every((ball) => (ball.special === 'none' || !ball.amount) && ball.count <= 1));
 
 export class Hero {
   private readonly canvas: HTMLCanvasElement;
@@ -145,7 +145,7 @@ export class Hero {
     const skin = HERO_LOOKS[this.races % HERO_LOOKS.length];
     if (dice) {
       const base = mergeConfig(CLASSICS[0], { sound: { track: 'silent' }, timing: { video: HERO_SECONDS, gap: 0 }, look: { skin } });
-      return randomMatchup(String(1 + Math.floor(Math.random() * 999_999)), base, false);
+      return randomMatchup(String(1 + Math.floor(Math.random() * 999_999)), base, { powers: false, crowds: false }) ?? base;
     }
     for (let i = 1; i <= CLASSICS.length; i++) {
       const cfg = heroConfig(CLASSICS[(this.classic + i) % CLASSICS.length], skin);
@@ -304,9 +304,10 @@ export function withLook(cfg: Config, skin: Skin): Config {
   return mergeConfig(cfg, { look: { skin } });
 }
 
-/** The studio's dice, balanced to the steps' settings, never with a power (as the hero rolls). */
+/** The studio's dice, balanced to the steps' settings, never with a power or a crowd (as the hero rolls). */
 export function rollMatchup(s: Settings): Config {
-  return randomMatchup(String(1 + Math.floor(Math.random() * 999_999)), mergeConfig(CLASSICS[0], settingsPatch(s)), false);
+  const base = mergeConfig(CLASSICS[0], settingsPatch(s));
+  return randomMatchup(String(1 + Math.floor(Math.random() * 999_999)), base, { powers: false, crowds: false }) ?? base;
 }
 
 /**

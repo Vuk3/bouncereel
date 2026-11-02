@@ -4,7 +4,7 @@ import type { Config, Skin, Special } from '../config.ts';
 import { BORDER, BOX, FINISH_H, H, INSET, PILL_H, STACK, VS_Y, W, finishTop, type Panel } from '../layout.ts';
 import type { Team } from '../sim/duel.ts';
 import { createRng } from '../sim/rng.ts';
-import { SEQUENCES, formatBig } from '../sim/sequences.ts';
+import { SEQUENCES, formatBig, strengthMark } from '../sim/sequences.ts';
 import type { Body, SimEvent } from '../sim/types.ts';
 import type { World } from '../sim/world.ts';
 import { Effects } from './effects.ts';
@@ -43,10 +43,21 @@ const CROWDED_TEXT_GAP = 0.3;
 const KICK_GAP = 0.12;
 /** The ink line on top of every layer in the paper look: the floor a ball lands on. */
 const SEAM = 5;
-/** Frames of trail behind a ball: about 0.15 s at 60 fps, a comet rather than a snake. */
+/** Positions kept behind a ball for its afterglow: about 0.15 s at 60 fps, more than the glow ever needs. */
 const TRAIL = 9;
+/**
+ * How far a ball's afterglow reaches behind it, in its radii, however fast it goes: the soft light
+ * the format's balls leave, a short smear rather than a comet's tail.
+ */
+const AFTERGLOW = 3.2;
 /** More balls than this in a box and the glow, trails and marks would melt into one blur. */
 const CROWD = 8;
+/**
+ * A crowd of more than this is a swarm: plain balls, no glow, so 200 still draw at 60 fps. Only a
+ * crowd, which is one from the start: a box of split balls changing its drawing as its 25th was
+ * born would read as a glitch.
+ */
+const SWARM = 24;
 /**
  * A ball's power, as the tag beside its name says it: the name is the ball's numbers alone, so
  * this is where a viewer sees which ball has one, and what it does.
@@ -1019,12 +1030,16 @@ export class Renderer {
 
   private drawGlowingBalls(t: Team, look: Flat): void {
     const ctx = this.ctx;
+    if (t.rule.count > SWARM) {
+      this.drawPlainBalls(t, look.ink);
+      return;
+    }
     const crowded = t.bodies.length > CROWD;
     const strength = crowded ? 0.35 : 1;
     // The glow reaches further as the damage grows: a ball that hits for quadrillions should look it.
     const digits = Math.min(19, t.damage.toString().length);
     const reach = 1.5 + (1.7 * digits) / 19;
-    for (const b of t.bodies) this.drawTrail(b, t.color, strength);
+    for (const b of t.bodies) this.drawAfterglow(b, t.color, 0.42 * strength);
     for (const b of t.bodies) {
       const r = b.r * reach;
       const glow = ctx.createRadialGradient(b.x, b.y, b.r * 0.6, b.x, b.y, r);
@@ -1035,7 +1050,7 @@ export class Renderer {
       ctx.arc(b.x, b.y, r, 0, Math.PI * 2);
       ctx.fill();
     }
-    const mark = crowded ? '' : SEQUENCES[t.rule.sequence].mark;
+    const mark = crowded ? '' : t.rule.sequence === 'ones' ? strengthMark(t.rule.strength) : SEQUENCES[t.rule.sequence].mark;
     for (const b of t.bodies) {
       const sphere = ctx.createRadialGradient(b.x - b.r * 0.35, b.y - b.r * 0.4, b.r * 0.1, b.x, b.y, b.r);
       sphere.addColorStop(0, mix(t.color, WHITE, 0.55));
@@ -1049,7 +1064,8 @@ export class Renderer {
       ctx.strokeStyle = look.ink;
       ctx.stroke();
       // What the ball hits with, as the format's balls wear "x2": too small to read under 18 px.
-      if (mark && b.r >= 18) {
+      if (mark === 'φ' && b.r >= 18) this.drawPhi(b.x, b.y, b.r, look.ink);
+      else if (mark && b.r >= 18) {
         ctx.font = `800 ${Math.round(b.r * (mark.length > 1 ? 0.74 : 0.92))}px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -1058,43 +1074,110 @@ export class Renderer {
     }
   }
 
-  /** A comet tail: a ribbon along the ball's last positions, narrowing and fading toward the oldest. */
-  private drawTrail(b: Body, color: string, strength: number): void {
-    const points = this.trails.get(b);
-    if (!points || points.length < 6) return;
-    const n = points.length / 2;
-    const tailX = points[0];
-    const tailY = points[1];
-    const headX = points[2 * n - 2];
-    const headY = points[2 * n - 1];
-    // Standing still (the hold, a finished team): nothing to draw, and a zero-length gradient would paint nothing anyway.
-    if (Math.abs(headX - tailX) + Math.abs(headY - tailY) < b.r * 0.5) return;
+  /**
+   * The golden ratio ball's φ, drawn: Rubik has no Greek, and a fallback font's letter would differ
+   * from one computer to the next. A ring with a stroke through it, white over ink like the
+   * other balls' marks.
+   */
+  private drawPhi(x: number, y: number, r: number, ink: string): void {
     const ctx = this.ctx;
-    const sides: number[] = [];
-    const back: number[] = [];
-    for (let i = 0; i < n; i++) {
-      const prev = Math.max(0, i - 1);
-      const next = Math.min(n - 1, i + 1);
-      const dx = points[2 * next] - points[2 * prev];
-      const dy = points[2 * next + 1] - points[2 * prev + 1];
-      const len = Math.hypot(dx, dy) || 1;
-      const half = (b.r * 0.9 * i) / (n - 1);
-      sides.push(points[2 * i] - (dy / len) * half, points[2 * i + 1] + (dx / len) * half);
-      back.push(points[2 * i] + (dy / len) * half, points[2 * i + 1] - (dx / len) * half);
-    }
+    const size = r * 0.6;
     ctx.beginPath();
-    ctx.moveTo(sides[0], sides[1]);
-    for (let i = 1; i < n; i++) ctx.lineTo(sides[2 * i], sides[2 * i + 1]);
-    for (let i = n - 1; i >= 0; i--) ctx.lineTo(back[2 * i], back[2 * i + 1]);
-    ctx.closePath();
-    const fade = ctx.createLinearGradient(tailX, tailY, headX, headY);
-    fade.addColorStop(0, rgba(color, 0));
-    fade.addColorStop(1, rgba(color, Math.min(0.75, 0.42 * strength)));
-    ctx.fillStyle = fade;
+    ctx.ellipse(x, y, size * 0.62, size * 0.48, 0, 0, Math.PI * 2);
+    ctx.moveTo(x, y - size * 0.95);
+    ctx.lineTo(x, y + size * 0.95);
+    ctx.lineCap = 'round';
+    ctx.lineWidth = Math.max(5, r * 0.3);
+    ctx.strokeStyle = ink;
+    ctx.stroke();
+    ctx.lineWidth = Math.max(2.5, r * 0.13);
+    ctx.strokeStyle = WHITE;
+    ctx.stroke();
+  }
+
+  /** A swarm's balls, in every look: the ball's colour in an ink ring with a highlight, and nothing behind them. */
+  private drawPlainBalls(t: Team, ink: string): void {
+    const ctx = this.ctx;
+    ctx.fillStyle = t.color;
+    ctx.beginPath();
+    for (const b of t.bodies) {
+      ctx.moveTo(b.x + b.r, b.y);
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = ink;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.beginPath();
+    // All in one path: each highlight starts where its ellipse does, so none is joined to the last.
+    const [cos, sin] = [Math.cos(-0.6), Math.sin(-0.6)];
+    for (const b of t.bodies) {
+      const [cx, cy] = [b.x - b.r * 0.34, b.y - b.r * 0.38];
+      ctx.moveTo(cx + b.r * 0.26 * cos, cy + b.r * 0.26 * sin);
+      ctx.ellipse(cx, cy, b.r * 0.26, b.r * 0.18, -0.6, 0, Math.PI * 2);
+    }
     ctx.fill();
   }
 
-  /** "DAMAGE: 2.584  |  SPEED: 3.0x" inside the top of the box, plus the power's own number. */
+  /**
+   * The light a ball leaves behind it, as the format's balls do: a soft tail along its last
+   * positions, never longer than AFTERGLOW radii however fast it goes, narrowing and fading to
+   * nothing. Two passes, a wide faint one under a narrower one, give it a soft edge without a
+   * canvas blur (which costs far more, and the hero draws on phones). Drawn under the ball.
+   */
+  private drawAfterglow(b: Body, color: string, alpha: number): void {
+    const points = this.trails.get(b);
+    if (!points || points.length < 4 || alpha <= 0) return;
+    // Back from the ball along where it has been, as far as the glow reaches.
+    const path = [b.x, b.y];
+    let left = b.r * AFTERGLOW;
+    for (let i = points.length - 2; i >= 0 && left > 0; i -= 2) {
+      const px = path[path.length - 2];
+      const py = path[path.length - 1];
+      const d = Math.hypot(points[i] - px, points[i + 1] - py);
+      if (d < 0.5) continue;
+      const k = Math.min(1, left / d);
+      path.push(px + (points[i] - px) * k, py + (points[i + 1] - py) * k);
+      left -= d;
+    }
+    const n = path.length / 2;
+    // Standing still (the hold, a finished team): nothing behind it.
+    if (n < 2 || Math.hypot(path[0] - path[2 * n - 2], path[1] - path[2 * n - 1]) < b.r * 0.5) return;
+    const ctx = this.ctx;
+    const fade = ctx.createLinearGradient(path[0], path[1], path[2 * n - 2], path[2 * n - 1]);
+    fade.addColorStop(0, rgba(color, Math.min(0.8, alpha)));
+    fade.addColorStop(1, rgba(color, 0));
+    ctx.fillStyle = fade;
+    for (const [spread, strength] of [
+      [1.45, 0.38],
+      [1, 1],
+    ]) {
+      const sides: number[] = [];
+      const back: number[] = [];
+      for (let i = 0; i < n; i++) {
+        const prev = Math.max(0, i - 1);
+        const next = Math.min(n - 1, i + 1);
+        const dx = path[2 * next] - path[2 * prev];
+        const dy = path[2 * next + 1] - path[2 * prev + 1];
+        const len = Math.hypot(dx, dy) || 1;
+        // From most of the ball's width at the ball to a fifth of it at the end.
+        const half = b.r * spread * (0.85 - (0.65 * i) / (n - 1));
+        sides.push(path[2 * i] - (dy / len) * half, path[2 * i + 1] + (dx / len) * half);
+        back.push(path[2 * i] + (dy / len) * half, path[2 * i + 1] - (dx / len) * half);
+      }
+      ctx.globalAlpha = strength;
+      ctx.beginPath();
+      ctx.moveTo(sides[0], sides[1]);
+      for (let i = 1; i < n; i++) ctx.lineTo(sides[2 * i], sides[2 * i + 1]);
+      for (let i = n - 1; i >= 0; i--) ctx.lineTo(back[2 * i], back[2 * i + 1]);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** "NEXT HIT: 2.584  |  SPEED: 3.0x" inside the top of the box, plus the power's or the crowd's own number. */
   private drawStats(t: Team, cfg: Config, look: Flat): void {
     const ctx = this.ctx;
     const text = this.stats(t, cfg);
@@ -1113,14 +1196,14 @@ export class Renderer {
    * against the damage. A power adds its own number.
    */
   private stats(t: Team, cfg: Config): string {
-    const parts = [`DAMAGE: ${formatBig(t.damage, cfg.look.separator)}`];
+    const parts = [`NEXT HIT: ${formatBig(t.damage, cfg.look.separator)}`];
     const b = t.bodies[0];
     const now = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
     if (now > 0) this.speeds[t.id] = now;
     const speed = (this.speeds[t.id] || t.rule.speed) / Math.max(1, Math.min(cfg.a.speed, cfg.b.speed));
     parts.push(`SPEED: ${speed >= 10 ? Math.round(speed) : speed.toFixed(1)}x`);
     const { special, amount } = t.rule;
-    if (amount && special === 'split') parts.push(`BALLS: ${t.bodies.length}`);
+    if (t.rule.count > 1 || (amount && special === 'split')) parts.push(`BALLS: ${t.bodies.length}`);
     if (amount && special === 'grow') parts.push(`SIZE: ${(b.r / t.rule.radius).toFixed(1)}x`);
     return parts.join('  |  ');
   }
@@ -1357,6 +1440,13 @@ export class Renderer {
 
   private drawBalls(t: Team, deck: Deck): void {
     const ctx = this.ctx;
+    if (t.rule.count > SWARM) {
+      this.drawPlainBalls(t, deck.ink);
+      return;
+    }
+    // Brighter on the dark cards, where the same light would barely show.
+    const glow = (deck.dark ? 0.55 : 0.36) * (t.bodies.length > CROWD ? 0.4 : 1);
+    for (const b of t.bodies) this.drawAfterglow(b, t.color, glow);
     for (const b of t.bodies) {
       ctx.beginPath();
       ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
@@ -1373,12 +1463,12 @@ export class Renderer {
     }
   }
 
-  /** Damage (left) and the special's number (right), as chips over the top of the box. */
+  /** What the next hit deals (left) and the special's or the crowd's number (right), as chips over the top of the box. */
   private drawChips(t: Team, cfg: Config, deck: Deck): void {
     const y = t.panel.top + INSET + CHIP_H / 2;
     const right = this.extraLabel(t);
     const damageRoom = BOX.right - BOX.left - 40 - (right ? 260 : 0);
-    this.drawChip('DAMAGE', formatBig(t.damage, cfg.look.separator), BOX.left + INSET, y, t.color, 'left', damageRoom, deck);
+    this.drawChip('NEXT HIT', formatBig(t.damage, cfg.look.separator), BOX.left + INSET, y, t.color, 'left', damageRoom, deck);
     if (right) this.drawChip(right[0], right[1], BOX.right - INSET, y, t.color, 'right', 240, deck);
   }
 
@@ -1416,6 +1506,7 @@ export class Renderer {
   /** What the special is doing, where there is room for it. */
   private extraLabel(t: Team): [string, string] | null {
     const { special, amount } = t.rule;
+    if (t.bodies.length > 1 && (t.rule.count > 1 || special === 'split')) return ['BALLS', String(t.bodies.length)];
     if (!amount || special === 'none') return null;
     if (special === 'split') return ['BALLS', String(t.bodies.length)];
     const b = t.bodies[0];

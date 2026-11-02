@@ -11,6 +11,9 @@ generator, and the sequences, specials and built-in matchups it draws on.
 | what the dice can produce | [src/sim/balance.ts](../src/sim/balance.ts) `randomMatchup`, `side`, `pickLayers`, `COLORS`, `HITS`, `MAX_POWER` |
 | how often the dice gives a ball a power | [src/sim/balance.ts](../src/sim/balance.ts) `POWER_CHANCE`, `BOTH_POWERED`, `POWERS` |
 | how often it gives a ball a size (Big, Tiny), which pace words names say | [src/sim/balance.ts](../src/sim/balance.ts) `SIZED`, `BIG`, `TINY`; `PACE_WORDS` |
+| how often it makes a crowd, of how many balls, how hard they hit | [src/sim/balance.ts](../src/sim/balance.ts) `CROWD_CHANCE`, `CROWD_COUNTS`, `CROWD_HITS`, `crowdRadius`; `STRENGTHS` in [sequences.ts](../src/sim/sequences.ts) |
+| what the dice keeps (the locks beside each ball, and under its Balls and Hit strength) | `#lock-a`, `#lock-b` and `#dice-label` in [app.html](../app.html); `locks`, `addFieldLock`, `randomize`, `syncDice` in [src/app.ts](../src/app.ts); `Keep`, `keep` in `randomMatchup`, `keptWhole` |
+| a ball changed by hand (its numbers, Balls, Hit strength, power): its name, size and balance | `count`, `strength` in [src/ui/fields.ts](../src/ui/fields.ts); `reshape`, `rebalance` in [src/app.ts](../src/app.ts); `relayer`, `sizeFor`, `plainName`, `diceName` in balance.ts |
 | the Powers in random matchups switch next to the dice | `#powers` and `#powers-hint` in [app.html](../app.html); `powers`, `loadDice` in [src/app.ts](../src/app.ts) |
 | why a matchup cannot balance, and what the page says | `balanceProblem` in [balance.ts](../src/sim/balance.ts); `rebalance`, `explainUnbalanced` and `#balance-note` in [src/app.ts](../src/app.ts) |
 | generated names | [src/sim/balance.ts](../src/sim/balance.ts) `nameFor`; nouns in [sequences.ts](../src/sim/sequences.ts) |
@@ -108,17 +111,33 @@ recording lands within a few hundredths of a second of the requested length.
 `randomMatchup(seed, base)` tries combinations from the seed until one balances, usually
 in a few milliseconds:
 
-1. **Two different sequences**, from all but `ones` (which needs a hundred hits for even
-   the smallest round layer) and `pi` (4.5 a hit pairs with nothing but Counting, on one
-   layer of 100). Fourteen sequences make 65 pairs that can race.
-2. **Layers**: for each power of ten up to **10^18**, count the hits each sequence needs to
-   deal it (`hitsFor`); keep powers where both need 14–80 hits and neither needs more than
-   8× the other. Pick from the upper half of what fits (big numbers are half the fun), then
-   2–4 layers rising to it, as round values (1, 2 or 5 × a power of ten). 10^18 is the
-   cap so every value, and the damage that breaks it, fits a card as whole digits.
-3. **Colours** from `COLORS`, at least 75° apart in hue (two greens read as one team).
-4. **Often a power** (a special; the panel says power): with the **Powers in random
-   matchups** switch on, about every other matchup gets one (51 to 59 of 100 in
+1. **Two different sequences**, from all but Always the same (`ones`: a hundred hits for even
+   the smallest round layer its size, so it is a crowd's) and `pi` (4.5 a hit pairs with
+   nothing but Counting, on one layer of 100). Fifteen sequences make 79 pairs that can race.
+2. **Often a crowd** (`CROWD_CHANCE`, about one roll in four, powers switch or not): one ball
+   becomes Always the same, 30 to 200 balls (`CROWD_COUNTS`) that all hit with the same number
+   every time, at a strength the roll picks from 1 to a million in powers of ten (`STRENGTHS`):
+   spam against skill, the format's favourite twist ("100× Millionaire Balls vs Penny Ball").
+   Only Always the same is ever a crowd: a hundred balls of numbers that grow would break every
+   layer within seconds. A crowd has no power and no size word; its balls are 13 px, 11 from a
+   hundred, 9 at two hundred (`crowdRadius`). Its hits come from all of its balls together, so
+   what has to be watchable is the hits each ball makes: 8–36 (`CROWD_HITS`, where a lone ball's
+   are 14–80; at 36 hits each a 30 s crowd moves at about 1,800 px/s, where a swarm at a lone
+   ball's 2,500 is a blur). Its strength chooses the layers: a crowd hitting for one gets
+   hundreds and thousands, one hitting for a million gets billions. The home page's hero makes
+   none.
+3. **Layers**: for each power of ten up to **10^18**, count the hits each ball needs to deal
+   it (`hitsFor`, over running totals kept per sequence, so a crowd's thousands of hits are
+   counted once), per ball for a crowd; keep powers where both are in their window and
+   neither needs more than 8× the other. With a crowd in the race, 2 and 5 × a power of ten
+   are tried as the top too: a hundred balls hitting for one need 2,000 or 5,000, where 1,000
+   is too few and 10,000 too many. Pick from the upper half of what fits (big numbers are
+   half the fun), then 2–4 layers rising to it, as round values (1, 2 or 5 × a power of ten).
+   10^18 is the cap so every value, and the damage that breaks it, fits a card as whole
+   digits.
+4. **Colours** from `COLORS`, at least 75° apart in hue (two greens read as one team).
+5. **Often a power** (a special; the panel says power): with the **Powers in random
+   matchups** switch on, about every other matchup gets one (39 to 56 of 100 in
    `npm run tune`), on one ball, or a different one on each ball one time in three ("one
    splits, the other speeds up"); with it off (the default), never. Half the rolls stay
    sequence against sequence, the format; the other half are the twist that keeps a run of
@@ -129,12 +148,12 @@ in a few milliseconds:
    home page's hero rolls without powers, and plays only the classics that have none.
    Amounts: `faster` 1.5–4 %, `slower` 1–2.5 %, `grow` 3–9 px, `split` 1. Ball size
    22–28 px; 18 for growing, 16 for splitting.
-5. **Now and then a size** (`SIZED`, about one matchup in three), on a ball without a power,
+6. **Now and then a size** (`SIZED`, about one matchup in three), on a ball without a power,
    powers switch or not: one ball **Big** (34–40 px) or **Tiny** (14–16 px), or one time in
    three a big one against a tiny one. It is a real difference, not a costume: a bigger ball
    has less far to fall, and balancing evens it out like any other.
-6. **A melody**, then **balance**. A combination that does not balance is skipped.
-7. **Names** from the ball's numbers: the sequence's noun, with one word in front. **Big**
+7. **A melody**, then **balance**. A combination that does not balance is skipped.
+8. **Names** from the ball's numbers: the sequence's noun, with one word in front. **Big**
    or **Tiny** for a size; else **Slow** or **Fast** when its speed is half or double the
    other's, as far as the matchup's pace words allow (`PACE_WORDS`, drawn per matchup:
    both, only Fast, only Slow, or neither). A fast-growing sequence against a slow one
@@ -147,9 +166,12 @@ in a few milliseconds:
    neither Slow nor Fast, since its starting speed is wrong within seconds. Named once
    before balancing (the winner line's length is part of the timing) and again after. The
    built-in matchups keep their own names ("Growing vs Speeding" is two Fibonacci balls
-   told apart by their powers).
+   told apart by their powers). Always the same is named after its strength (One, Ten,
+   Hundred, Thousand, Ten Thousand, Hundred Thousand, Millionaire: `strengthNoun`), and a crowd
+   after its number and that: "100× Millionaire Balls", "200× One Balls", "50× Thousand
+   Balls", as the format writes them.
 
-8. **The words**, from a stream of their own (`words:<seed>`) so the matchup a seed gives
+9. **The words**, from a stream of their own (`words:<seed>`) so the matchup a seed gives
    stays the same: the question goes back to the new seed's pick, and the winner card's
    last line and the winner line are new picks from `LAST_LINES` and `WINNER_LINES`
    ([config.ts](../src/config.ts)), never the one before. Only the dice's own words: a
@@ -159,11 +181,36 @@ in a few milliseconds:
 Voice, volume, timing and look come from the current config; the page clears a
 hand-written opening, which would describe the old matchup.
 
+**Locks**, all open on every visit. Beside each ball in the matchup card, one that keeps the
+ball (`Keep.ball`): its numbers, power, colour, size, and a name its creator wrote. Under its
+**Balls** and **Hit strength** in the Balls tab, one each that keeps how many balls it is
+(`count`) and how hard it hits (`strength`); either closes the ball's lock too, since they are the
+ball's, and opening the ball's lock opens them. Whatever is not locked is rolled: a kept Always
+the same ball with its count locked gets a new strength, a new opponent and new layers; with its
+count and strength locked, only a new opponent and new layers. A kept ball's speed is always
+balanced again, and a name the dice gave it is given again (`diceName`), since Slow, Fast, its
+count or its strength may no longer be true. The dice button says what a roll will do: **New
+opponent** with one ball kept; with both kept, **New layers** when nothing of either is left
+to roll (`keptWhole`), else **Roll the rest**. When nothing fits (one Always the same ball on its
+own needs a hundred hits for the smallest layer; two kept balls no round layers suit), the roll
+is null and the matchup card says why and what to change.
+
+**A ball changed by hand**, its numbers, **Balls**, **Hit strength** or power (`reshape`): its
+name follows when the dice gave the one it had ("Fibonacci Ball" made Always the same at a
+thousand, a hundred of them, is "100× Thousand Balls"; a name its creator wrote stays), Always
+the same becomes a crowd of a hundred (one ball alone cannot race), any other numbers one ball,
+and its size follows its count (`sizeFor`). **Balls** and **Hit strength** are Always the same's
+alone. Then the race is balanced again by itself, as **Make it close** does (`rebalance`): this
+race, new races of it, then new layers for the same two balls (`relayer`); and, for the ball
+just changed, a new opponent when no layers suit the two (a hundred balls hitting for a
+thousand against Factorial), unless the opponent is locked. A message says which.
+
 `npm run tune` generates 100 random matchups at 30, 40 and 60 s, as the dice comes and
-with powers off, and reports how many have a power, how many were photo finishes and how
-many came out more than 1 s off length (it should be 0); then 100 more at finish gaps of
-3, 5 and 10 s, with how many came out more than 1 s off length or off the gap (both should
-be 0).
+with powers off, and reports how many have a power or a crowd, how many were photo finishes
+and how many came out more than 1 s off length (it should be 0); 30 rolls keeping the top
+ball and 30 keeping both, with how many found nothing (a few, for two kept balls), changed a
+kept ball (it should be 0) or came out off length (0); then 100 more at finish gaps of 3, 5
+and 10 s, with how many came out more than 1 s off length or off the gap (both should be 0).
 
 ## 4. Sequences
 
@@ -182,18 +229,22 @@ floor hit, a BigInt, precomputed 400 terms deep.
 | `triangular` | 1, 3, 6, 10… | Triangle |
 | `tribonacci` | 1, 1, 2, 4, 7, 13… | Tribonacci |
 | `lucas` | 2, 1, 3, 4, 7, 11… (Fibonacci's rule from 2 and 1) | Lucas |
+| `golden` | 1, 2, 3, 4, 7, 11, 18… (the golden ratio's powers rounded, so each hit is 1.618 times the last; from the second, the Lucas numbers, so exact however far it goes) | Golden Ratio |
 | `catalan` | 1, 1, 2, 5, 14, 42… (nearly ×4 a hit once going) | Catalan |
 | `tenfold` | 1, 10, 100, 1000… (a zero a hit; races only on layers of 10^13 and up) | Tenfold |
 | `collatz` | 27, 82, 41, 124, 62… (halve when even, 3n+1 when odd: up and down, peaks at 9,232 on hit 78, reaches 1 on hit 112, then 4, 2, 1; races only on layers up to 10^4) | Collatz |
 | `counting` | 1, 2, 3, 4… | Counting |
 | `pi` | 3, 1, 4, 1, 5, 9… (the digits of pi, worked out by Machin's formula; a 0 hits for nothing; only by hand) | Pi |
-| `ones` | 1, 1, 1… | (none: "Steady Ball") |
+| `ones` | Always the same: one number every hit, the ball's strength (1 to a million, `STRENGTHS`); the only crowd | its strength's: One, Thousand, Millionaire… |
 
 Each also has a `brief` (one clause for the opening: "adds up its last two hits"),
 `facts` (two or three true lines the opening can add, the seed picking one: "Fibonacci
-numbers hide in sunflowers and pine cones.") and a `mark`, the one or two characters its ball wears in the paper look (F, n!,
-×2, n², P…; only characters Rubik's Latin set has). Adding a sequence is one
-entry with all six; the panel, the generator, the narrator and the renderer pick it up.
+numbers hide in sunflowers and pine cones.") and a `mark`, the one to three characters its ball wears in the paper look (F, n!,
+×2, n², P…; only characters Rubik's Latin set has, and the golden ratio's φ, which the
+renderer draws). Adding a sequence is one entry with all six; the panel, the generator, the
+narrator and the renderer pick it up. ⚠️ A table runs 400 terms deep (`LENGTH`): a crowd makes
+thousands of hits, so what a crowd hits with, Always the same, has a formula instead; past 400 a
+table repeats its last term.
 
 ## 5. Built-in matchups
 
@@ -209,6 +260,8 @@ entry with all six; the panel, the generator, the narrator and the renderer pick
 | Multiplying Ball vs Fibonacci | counting that splits; up to 64 balls |
 | Growing vs Speeding | both Fibonacci: bigger against faster |
 | Tribonacci vs Tripling | 1.000 / 10^9 / 10^14 |
+| Golden Ratio vs Tripling | 1.618 times a hit against 3 times; 50.000 / 4 billion / 3 × 10^15, after the reel this follows |
+| 100× Millionaire Balls vs Doubling | a crowd of a hundred hitting for a million against one ball doubling from 1; 1 million / 1 billion / 2 billion |
 
 A new one: add a `preset(...)` call, then `npm run tune` must show it balancing at 30, 40
 and 60 s. Speeds in a preset are only a starting point; balancing replaces them. Loading one keeps
@@ -226,3 +279,4 @@ the narrator, video length, finish gap and look.
 - 2026-10-25 - more varied rolls: a power about every other roll with the switch on (two different ones on both balls one time in three), a Big or Tiny ball about one roll in three with or without powers, and Slow and Fast said on both, one or neither name.
 - 2026-10-25 - five more sequences: Lucas, Catalan, Tenfold and Collatz on the dice (65 pairings, from 33), Digits of pi by hand.
 - 2026-10-26 - the dice deals the words too (`words:<seed>`): the seed's question, a new last line and winner line, keeping a creator's own; sequences carry two or three `facts`.
+- 2026-11-02 - crowds (`count`, up to 200 balls), Always the same's alone: about one roll in four, of 30–200 balls at a strength of 1 to a million (`strength`), on layers chosen per ball (`CROWD_HITS`, tops of 2 and 5 × a power of ten); the Balls and Hit strength fields; locks for a ball, its count and its strength (New opponent, New layers, Roll the rest); a ball changed by hand renamed and balanced again, on new layers or against a new opponent when it must; the golden ratio; Golden Ratio vs Tripling and 100× Millionaire Balls vs Doubling.

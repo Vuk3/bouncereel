@@ -3,7 +3,7 @@ import { LOOK_LABELS, SOUND_LABELS } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
 import { openingQuestion } from './audio/opening.ts';
 import { FOLLOW_LINE, type Config, type Contestant } from './config.ts';
-import { SEQUENCES, type SequenceId } from './sim/sequences.ts';
+import { SEQUENCES, formatBig, type SequenceId } from './sim/sequences.ts';
 
 // Every finished recording goes into the account's video library (the Worker's D1). A save that
 // cannot reach it (offline, a session that ended, the API down) waits in this browser and is
@@ -35,9 +35,11 @@ export function postPrompt(video: Pick<VideoSummary, 'title' | 'fileName' | 'vid
   if (race) {
     const ball = (place: string, side: RaceSide, c: Contestant | undefined) => {
       const seq = SEQUENCES[side.sequence as SequenceId];
-      const does = seq ? `${seq.label} numbers, ${seq.brief} (${seq.hint})` : side.sequence;
+      const does =
+        side.sequence === 'ones' && c ? `always hits for ${formatBig(BigInt(c.strength), ',')}` : seq ? `${seq.label} numbers, ${seq.brief} (${seq.hint})` : side.sequence;
       const power = POWERS[side.special] && (!c || c.amount) ? `; power: it ${POWERS[side.special]}` : '';
-      return `${place} ball: ${side.name}${c ? ` (${c.color})` : ''}. ${does}${power}`;
+      const crowd = c && c.count > 1 ? `; a crowd of ${c.count} balls, every hit counted together` : '';
+      return `${place} ball: ${side.name}${c ? ` (${c.color})` : ''}. ${does}${crowd}${power}`;
     };
     lines.push(ball('Top', race.a, cfg?.a), ball('Bottom', race.b, cfg?.b));
     const winner = race.winner === 'a' ? race.a.name : race.winner === 'b' ? race.b.name : null;

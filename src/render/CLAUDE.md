@@ -8,7 +8,7 @@ The video's look, drawn on one 1080×1920 canvas every frame. Deep-dive:
 | Kind | Place |
 | --- | --- |
 | where the boxes, names and VS sit | [layout.ts](../layout.ts): both cards come from one template |
-| the three looks: paper (`PAPER`, `drawSheet`…), cards and night, one drawing in two palettes (`DECKS`, `drawCard`…); balls, trails, the winner card | [renderer.ts](./renderer.ts) |
+| the three looks: paper (`PAPER`, `drawSheet`…), cards and night, one drawing in two palettes (`DECKS`, `drawCard`…); balls, their afterglow (`drawAfterglow`), a swarm's plain balls (`drawPlainBalls`), the winner card | [renderer.ts](./renderer.ts) |
 | the ⚡ power tag beside a name, the free plan's watermark, the BounceReel mark | [renderer.ts](./renderer.ts) `drawTag`, `drawWatermark`, `drawMark` |
 | floating damage numbers, debris, confetti, shake | [effects.ts](./effects.ts); how big a hit lands (flash, kick, number size) in renderer.ts `handle`, `floatDamage` |
 | the opening title over the first frame, the meters and LEAD CHANGE, the last layer's glow, a layer's number counting down | [renderer.ts](./renderer.ts) `drawOpening`, `drawMeters`, `drawLeadChange`, `finalGlow`, `count` |
