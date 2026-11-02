@@ -133,7 +133,11 @@ export class Panel {
     heading.textContent = section.title;
     const body = document.createElement('div');
     body.className = 'group-body';
-    for (const field of section.fields) body.append(this.build(field));
+    for (const field of section.fields) {
+      // A part of the section begins: its title over a hairline (Field.part).
+      if (field.part) body.append(Object.assign(document.createElement('h3'), { className: 'group-part', textContent: field.part }));
+      body.append(this.build(field));
+    }
     el.append(heading, body);
     this.bodies.set(section.id, body);
     return el;

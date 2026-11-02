@@ -24,6 +24,8 @@ interface Base {
   hint?: string | ((cfg: Config) => string);
   /** Values shown as chips under the input, such as the layers as they will read on screen. */
   chips?: (cfg: Config) => string[];
+  /** Starts a part of its section: a hairline above this field, with this title, so what belongs together reads together. */
+  part?: string;
 }
 
 export type Field =
@@ -80,6 +82,7 @@ function ball(key: 'a' | 'b', title: string): Section {
         kind: 'select',
         path: `${key}.sequence`,
         label: 'Damage per floor hit',
+        part: 'How it hits',
         options: () => Object.values(SEQUENCES).map((s) => [s.id, s.label]),
         hint: (c) => SEQUENCES[c[key].sequence].hint,
       },
@@ -105,7 +108,7 @@ function ball(key: 'a' | 'b', title: string): Section {
             ? 'A crowd: every ball hits the same, all at one speed, as in “100× Millionaire Balls”'
             : 'The same hit every time needs a crowd: one ball alone needs a hundred hits for the smallest layer',
       },
-      { kind: 'select', path: `${key}.special`, label: 'Power', options: () => SPECIAL_LABELS },
+      { kind: 'select', path: `${key}.special`, label: 'On every hit', options: () => SPECIAL_LABELS, part: 'Power' },
       {
         kind: 'range',
         path: `${key}.amount`,
@@ -211,13 +214,14 @@ export const TABS: Tab[] = [
             hint: 'The automatic opening ends on it too. Leave it empty for one picked with the race',
           },
           { kind: 'text', path: 'look.cta', label: 'Last line on the winner card', placeholder: LAST_LINES[0], live: true, hint: 'The dice deals a new one unless you write your own. Leave it empty for none' },
-          { kind: 'check', path: 'look.loop', label: 'End on the first frame, so the video loops without a cut', live: true },
+          { kind: 'check', path: 'look.loop', label: 'End on the first frame, so the video loops without a cut', live: true, part: 'Start and end' },
           { kind: 'range', path: 'timing.startDelay', label: 'Hold before the start', min: 0, max: 3, step: 0.1, format: secs, live: true },
           { kind: 'range', path: 'timing.hold', label: 'Winner card, at least', min: 1.5, max: 8, step: 0.5, format: secs, hint: 'Longer when the video length or the winner line needs it' },
           {
             kind: 'select',
             path: 'look.separator',
             label: 'Big numbers',
+            part: 'On screen',
             live: true,
             options: () => [
               ['.', '1.000.000 (as in the format)'],
@@ -233,9 +237,9 @@ export const TABS: Tab[] = [
         fields: [
           { ...speed('a', 'Top ball speed'), hint: 'Balancing sets both speeds when a matchup loads' },
           speed('b', 'Bottom ball speed'),
-          { kind: 'range', path: 'a.radius', label: 'Top ball size', min: 8, max: 80, step: 1, format: px },
+          { kind: 'range', path: 'a.radius', label: 'Top ball size', min: 8, max: 80, step: 1, format: px, part: 'Sizes' },
           { kind: 'range', path: 'b.radius', label: 'Bottom ball size', min: 8, max: 80, step: 1, format: px },
-          { kind: 'range', path: 'physics.gravity', label: 'Gravity', min: 0, max: 3000, step: 50, format: (v) => `${v} px/s²`, hint: '0 is the format: straight lines, constant speed' },
+          { kind: 'range', path: 'physics.gravity', label: 'Gravity', min: 0, max: 3000, step: 50, format: (v) => `${v} px/s²`, hint: '0 is the format: straight lines, constant speed', part: 'Rules' },
           { kind: 'range', path: 'physics.maxSpeed', label: 'Speed limit', min: 1000, max: 9000, step: 100, format: pxs },
         ],
       },

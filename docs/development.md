@@ -107,9 +107,10 @@ generated (`startOver` in [app.ts](../src/app.ts)).
   default, locked with a Paid plans tag on a plan without `follow`; a change balances the race
   again, since the winner card stays up longer with it.
 - **Tabs** (arrow keys move between them):
-  - **Balls**: top ball and bottom ball (name, colour from the dice's palette or any other,
-    the numbers it hits with, its power and how much), and the layers, top first, with
-    how they will read on screen.
+  - **Balls**: top ball and bottom ball, each a card tinted with its colour: name and colour
+    (from the dice's palette or any other); **How it hits**, the numbers, and for Always the
+    same its Hit strength and Balls, each with its lock; **Power**, the power and how much. Then
+    the layers, top first, with how they will read on screen.
   - **Voice**: Kokoro's eight voices as a list, each with its accent, its grade and a play
     button that says this matchup's names in it; the opening (empty for the automatic one, shown
     as the placeholder); the winner line (empty for none); **Hear the opening**, in the
@@ -122,8 +123,12 @@ generated (`startOver` in [app.ts](../src/app.ts)).
     seed, Export and Import of the config as JSON).
 
 The panel keeps one spacing scale (16 px between blocks and fields, 10 inside a block, 6 from a
-label to its control); a section's title (Video, Top ball, Physics…) is a small uppercase label
-under a hairline, so the fields are what the eye reads.
+label to its control). Every block is a card of its own, 12 px apart: the Video block (its three
+parts, length and finish gap, sound, look, under hairlines) and each section of a tab, a ball's
+tinted with its colour so the top ball and the bottom one never read as one list. A section's
+title (Video, Top ball, Physics…) is a small uppercase label, and a section in parts has a
+hairline and a smaller title over each (`part` in [fields.ts](../src/ui/fields.ts): How it
+hits, Power; Start and end, On screen; Sizes, Rules), so what belongs together reads together.
 
 Keyboard: Space plays and pauses, R restarts (not while recording, and not while a field or
 a tab has the focus).
@@ -320,3 +325,4 @@ browser's Cache Storage. The videos themselves live in D1, locally in `.wrangler
 - 2026-10-27 - the recording bar asks to leave the headphones as they are and says when the sound stalls.
 - 2026-10-30 - the Ask viewers to follow switch under the looks; a run restarted while it plays generates its narration first.
 - 2026-11-02 - a lock beside each ball in the matchup card and under its Balls and Hit strength, and the dice button saying what a roll will do (New opponent, New layers, Roll the rest); the Balls and Hit strength fields for Always the same; a ball changed by hand renamed and balanced again by itself.
+- 2026-11-02 - the panel in cards: the Video block in three parts, each tab section a card, a ball's tinted with its colour and in parts (How it hits, Power); the power field says On every hit; the swatches on one row.

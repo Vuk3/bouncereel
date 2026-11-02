@@ -145,8 +145,10 @@
             <p id="powers-hint" class="hint deal-hint">On: about every other roll gives a ball a power.</p>
           </div>
 
+          <!-- Three parts under hairlines: how long and how close, what it sounds like, what it looks like. -->
           <section class="video" aria-labelledby="video-title">
             <h2 id="video-title">Video</h2>
+            <div class="part">
             <div class="field">
               <label for="video"><span>Length</span><output id="video-out"></output></label>
               <input id="video" name="video" type="range" min="20" max="90" step="5" />
@@ -155,6 +157,8 @@
               <label for="gap"><span>Finish gap</span><output id="gap-out"></output></label>
               <input id="gap" name="gap" type="range" min="0" max="10" step="1" />
             </div>
+            </div>
+            <div class="part">
             <div class="field">
               <span class="field-label" id="track-label">Sound</span>
               <div class="track" role="radiogroup" aria-labelledby="track-label">
@@ -164,6 +168,8 @@
               </div>
               <small id="track-hint" class="hint"></small>
             </div>
+            </div>
+            <div class="part">
             <div class="field">
               <span class="field-label" id="look-label">Look</span>
               <div class="looks" role="radiogroup" aria-labelledby="look-label">
@@ -178,6 +184,7 @@
                 <span>Ask viewers to follow</span>
               </label>
               <small id="follow-hint" class="hint">A follow button once in the race and under the winner card, and the narrator ends on “Follow for more!”</small>
+            </div>
             </div>
           </section>
 

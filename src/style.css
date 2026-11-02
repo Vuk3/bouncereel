@@ -504,10 +504,22 @@ fieldset:disabled {
   margin: -4px 0 0;
 }
 
-/* The video's own settings: length, finish gap, look. */
+/*
+ * The video's own settings, in a card of their own: how long and how close, what it sounds like,
+ * what it looks like, each a part under a hairline, so the three never run into one another.
+ */
 .video {
   display: grid;
   gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.video .part {
+  display: grid;
+  gap: 16px;
+}
+.video .part + .part {
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
@@ -783,7 +795,11 @@ a.upgrade {
 
 .settings {
   display: grid;
-  gap: 4px;
+  gap: 12px;
+}
+.tabpanel {
+  display: grid;
+  gap: 12px;
 }
 .tabs {
   display: grid;
@@ -816,19 +832,42 @@ a.upgrade {
     0 1px 3px light-dark(rgb(20 26 46 / 0.08), rgb(0 0 0 / 0.4));
 }
 
+/*
+ * Each section of a tab is a card of its own, a gap between them. A ball's is tinted with its colour,
+ * edge and all, so the top ball and the bottom one never read as one list, and match their rows in
+ * the matchup card.
+ */
 .group {
-  --team: transparent;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--line);
+  --team: var(--line);
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
 }
-.group:last-child {
-  border-bottom: 0;
+.group[data-team] {
+  border-color: color-mix(in srgb, var(--team) 40%, var(--line));
+  background: color-mix(in srgb, var(--team) 5%, var(--surface));
 }
 .group h2 {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+}
+.group[data-team] h2 {
+  color: var(--ink);
+  font-size: 12px;
+}
+/* A part of a section (Field.part): a hairline in the section's colour, and its title under it. */
+.group-part {
+  margin: 4px 0 -6px;
+  padding-top: 16px;
+  border-top: 1px solid color-mix(in srgb, var(--team) 30%, var(--line));
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 .group[data-team] h2::before {
   content: '';
@@ -1007,10 +1046,12 @@ input[type='color']::-webkit-color-swatch {
 
 /* A ball's colour: the dice's palette one click each, and a ring for any other. */
 /* Twelve swatches and the ring fit one row of the panel: 13 × 22 px plus 12 gaps of 5. */
+/* One row of the twelve and the picker, spread across the ball's card. */
 .swatches {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  justify-content: space-between;
+  gap: 3px;
 }
 .swatch {
   width: 22px;
@@ -1024,8 +1065,8 @@ input[type='color']::-webkit-color-swatch {
 }
 .swatch[aria-pressed='true'] {
   box-shadow:
-    0 0 0 2px var(--surface),
-    0 0 0 4px var(--ink);
+    0 0 0 1.5px var(--surface),
+    0 0 0 3px var(--ink);
 }
 input[type='color'].swatch-any {
   width: 22px;
