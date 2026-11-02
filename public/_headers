@@ -44,6 +44,8 @@
 # Fixed names, rarely changed: a week, and a check after that.
 /fonts/*
   Cache-Control: public, max-age=604800
+/hand/*
+  Cache-Control: public, max-age=604800
 /hero/*
   Cache-Control: public, max-age=604800
 /looks/*

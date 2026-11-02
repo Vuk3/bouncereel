@@ -97,6 +97,7 @@ enough to read whole before the real work starts.
 | [wrangler.jsonc](wrangler.jsonc), [public/_headers](public/_headers) | the Worker's config (domain, D1, `SITE_URL`, which paths reach the Worker); the production headers (isolation, indexing) |
 | [scripts/tune.ts](scripts/tune.ts), [scripts/admin.mjs](scripts/admin.mjs), [scripts/stills.ts](scripts/stills.ts) | `npm run tune`; `npm run admin` (make a superadmin); the page that draws the site's images |
 | [public/fonts/](public/fonts/) | Rubik, the video's lettering (SIL OFL) |
+| [public/hand/](public/hand/) | the 3D 👆 that taps the video's follow button (Microsoft's Fluent Emoji, MIT) |
 
 ## Glossary
 
