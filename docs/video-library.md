@@ -187,13 +187,19 @@ address, redirects here. It shows the signed-in account's videos only.
 - **A row per video**: a thumbnail (its two cards on the dark stage, each ball in the colour its
   config gave it, from `colors` in the list), the title (opens the drawer), the sequences with
   their powers, then when it was recorded, its length and the finish (winner and margin), with
-  a tag for **Stopped early** and, for a superadmin, **Texts ready**. Then a **tick per platform**,
-  **Open in studio**, and the arrow to the drawer. Narrower, the ticks go under the title; on a
-  phone they share one line and the actions take the next.
+  a tag for **Stopped early** and, for a superadmin, **Texts ready**. Then a **tick per platform**
+  and **All**, **Open in studio**, and the arrow to the drawer. Narrower, the ticks go under the
+  title; on a phone the three platforms share one line and All starts the next, before the
+  actions.
 - **A tick** marks the video posted on that platform: `PUT …/posts/:platform` with no link.
   Unticking removes the post, asking first when it has a link, which goes with it. A save
   redraws only its row and the totals and gives the focus back to the tick, so the list does
   not jump; the filter applies again on the next search, filter or sort.
+- **All** ticks the three at once, a select-all box: half-ticked (a dash) while some are, and a
+  click then ticks the rest; with all three ticked it unticks them, asking first when one has a
+  link. One request per platform, side by side, the row's ticks disabled meanwhile; one that
+  fails leaves that platform as it was and says which, the others stay saved. It is on the row
+  only: the drawer keeps one line per platform.
 - **The drawer** (from the right, the account page's drawer at 560 px):
   - **Where it went up**: each platform's tick and its link box, with an arrow to the post once
     it has a link. A link saves when its box loses focus or on Enter and ticks the platform; an
@@ -285,3 +291,4 @@ by in a migration; `NewVideo` gets a variant per game, and `toSummary` in
 - 2026-10-26 - a video saved before configs kept a question opens with, and is described with, the question its seed picked then.
 - 2026-10-26 - Who won beside Balls raced: how many races the top and the bottom ball won, and how many each sequence won, from the `winner` the list already carries.
 - 2026-10-30 - the follow button (`look.follow`) checked on save; the text a superadmin copies for posts says when a video asks viewers to follow.
+- 2026-11-02 - All on each row of the Videos page: ticks YouTube, TikTok and Instagram at once.

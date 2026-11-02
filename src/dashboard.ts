@@ -26,9 +26,9 @@ import { bindThemeToggle } from './ui/theme.ts';
 
 // The Videos page (/app/videos): every recording in the account's library and where each went up.
 // The look is src/console.css, as on the account page. A row ticks the platforms a video is
-// posted on (a post needs no link); the video's drawer adds the links, its facts, deleting it and
-// the way back into the studio, and for a superadmin the texts for posting it
-// (docs/video-library.md §6). One request loads the list; a tick or a link saves on its own and
+// posted on, one or all three (a post needs no link); the video's drawer adds the links, its
+// facts, deleting it and the way back into the studio, and for a superadmin the texts for
+// posting it (docs/video-library.md §6). One request loads the list; a tick or a link saves on its own and
 // redraws only its row, so the list does not jump while working down it.
 
 type SortKey = 'recorded' | 'title' | 'length' | 'margin';
@@ -290,7 +290,7 @@ function row(video: VideoSummary): HTMLLIElement {
   const posted = el('div', 'posted');
   posted.setAttribute('role', 'group');
   posted.setAttribute('aria-label', `Where ${video.title} is posted`);
-  posted.append(...PLATFORMS.map((p) => postCheck(video, p)));
+  posted.append(...PLATFORMS.map((p) => postCheck(video, p)), allCheck(video));
 
   const actions = el('div', 'video-actions');
   const open = el('a', 'button small ghost', 'Open in studio');
@@ -364,6 +364,57 @@ async function setPosted(video: VideoSummary, platform: Platform, input: HTMLInp
     input.disabled = false;
     report(`${PLATFORM_LABELS[platform]} not saved: ${errorText(err)}`);
   }
+}
+
+/**
+ * The row's tick for all three at once, as a select-all box: half-ticked while some are, and a
+ * click then ticks the rest. Only on the row: in the drawer it would redraw every line, and a
+ * link half typed in one with it.
+ */
+function allCheck(video: VideoSummary): HTMLElement {
+  const count = PLATFORMS.filter((p) => postOn(video, p)).length;
+  const label = el('label', 'post-check post-all');
+  const input = el('input');
+  input.type = 'checkbox';
+  input.name = 'all';
+  input.checked = count === PLATFORMS.length;
+  input.indeterminate = count > 0 && !input.checked;
+  input.setAttribute('aria-label', 'Posted on all three');
+  label.append(input, el('span', '', 'All'));
+  label.title = input.checked ? 'Untick all three' : 'Tick all three';
+  input.addEventListener('change', () => void setAllPosted(video, input));
+  return label;
+}
+
+/**
+ * Ticked: the platforms not ticked yet are, without a link. Unticked: every post goes, and the
+ * links with them (asked first). One request per platform, side by side; one that fails leaves
+ * its platform as it was and says so, the others stay saved.
+ */
+async function setAllPosted(video: VideoSummary, input: HTMLInputElement): Promise<void> {
+  const on = input.checked;
+  const links = video.posts.filter((p) => p.url).length;
+  if (!on && links && !confirm(`Untick all three? ${links === 1 ? 'Its link is' : 'Their links are'} removed too.`)) {
+    input.checked = true;
+    return;
+  }
+  const changing = PLATFORMS.filter((p) => Boolean(postOn(video, p)) !== on);
+  // The row's other ticks wait too, so none is clicked while its platform is saving.
+  for (const box of input.closest('.posted')?.querySelectorAll('input') ?? []) box.disabled = true;
+  const results = await Promise.allSettled(
+    changing.map(async (platform) => {
+      if (on) {
+        const { post } = await api<PostResponse>('PUT', `/api/videos/${video.id}/posts/${platform}`, {});
+        video.posts = [...video.posts.filter((p) => p.platform !== platform), post];
+      } else {
+        await api('DELETE', `/api/videos/${video.id}/posts/${platform}`);
+        video.posts = video.posts.filter((p) => p.platform !== platform);
+      }
+    }),
+  );
+  refresh(video).row?.querySelector<HTMLInputElement>('input[name="all"]')?.focus();
+  const failed = results.flatMap((r, i) => (r.status === 'rejected' ? [[changing[i], r.reason] as const] : []));
+  if (failed.length) report(`${failed.map(([p]) => PLATFORM_LABELS[p]).join(', ')} not saved: ${errorText(failed[0][1])}`);
 }
 
 // ── A video's drawer ────────────────────────────────────────────────────

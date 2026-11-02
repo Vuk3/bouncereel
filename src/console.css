@@ -1519,6 +1519,14 @@
       center / 16px no-repeat,
     var(--accent);
 }
+/* All, while only some are ticked: a dash in the box, the pill itself still unticked. */
+.post-check input:indeterminate + span::before {
+  box-shadow: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6 10h8' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E")
+      center / 16px no-repeat,
+    var(--accent);
+}
 .post-check input:focus-visible + span {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
@@ -1590,6 +1598,7 @@
 }
 @media (max-width: 560px) {
   .video-row {
+    position: relative;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 12px 14px;
     padding: 16px 20px;
@@ -1605,6 +1614,19 @@
   .video-actions {
     grid-column: 1 / -1;
     grid-row: 3;
+    padding-left: 66px;
+  }
+  /*
+   * The three ticks fill their line by themselves at 390 px, so All starts the actions' line
+   * instead, in the row's bottom-left corner (its padding), the actions moved over by its width
+   * and their gap. It stays in the ticks' group for the keyboard and a screen reader. Both lines
+   * are 34 px tall, so they align.
+   */
+  .posted .post-all {
+    position: absolute;
+    left: 20px;
+    bottom: 16px;
+    width: 58px;
   }
   .video-actions .button {
     flex: 1;
