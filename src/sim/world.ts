@@ -33,6 +33,18 @@ export interface Outcome {
    * back within a second never changed for the viewer.
    */
   leads: { at: number; team: number }[];
+  /**
+   * Race seconds from which the winner was ahead to the end: 0 when it led from the start, the
+   * win itself when it passed at the line.
+   */
+  decided: number;
+  /**
+   * The shares of the race, 0..1, the winner spent behind and ahead (the rest even, as when both
+   * stand on one big layer that neither has dented). Behind for longer than ahead, with a late
+   * `decided`, is a comeback (balance.ts).
+   */
+  trailed: number;
+  led: number;
 }
 
 /** Race seconds a new leader must keep the lead for its change to be marked (Outcome.leads). */
@@ -50,6 +62,8 @@ export function predict(cfg: Config): Outcome {
   let leadChanges = 0;
   const changes: Outcome['leads'] = [];
   let nextSample = 0;
+  let samples = 0;
+  const behind = [0, 0];
   const limit = cfg.timing.maxSeconds + 1;
 
   while (world.winner === null && world.time < limit) {
@@ -59,6 +73,9 @@ export function predict(cfg: Config): Outcome {
     if (world.time >= nextSample) {
       nextSample += 0.25;
       const [a, b] = world.teams.map((t) => world.progress(t));
+      samples++;
+      if (a < b) behind[0]++;
+      else if (b < a) behind[1]++;
       const ahead = a > b ? 0 : b > a ? 1 : leader;
       if (ahead !== leader) {
         if (leader >= 0) {
@@ -88,6 +105,9 @@ export function predict(cfg: Config): Outcome {
 
   const winner = world.winner;
   const loser = world.teams.find((t) => t.id !== winner);
+  // Every flip counts here, marked or not: the meters show each one.
+  const last = changes[changes.length - 1];
+  const decided = atLine ?? (last && last.team === winner ? last.at : 0);
   return {
     seed: cfg.seed,
     winner,
@@ -97,6 +117,9 @@ export function predict(cfg: Config): Outcome {
     runnerUp: loser ? world.progress(loser) : 0,
     leadChanges,
     leads,
+    decided,
+    trailed: winner === null ? 0 : behind[winner] / Math.max(1, samples),
+    led: winner === null ? 0 : behind[1 - winner] / Math.max(1, samples),
   };
 }
 

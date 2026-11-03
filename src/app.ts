@@ -1172,9 +1172,11 @@ export class App {
       const saved = localStorage.getItem(key);
       if (saved) {
         const cfg = savedConfig(JSON.parse(saved));
-        // The half-second hold before the start was the default nobody chose: today's is none, since
-        // a still first second is when viewers scroll on. A hold set to anything else stays.
+        // The half-second hold before the start and the 3.5 s winner card were defaults nobody chose:
+        // today's are none and 2 s, since a still first second and a long end are when viewers
+        // scroll on. One set to anything else stays.
         if (cfg.timing.startDelay === 0.5) cfg.timing.startDelay = 0;
+        if (cfg.timing.hold === 3.5) cfg.timing.hold = 2;
         return cfg;
       }
     } catch {

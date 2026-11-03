@@ -35,10 +35,10 @@ when it is 0), or `null` when that is not possible.
   time T at speed v becomes T × v / v′ at speed v′, and v′ = v × T / target puts it on
   the line at the target.
 - **The targets.** The race length comes from [pacing](#2-the-video-length). One team,
-  picked by the seed (`balance:<seed>`), gets exactly that; the other gets the race plus
-  the **finish gap**:
+  picked by the seed (`balance:<seed>`, or the other one for a comeback, below), gets
+  exactly that; the other gets the race plus the **finish gap**:
   - `timing.gap` 0 (the default, "photo finish" on the slider): 0.15–1.1 s more, also
-    picked by the seed. A near photo finish, with a winner the seed decides.
+    picked by the seed. A near photo finish.
   - `timing.gap` 1–10 s (the **Finish gap** slider under Video length): exactly that much
     more, so the winner is through 5 s or 10 s before the loser. The same scaling does it;
     the loser simply gets a slower speed. The race (the winner's time) and the video length
@@ -54,6 +54,18 @@ when it is 0), or `null` when that is not possible.
   0.6 s of their targets (split boxes are chaotic), the chosen winner really is first, and
   both starting speeds are between 140 and 3200 px/s: slower looks stuck, faster is a blur
   on a phone. Anything else returns `null`.
+- **The comeback.** Four seeds in five ask for one (`comeback:<seed>`, `COMEBACK`): the
+  winner spends more of the race behind than ahead and goes ahead for good only in its last
+  30 %, or at the line (`isComeback`, from `predict`'s `trailed`, `led` and `decided`). Who
+  wins is then open until the end, and that is what keeps viewers watching. Both teams are
+  scaled to arrive together, so whichever trails most of the way is still close at the end:
+  when the seed's winner does not give what the seed asks for, the other one is solved too,
+  and the race nearer the ask is kept (longer behind for a comeback, shorter for a hold). The
+  fifth seed asks for the leader to hold on, by a hair: a viewer who learnt that the ball
+  behind always wins would know the end from the first second. A matchup whose other winner
+  does not fit keeps the seed's. The dice passes over up to four matchups that cannot make a
+  comeback its seed asks for (`COMEBACK_TRIES`), so 78 of 100 rolls win from behind at every
+  length (`npm run tune`; 37 before), against 6 of the 9 built-in matchups.
 - **Side effects**: gravity is set to 0, and `timing.maxSeconds` to the race plus 30 s.
 
 **Why not** (`balanceProblem(cfg)`): the same solve, read for the first thing in the way,
@@ -98,7 +110,7 @@ surrounds the race:
 | hold before the start | `timing.startDelay` (0: the balls move from the first frame, under the opening title) |
 | slow motion into the win | the last 0.6 s of race play at 0.3×, so 1.4 s extra |
 | slow motion after the win | 1.2 |
-| winner card | `cardSeconds`: `timing.hold` (3.5), or, when the video is narrated, the winner line's length at 11 characters a second + 0.4 s, whichever is more. Narrated (`narrated`) means a narrator is picked and the Sound is Narrator and music; music only and silent videos plan the hold alone |
+| winner card | `cardSeconds`: `timing.hold` (2: once the race is decided viewers leave, and a short end loops back sooner), or, when the video is narrated, the winner line's length at 11 characters a second + 0.4 s, whichever is more. Narrated (`narrated`) means a narrator is picked and the Sound is Narrator and music; music only and silent videos plan the hold alone |
 | the end | `END_PAD` 0.5: the fade into the first frame (`look.loop`), or a held moment |
 
 `raceSeconds(cfg)` = video − all of that (at least 8 s). The estimate errs long; the page
@@ -291,3 +303,4 @@ the narrator, video length, finish gap and look.
 - 2026-10-26 - the dice deals the words too (`words:<seed>`): the seed's question, a new last line and winner line, keeping a creator's own; sequences carry two or three `facts`.
 - 2026-11-02 - crowds (`count`, up to 200 balls), Always the same's alone: about one roll in four, of 30–200 balls at a strength of 1 to a million (`strength`), on layers chosen per ball (`CROWD_HITS`, tops of 2 and 5 × a power of ten); the Balls and Hit strength fields; locks for a ball, its count and its strength (New opponent, New layers, Roll the rest); a ball changed by hand renamed and balanced again, on new layers or against a new opponent when it must; the golden ratio; Golden Ratio vs Tripling and 100× Millionaire Balls vs Doubling.
 - 2026-11-03 - a small first layer (`starterLayer`), broken within both balls' first four hits, in front of three or fewer rolled layers and on every built-in matchup but Multiplying Ball (Fibonacci vs Slow Factorial tops at 10^14, Golden Ratio vs Tripling at 5 × 10^14); no hold before the start by default; a `rule` per sequence for the first frame.
+- 2026-11-03 - comebacks: four seeds in five ask for the winner to trail most of the race and go ahead only in its last 30 % (`isComeback`, `COMEBACK`), the other winner solved when the seed's does not give it and the dice passing over matchups that cannot (`COMEBACK_TRIES`): 78 of 100 rolls win from behind, from 37; the winner card's default hold 2 s, from 3.5.

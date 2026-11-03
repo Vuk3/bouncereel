@@ -3,7 +3,7 @@ import { LAST_LINES, WINNER_LINES, mergeConfig, type Config, type Contestant, ty
 import { raceSeconds } from '../pacing.ts';
 import { createRng, type Rng } from './rng.ts';
 import { SEQUENCES, STRENGTH_NOUNS, STRENGTHS, strengthNoun, type SequenceId } from './sequences.ts';
-import { finishTimes } from './world.ts';
+import { finishTimes, predict, type Outcome } from './world.ts';
 
 // Makes any matchup a race of the requested length that ends as close as asked,
 // and invents new matchups.
@@ -14,8 +14,9 @@ import { finishTimes } from './world.ts';
 // finish time is (time at some speed) × (that speed / new speed), and setting
 // each ball's speed so it reaches the line at the target makes both arrive
 // together. One ball is given the target, the other a fraction of a second
-// more (a photo finish, with a winner the seed decides) or the gap asked for in
-// `timing.gap`: the same scaling puts a ball 5 s behind as easily as 0.3 s.
+// more (a photo finish) or the gap asked for in `timing.gap`: the same scaling
+// puts a ball 5 s behind as easily as 0.3 s. Which one wins is chosen for the
+// story: most races end on a comeback (COMEBACK).
 //
 // Speeds that change per hit (and the speed limit) bend that rule a little, so
 // it repeats the correction a few times and checks the result.
@@ -25,10 +26,41 @@ const MIN_SPEED = 140;
 const MAX_SPEED = 3200;
 /** How far behind the winner the loser reaches the line in a photo finish (`timing.gap` 0), seconds. */
 const PHOTO_FINISH = [0.15, 1.1] as const;
+/**
+ * Four seeds in five ask for a comeback (`isComeback`): the winner spends more of the race behind
+ * than ahead and takes the lead for good in its last 30 % or at the line, so who wins is open
+ * until the end, and viewers stay to see it. Both balls are scaled to arrive together, so
+ * whichever trails most of the way is still close at the end; making it the winner is a
+ * comeback. Not every race: a viewer who learnt that the ball behind always wins would know the
+ * end from the first second, so the fifth asks for the leader to hold on, by a hair. A matchup
+ * whose other winner does not fit keeps the seed's.
+ */
+const COMEBACK = 0.8;
+const COMEBACK_FROM = 0.7;
+
+/** Behind for longer than ahead, and ahead for good only in the race's last 30 %, or at the line. */
+export function isComeback(o: Outcome): boolean {
+  return o.trailed > o.led && o.decided >= COMEBACK_FROM * o.time;
+}
+
+/** Whether a seed's race asks for a comeback (COMEBACK), from a stream of its own. */
+function wantsComeback(seed: string): boolean {
+  return createRng(`comeback:${seed}`).next() < COMEBACK;
+}
 
 export function balance(cfg: Config): Config | null {
-  const { out, times, target, first, sides } = solve(cfg);
-  return onTime(times, target) && sides.every(sane) && times[first] < times[1 - first] ? out : null;
+  const seeded = solve(cfg);
+  if (!fits(seeded)) return null;
+  const comeback = wantsComeback(cfg.seed);
+  const was = predict(seeded.out);
+  if (isComeback(was) === comeback) return seeded.out;
+  const swapped = solve(cfg, (1 - seeded.first) as 0 | 1);
+  if (!fits(swapped)) return seeded.out;
+  // Whichever comes nearer what the seed asks for: longer behind than ahead for a comeback, the
+  // other way round for a hold.
+  const now = predict(swapped.out);
+  const behind = (o: Outcome) => o.trailed - o.led;
+  return (comeback ? behind(now) > behind(was) : behind(now) < behind(was)) ? swapped.out : seeded.out;
 }
 
 /** Why `balance` cannot fit a matchup: which ball would have to be too fast or too slow, or whether the finish will not land; null when it can. */
@@ -49,16 +81,31 @@ export function balanceProblem(cfg: Config): BalanceProblem | null {
 
 const sane = (c: Contestant) => c.speed >= MIN_SPEED && c.speed <= MAX_SPEED;
 
+/** Both balls on their targets, at speeds that look right, the winner first. */
+const fits = (s: Solution) => onTime(s.times, s.target) && s.sides.every(sane) && s.times[s.first] < s.times[1 - s.first];
+
 // A box of split balls is chaotic (a newborn's path depends on the exact step it was born in),
 // so allow it a little slack around the target.
 const onTime = (times: number[], target: number[]) => [0, 1].every((k) => Math.abs(times[k] - target[k]) < 0.6);
 
-/** The speeds that put both balls on their targets, found by scaling and checked by running the race. */
-function solve(cfg: Config): { out: Config; times: [number, number]; target: number[]; first: 0 | 1; sides: Contestant[] } {
+interface Solution {
+  out: Config;
+  times: [number, number];
+  target: number[];
+  first: 0 | 1;
+  sides: Contestant[];
+}
+
+/**
+ * The speeds that put both balls on their targets, found by scaling and checked by running the
+ * race: the seed's pick of a winner (`first`), or `winner`.
+ */
+function solve(cfg: Config, winner?: 0 | 1): Solution {
   const out = structuredClone(cfg);
   const race = raceSeconds(cfg);
   const rng = createRng(`balance:${cfg.seed}`);
-  const first: 0 | 1 = rng.next() < 0.5 ? 0 : 1;
+  const drawn: 0 | 1 = rng.next() < 0.5 ? 0 : 1;
+  const first = winner ?? drawn;
   // Drawn only for a photo finish, after the winner: a seed balances to the same race it always did.
   const gap = cfg.timing.gap > 0 ? cfg.timing.gap : rng.range(PHOTO_FINISH[0], PHOTO_FINISH[1]);
   const target = [first === 0 ? race : race + gap, first === 1 ? race : race + gap];
@@ -338,6 +385,12 @@ export function relayer(cfg: Config, seed: string): Config | null {
   return null;
 }
 
+/**
+ * Matchups a roll whose seed asks for a comeback passes over when theirs cannot make one (balance
+ * keeps such a matchup's own winner): two fail in ten, so a few more tries find one nearly always.
+ */
+const COMEBACK_TRIES = 4;
+
 /** About one roll in four makes one ball a crowd: spam against skill, the format's favourite twist. */
 const CROWD_CHANCE = 0.25;
 /**
@@ -397,6 +450,8 @@ export function randomMatchup(seed: string, base: Config, dice: Partial<Dice> = 
   // Always the same needs a hundred hits for even the smallest round layer as one ball, and the
   // digits of pi (4.5 a hit) pair with nothing but Counting, on one layer of 100: a crowd, or by hand.
   const sequences = (Object.keys(SEQUENCES) as SequenceId[]).filter((s) => s !== 'pi' && s !== 'ones');
+  const comeback = wantsComeback(seed);
+  let passed = 0;
   for (let attempt = 0; attempt < 60; attempt++) {
     const drawn = [pick(rng, sequences), pick(rng, sequences)];
     let crowd = crowds && crowdRng.next() < CROWD_CHANCE ? (crowdRng.next() < 0.5 ? 0 : 1) : -1;
@@ -458,6 +513,10 @@ export function randomMatchup(seed: string, base: Config, dice: Partial<Dice> = 
     });
     const balanced = balance(cfg);
     if (!balanced) continue;
+    if (comeback && passed < COMEBACK_TRIES && !isComeback(predict(balanced))) {
+      passed++;
+      continue;
+    }
     if (named[0]) balanced.a.name = nameFor(balanced.a, balanced.b, pace);
     if (named[1]) balanced.b.name = nameFor(balanced.b, balanced.a, pace);
     if (balanced.a.name === balanced.b.name && named[1]) balanced.b.name = `Other ${balanced.b.name}`;

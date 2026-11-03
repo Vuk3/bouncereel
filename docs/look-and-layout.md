@@ -25,7 +25,7 @@ and chips on a pastel page.
 | the opening title over the first frame (§11) | [src/render/renderer.ts](../src/render/renderer.ts) `drawOpening`, `OPENINGS`; how long it shows, `openingShown` in [src/pacing.ts](../src/pacing.ts); its question, [src/audio/opening.ts](../src/audio/opening.ts) |
 | the meters and LEAD CHANGE (§12) | [src/render/renderer.ts](../src/render/renderer.ts) `drawMeters`, `METER`, `drawLeadChange`, `LEAD_SHOW`, `LEAD_RIGHT`; which changes, `Outcome.leads` from `predict` in [src/sim/world.ts](../src/sim/world.ts) |
 | the follow button, in the race and under the winner card (§14) | [src/render/renderer.ts](../src/render/renderer.ts) `drawRaceFollow`, `drawEndFollow`, `drawFollowButton`, `followAt`, `FOLLOW_*`; the hand that taps it, `drawTapHand`, `handPose`, `HAND_*` and its image in [public/hand/](../public/hand/); `Overlay.follow` from `look.follow` in [src/app.ts](../src/app.ts); the card's least time, `FOLLOW_CARD` in [src/pacing.ts](../src/pacing.ts) |
-| the last layer's glow (§13) | [src/render/renderer.ts](../src/render/renderer.ts) `finalGlow`, `PULSE_HZ`, drawn in `drawSheetLayers` and `drawLayers` |
+| the last layer's glow and LAST LAYER! (§13) | [src/render/renderer.ts](../src/render/renderer.ts) `finalGlow`, `PULSE_HZ`, drawn in `drawSheetLayers` and `drawLayers`; `drawTitleRow`, `drawLastSign`, `LAST_SHOW` |
 | how a hit lands (flash, shake, its number's size), the layer's countdown (§4, §7) | [src/render/renderer.ts](../src/render/renderer.ts) `handle`, `floatDamage`, `KICK_GAP`; `count`, `COUNT` |
 | the look picker's thumbnails | [src/app.ts](../src/app.ts) `drawStills`, `THUMB` |
 | floating numbers, debris, confetti, shake | [src/render/effects.ts](../src/render/effects.ts) |
@@ -387,6 +387,14 @@ can sit on it for half the race. What marks it grows with how far through it the
 - **Its hits land harder**: the flash at least 0.35 to full, the shake 1 to 5 px.
 - **Its notes climb**, an octave by the hit that breaks it
   ([sound and narration](./sound-and-narration.md)).
+- **LAST LAYER!** stands in the ball's name row for 2 s from the hit that leaves it on its
+  last layer (`drawTitleRow`, `LAST_SHOW`): the power tag's gold with an ink line, Rubik 900
+  36 px in a pill as tall as a name pill, the cards' hard shadow on cards and night. The row
+  goes over 0.15 s before the sign pops in and comes back over 0.15 s after it has gone, so the
+  two are never seen at once (`LAST_SWAP`). The name row is the one spot of the card nothing
+  else uses while the race is on, and it says which ball it is: a viewer sees that the end is
+  near and waits for who breaks through first. Not under the opening title: a race of two
+  layers is on its last a second in.
 
 ## 14. The follow button
 
@@ -449,3 +457,4 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-11-02 - a soft afterglow behind every ball in every look (paper's comet trail gone); NEXT HIT for DAMAGE on the chips and the stats line; BALLS for a crowd; a crowd of more than 24 drawn plain; the golden ratio ball's φ.
 - 2026-10-30 - the looks come in the order paper, night, cards: in the studio, the admin's plan form, a plan's words and the home page.
 - 2026-11-03 - the opening title on panels: each ball's tag, name and what it does (`rule`) on an opaque panel in its tint across the top of its box, over the strip where the ball comes down to its first hits; the race's VS over the wash and the question in a gold-on-ink pill under it, clear of the watermark; the words go before the panels; the cover leaves out a ball half under a panel. A damage number takes away any it would touch: nothing is drawn through or over anything else.
+- 2026-11-03 - LAST LAYER! in a ball's name row for 2 s as it reaches its last layer, the row going before it and coming back after.

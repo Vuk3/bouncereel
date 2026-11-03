@@ -102,8 +102,13 @@ speed like a single ball.
   kept for a second or more, `LEAD_HOLD`, or the last one if kept to the end, that hands the
   lead to the other team than the last marked; the pass at the line is counted, ends the
   hold before it, and is not marked itself; the race time each was seen and the team that
-  took it). The page uses the win time to start
-  slow motion just before it, the winner for the narrator's winner line, and `leads` in
+  took it). It also says how the race was won, from the same samples: the race time from
+  which the winner stayed ahead (`decided`: 0 when it led from the start, the win itself when
+  it passed at the line) and the shares of the race it spent behind and ahead (`trailed`,
+  `led`; the rest even, as when both stand on one big layer neither has dented), which
+  balancing reads to make most races comebacks
+  ([matchups and balancing](./matchups-and-balancing.md) §1). The page uses the win time to
+  start slow motion just before it, the winner for the narrator's winner line, and `leads` in
   the renderer and the sonifier, which act on each as the race reaches it.
 - **`finishTimes(cfg, limit)`** builds the world with `runOn` (`createWorld(cfg, true)`),
   so the race does not stop at the win, and returns when each team touches the line
@@ -142,3 +147,4 @@ line was generated for the ball that wins, and balancing measures the race that 
   counts the winner passing at the line, which no sample saw; read only, nothing in a race
   moves (`npm run tune` unchanged).
 - 2026-11-02 - crowds: a team may start with up to 200 balls (`count`), its extra balls from a stream of their own; a hit is its term times the ball's strength (Always the same at 1 to a million); the golden ratio (exact, as the Lucas numbers).
+- 2026-11-03 - the prediction says how the race was won (`decided`, `trailed`, `led`), for the comebacks balancing makes; read only, nothing in a race moves.

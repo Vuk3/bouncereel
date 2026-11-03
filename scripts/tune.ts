@@ -8,7 +8,7 @@
 
 import { DEFAULT_CONFIG, PRESETS, mergeConfig, type Contestant } from '../src/config.ts';
 import { videoSeconds } from '../src/pacing.ts';
-import { balance, randomMatchup } from '../src/sim/balance.ts';
+import { balance, isComeback, randomMatchup } from '../src/sim/balance.ts';
 import { finishTimes, predict } from '../src/sim/world.ts';
 
 // The one Node global used here; declared instead of pulling in @types/node.
@@ -27,7 +27,7 @@ for (const video of lengths) {
       continue;
     }
     const o = predict(cfg);
-    console.log(`  ${preset.label.padEnd(32)} ${videoSeconds(cfg, o.time).toFixed(1)} s  ${o.winnerName} wins  speeds ${Math.round(cfg.a.speed)}/${Math.round(cfg.b.speed)}`);
+    console.log(`  ${preset.label.padEnd(32)} ${videoSeconds(cfg, o.time).toFixed(1)} s  ${o.winnerName} wins${isComeback(o) ? ' from behind' : ''}  speeds ${Math.round(cfg.a.speed)}/${Math.round(cfg.b.speed)}`);
   }
 
   const base = mergeConfig(DEFAULT_CONFIG, { timing: { video } });
@@ -39,12 +39,14 @@ for (const video of lengths) {
     let off = 0;
     let powered = 0;
     let crowds = 0;
+    let comebacks = 0;
     for (let i = 1; i <= 100; i++) {
       const t = performance.now();
       const cfg = randomMatchup(String(i * 7919), base, { powers }) ?? base;
       slowest.push(performance.now() - t);
       const o = predict(cfg);
       if (o.runnerUp >= 0.949) photo++;
+      if (isComeback(o)) comebacks++;
       if (Math.abs(videoSeconds(cfg, o.time) - video) > 1) off++;
       if (cfg.a.special !== 'none' || cfg.b.special !== 'none') powered++;
       if (cfg.a.count > 1 || cfg.b.count > 1) crowds++;
@@ -52,7 +54,7 @@ for (const video of lengths) {
     slowest.sort((a, b) => b - a);
     const label = powers ? 'random matchups' : 'random, no powers';
     console.log(
-      `  100 ${label}: ${((performance.now() - started) / 100).toFixed(1)} ms each (worst ${slowest[0].toFixed(0)} ms), ${powered} with a power, ${crowds} with a crowd, ${photo} photo finishes, ${off} more than 1 s off length`,
+      `  100 ${label}: ${((performance.now() - started) / 100).toFixed(1)} ms each (worst ${slowest[0].toFixed(0)} ms), ${powered} with a power, ${crowds} with a crowd, ${photo} photo finishes, ${comebacks} won from behind, ${off} more than 1 s off length`,
     );
   }
 

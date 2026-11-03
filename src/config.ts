@@ -185,8 +185,10 @@ const BASE: Config = {
   physics: { gravity: 0, maxSpeed: 5000 },
   sound: { melody: 'ode', timbre: 'marimba', volume: 0.8, track: 'narrator' },
   voice: { voice: 'af_heart', script: '', outro: WINNER_LINES[0] },
-  // No hold before the start: the balls move from the first frame, under the opening title.
-  timing: { video: 40, gap: 0, startDelay: 0, hold: 3.5, maxSeconds: 150 },
+  // No hold before the start: the balls move from the first frame, under the opening title. The
+  // winner card's 2 s: once the race is decided viewers leave, and a short end loops back to the
+  // first frame sooner, which the platforms count as another view.
+  timing: { video: 40, gap: 0, startDelay: 0, hold: 2, maxSeconds: 150 },
   // The last line answers the opening's question and sends viewers to the comments.
   look: { skin: 'paper', question: '', cta: LAST_LINES[0], loop: true, follow: false, separator: '.', safeZones: false },
 };

@@ -85,6 +85,15 @@ const BALL_ROOM = 84;
  */
 const COVER = 0.05;
 /**
+ * LAST LAYER!, in a ball's name row from the hit that leaves it on its last layer (drawTitleRow):
+ * seconds it shows, and those the row takes to go before it and come back after it, so the two
+ * are never seen at once. In the name's place: the one spot of the card nothing else ever uses
+ * while the race is on, and the one that says which ball it is.
+ */
+const LAST_SHOW = 2;
+const LAST_SWAP = 0.15;
+const LAST_SIGN = 'LAST LAYER!';
+/**
  * The opening's name and its rule ("×1.618 EVERY HIT", `ruleOf`) at most, in px: a long one shrinks
  * to 800 px. Laid out on Rubik's capitals, 0.7 of the size, so tag, name and rule stand evenly in
  * the panel with a tag (220 px of its 256) or without.
@@ -309,6 +318,8 @@ export class Renderer {
   private lead = 0;
   private leader = -1;
   private leadAge = Infinity;
+  /** Per team, seconds since the hit that left it on its last layer (LAST_SHOW). */
+  private lastAge = [Infinity, Infinity];
   /**
    * 0..1 of the race's labels (each name row, the chips or stats line): none under the opening
    * title, which says the names itself, coming in over the second half of its fade, once the
@@ -341,6 +352,7 @@ export class Renderer {
     this.lead = 0;
     this.leader = -1;
     this.leadAge = Infinity;
+    this.lastAge = [Infinity, Infinity];
     // The follow button's hand is drawn seconds into the video: asked for now, it is there by then.
     if (cfg.look.follow && !this.hand) {
       this.hand = new Image();
@@ -368,6 +380,8 @@ export class Renderer {
           const h = STACK / team.layers.length;
           this.effects.debris(BOX.left + INSET, team.panel.floor + e.layer * h, BOX.right - BOX.left - 2 * INSET, h - LAYER_GAP, team.color);
           this.effects.kick(5);
+          // Not under the opening title: a race of two layers is on its last a second in, with the end far off.
+          if (e.layer === team.layers.length - 2 && this.labels >= 1) this.lastAge[e.team] = 0;
         }
       } else if (e.type === 'finish' && e.place === 1) {
         this.effects.kick(8);
@@ -424,6 +438,7 @@ export class Renderer {
       this.leadAge = 0;
     }
     this.leadAge += dt;
+    this.lastAge = this.lastAge.map((age) => age + dt);
     this.labels = Math.max(0, 1 - 2 * (overlay.opening ?? 0));
     this.cover = (overlay.opening ?? 0) >= 1 && world.time < COVER;
 
@@ -1026,7 +1041,7 @@ export class Renderer {
       ctx.save();
       ctx.globalAlpha = this.labels;
       this.drawStats(t, cfg, look);
-      this.drawName(t, look);
+      this.drawTitleRow(t, () => this.drawName(t, look), look.ink, false);
       ctx.restore();
     }
   }
@@ -1304,6 +1319,63 @@ export class Renderer {
     if (tag) this.drawTag(tag, left + width + 18, t.panel.title + 6, look.ink, false);
   }
 
+  /**
+   * A ball's name row, or LAST LAYER! in its place for LAST_SHOW seconds from the hit that left it
+   * on its last layer: the end is near, and a viewer waits for who breaks through first.
+   */
+  private drawTitleRow(t: Team, row: () => void, ink: string, shadow: boolean): void {
+    const age = this.lastAge[t.id];
+    if (age >= LAST_SHOW) {
+      row();
+      return;
+    }
+    const ctx = this.ctx;
+    const base = ctx.globalAlpha;
+    const back = LAST_SHOW - LAST_SWAP;
+    const name = age < LAST_SWAP ? 1 - age / LAST_SWAP : age > back ? (age - back) / LAST_SWAP : 0;
+    if (name > 0) {
+      ctx.globalAlpha = base * name;
+      row();
+      ctx.globalAlpha = base;
+    }
+    // Seconds the sign has been up, and those it has left.
+    const since = age - LAST_SWAP;
+    const left = back - LAST_SWAP - since;
+    if (since <= 0 || left <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = base * Math.min(1, since / 0.08, left / LAST_SWAP);
+    ctx.translate(W / 2, t.panel.title);
+    const pop = easeOutBack(Math.min(1, since / 0.3));
+    ctx.scale(pop, pop);
+    this.drawLastSign(ink, shadow);
+    ctx.restore();
+  }
+
+  /** LAST LAYER! centred on the origin: the power tag's gold and ink, as tall as a name pill, with the cards' hard shadow when `shadow`. */
+  private drawLastSign(ink: string, shadow: boolean): void {
+    const ctx = this.ctx;
+    ctx.font = `900 36px ${FONT}`;
+    ctx.letterSpacing = '1.5px';
+    const w = ctx.measureText(LAST_SIGN).width + 64;
+    const h = PILL_H;
+    if (shadow) {
+      ctx.fillStyle = ink;
+      roundRect(ctx, -w / 2 + 6, -h / 2 + 7, w, h, h / 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = TAG_FILL;
+    roundRect(ctx, -w / 2, -h / 2, w, h, h / 2);
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = ink;
+    ctx.stroke();
+    ctx.fillStyle = ink;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(LAST_SIGN, 0, 2);
+    ctx.letterSpacing = '0px';
+  }
+
   private drawPlainVs(look: Flat): void {
     const ctx = this.ctx;
     ctx.fillStyle = look.vs;
@@ -1404,7 +1476,7 @@ export class Renderer {
       ctx.save();
       ctx.globalAlpha = this.labels;
       this.drawChips(t, cfg, deck);
-      this.drawNameRow(t, deck);
+      this.drawTitleRow(t, () => this.drawNameRow(t, deck), deck.ink, true);
       ctx.restore();
     }
   }

@@ -50,20 +50,22 @@ enforce it.
 ## 2. The balance check
 
 `npm run tune` (or `npm run tune -- 45` for one length) prints, per video length, every
-built-in matchup's balanced length, winner and speeds, then a line for 100 random
-matchups as the dice makes them and one with powers off (then the finish gaps):
+built-in matchup's balanced length, winner (and "from behind" for a comeback) and speeds,
+then a line for 100 random matchups as the dice makes them and one with powers off (then the
+locks and the finish gaps):
 
 ```
 ── 40 s videos
-  Fibonacci vs Slow Factorial      40.0 s  Slow Factorial Ball wins  speeds 2103/483
+  Fibonacci vs Slow Factorial      40.0 s  Slow Factorial Ball wins from behind  speeds 2079/485
   …
-  100 random matchups: 3.1 ms each (worst 8 ms), 31 with a power, 84 photo finishes, 0 more than 1 s off length
-  100 random, no powers: 2.9 ms each (worst 12 ms), 0 with a power, 85 photo finishes, 0 more than 1 s off length
+  100 random matchups: 27.6 ms each (worst 277 ms), 45 with a power, 24 with a crowd, 62 photo finishes, 78 won from behind, 0 more than 1 s off length
+  100 random, no powers: 22.4 ms each (worst 226 ms), 0 with a power, 22 with a crowd, 62 photo finishes, 78 won from behind, 0 more than 1 s off length
 ```
 
 Run it after any change to [src/sim/](../src/sim/), [layout.ts](../src/layout.ts) or the
 presets. "cannot fit" for a preset, or anything but 0 off-length random matchups, is a
-regression.
+regression; so is a fall in the rolls won from behind (about 78 of 100, by design no more
+than 80: [matchups and balancing](./matchups-and-balancing.md) §1).
 
 ## 3. The control panel
 
