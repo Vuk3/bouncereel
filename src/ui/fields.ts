@@ -216,7 +216,7 @@ export const TABS: Tab[] = [
           { kind: 'text', path: 'look.cta', label: 'Last line on the winner card', placeholder: LAST_LINES[0], live: true, hint: 'The dice deals a new one unless you write your own. Leave it empty for none' },
           { kind: 'check', path: 'look.loop', label: 'End on the first frame, so the video loops without a cut', live: true, part: 'Start and end' },
           { kind: 'range', path: 'timing.startDelay', label: 'Hold before the start', min: 0, max: 3, step: 0.1, format: secs, live: true },
-          { kind: 'range', path: 'timing.hold', label: 'Winner card, at least', min: 1.5, max: 8, step: 0.5, format: secs, hint: 'Longer when the video length or the winner line needs it' },
+          { kind: 'range', path: 'timing.hold', label: 'Winner card, at least', min: 1.5, max: 8, step: 0.5, format: secs, hint: 'Longer when the winner line needs it' },
           {
             kind: 'select',
             path: 'look.separator',

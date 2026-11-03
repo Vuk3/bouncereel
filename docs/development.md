@@ -56,10 +56,10 @@ locks and the finish gaps):
 
 ```
 ── 40 s videos
-  Fibonacci vs Slow Factorial      40.0 s  Slow Factorial Ball wins from behind  speeds 2079/485
+  Fibonacci vs Slow Factorial      40.0 s  Slow Factorial Ball wins from behind  speeds 2034/474
   …
-  100 random matchups: 27.6 ms each (worst 277 ms), 45 with a power, 24 with a crowd, 62 photo finishes, 78 won from behind, 0 more than 1 s off length
-  100 random, no powers: 22.4 ms each (worst 226 ms), 0 with a power, 22 with a crowd, 62 photo finishes, 78 won from behind, 0 more than 1 s off length
+  100 random matchups: 27.2 ms each (worst 301 ms), 44 with a power, 24 with a crowd, 63 photo finishes, 78 won from behind, 0 more than 1 s off length
+  100 random, no powers: 20.9 ms each (worst 233 ms), 0 with a power, 21 with a crowd, 65 photo finishes, 78 won from behind, 0 more than 1 s off length
 ```
 
 Run it after any change to [src/sim/](../src/sim/), [layout.ts](../src/layout.ts) or the
@@ -157,11 +157,14 @@ both load style.css.
 [app.ts](../src/app.ts)) is this run's phases at their real lengths, from the prediction and
 [pacing.ts](../src/pacing.ts): the hold (`startDelay`), the race up to the slow-down
 (`T − SLOWMO_LEAD`), slow motion into and out of the win (`SLOWMO_LEAD / SLOWMO + SLOWMO_TAIL`,
-2.0 + 1.2 s), the winner card up to the video's length less `END_PAD`, then Loop (the fade into
+2.0 + 1.2 s), the winner card for its hold or a beat past the winner line, whichever is longer
+(`lineSeconds`: the line's clip once generated, else pacing.ts's guess), then Loop (the fade into
 the first frame) or End (a held end without `look.loop`); a race nobody finishes has no slow
-motion, and a card stays at least 1.5 s, so a late finish pushes the end past the length. Each
+motion, and a card stays at least 1.5 s. The track ends where the run will, a few tenths either
+side of the video's length with a narrator, since the card never waits for the length. Each
 segment names itself only where the whole word fits (container queries); its tooltip gives the
-seconds. It is built on every restart and on a live change of the hold or the loop. Each frame
+seconds. It is built on every restart, again once the run's narration is generated, and on a
+live change of the hold or the loop. Each frame
 moves the played part by `translate` alone (a layer as wide as the track: no layout) and
 writes the clock ("12.4 / 30.0 s", the video's own seconds against its length) when the tenth
 changes; the clock stops at the run's end and turns amber if that end came after the length,
@@ -328,3 +331,4 @@ browser's Cache Storage. The videos themselves live in D1, locally in `.wrangler
 - 2026-10-30 - the Ask viewers to follow switch under the looks; a run restarted while it plays generates its narration first.
 - 2026-11-02 - a lock beside each ball in the matchup card and under its Balls and Hit strength, and the dice button saying what a roll will do (New opponent, New layers, Roll the rest); the Balls and Hit strength fields for Always the same; a ball changed by hand renamed and balanced again by itself.
 - 2026-11-02 - the panel in cards: the Video block in three parts, each tab section a card, a ball's tinted with its colour and in parts (How it hits, Power); the power field says On every hit; the swatches on one row.
+- 2026-11-03 - the timeline's winner card is the run's own: its hold, or a beat past the winner line (its clip once generated), so the track can end a few tenths either side of the length.

@@ -102,10 +102,11 @@ interface Solution {
  */
 function solve(cfg: Config, winner?: 0 | 1): Solution {
   const out = structuredClone(cfg);
-  const race = raceSeconds(cfg);
   const rng = createRng(`balance:${cfg.seed}`);
   const drawn: 0 | 1 = rng.next() < 0.5 ? 0 : 1;
   const first = winner ?? drawn;
+  // The time for the winner card is planned for this winner's own line (pacing.ts cardSeconds).
+  const race = raceSeconds(cfg, [cfg.a, cfg.b][first].name);
   // Drawn only for a photo finish, after the winner: a seed balances to the same race it always did.
   const gap = cfg.timing.gap > 0 ? cfg.timing.gap : rng.range(PHOTO_FINISH[0], PHOTO_FINISH[1]);
   const target = [first === 0 ? race : race + gap, first === 1 ? race : race + gap];

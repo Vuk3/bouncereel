@@ -110,13 +110,15 @@ surrounds the race:
 | hold before the start | `timing.startDelay` (0: the balls move from the first frame, under the opening title) |
 | slow motion into the win | the last 0.6 s of race play at 0.3×, so 1.4 s extra |
 | slow motion after the win | 1.2 |
-| winner card | `cardSeconds`: `timing.hold` (2: once the race is decided viewers leave, and a short end loops back sooner), or, when the video is narrated, the winner line's length at 11 characters a second + 0.4 s, whichever is more. Narrated (`narrated`) means a narrator is picked and the Sound is Narrator and music; music only and silent videos plan the hold alone |
+| winner card | `cardSeconds`: `timing.hold` (2: once the race is decided viewers leave, and a short end loops back sooner; 2.5 with the follow button), or, when the video is narrated, the time to say the line for the winner `solve` picks (`spokenSeconds`: about 17 characters a second, a time read as words, 0.85 s between sentences) + 0.3 s, whichever is more. Narrated (`narrated`) means a narrator is picked and the Sound is Narrator and music; music only and silent videos plan the hold alone |
 | the end | `END_PAD` 0.5: the fade into the first frame (`look.loop`), or a held moment |
 
-`raceSeconds(cfg)` = video − all of that (at least 8 s). The estimate errs long; the page
-then stretches the winner card so the recording ends exactly on the length, never cutting
-the winner line ([recording](./recording-and-export.md#2-ending-on-the-exact-length)). A
-recording lands within a few hundredths of a second of the requested length.
+`raceSeconds(cfg, winner)` = video − all of that (at least 8 s), for the winner `solve` has
+picked, since the two balls' lines differ (a crowd's is a second longer). The page ends the
+winner card a beat after the line it says and never waits for the length
+([recording](./recording-and-export.md#2-where-it-ends)), so a video without a narrator lands
+within a few hundredths of a second of the requested length, and one with a narrator as far
+from it as the guess was from the line: within half a second for Heart, the default.
 
 ## 3. The dice: random matchups
 
@@ -304,3 +306,4 @@ the narrator, video length, finish gap and look.
 - 2026-11-02 - crowds (`count`, up to 200 balls), Always the same's alone: about one roll in four, of 30–200 balls at a strength of 1 to a million (`strength`), on layers chosen per ball (`CROWD_HITS`, tops of 2 and 5 × a power of ten); the Balls and Hit strength fields; locks for a ball, its count and its strength (New opponent, New layers, Roll the rest); a ball changed by hand renamed and balanced again, on new layers or against a new opponent when it must; the golden ratio; Golden Ratio vs Tripling and 100× Millionaire Balls vs Doubling.
 - 2026-11-03 - a small first layer (`starterLayer`), broken within both balls' first four hits, in front of three or fewer rolled layers and on every built-in matchup but Multiplying Ball (Fibonacci vs Slow Factorial tops at 10^14, Golden Ratio vs Tripling at 5 × 10^14); no hold before the start by default; a `rule` per sequence for the first frame.
 - 2026-11-03 - comebacks: four seeds in five ask for the winner to trail most of the race and go ahead only in its last 30 % (`isComeback`, `COMEBACK`), the other winner solved when the seed's does not give it and the dice passing over matchups that cannot (`COMEBACK_TRIES`): 78 of 100 rolls win from behind, from 37; the winner card's default hold 2 s, from 3.5.
+- 2026-11-03 - the winner card planned for the winner's own line (`raceSeconds(cfg, winner)`), from a guess measured on Kokoro's clips cut to the voice (17 characters a second, a time read as words, 0.85 s between sentences, + 0.3 s): a narrated race a few tenths to a second longer at the same length, every built-in matchup's winner as it was.

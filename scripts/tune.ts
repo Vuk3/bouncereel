@@ -27,7 +27,7 @@ for (const video of lengths) {
       continue;
     }
     const o = predict(cfg);
-    console.log(`  ${preset.label.padEnd(32)} ${videoSeconds(cfg, o.time).toFixed(1)} s  ${o.winnerName} wins${isComeback(o) ? ' from behind' : ''}  speeds ${Math.round(cfg.a.speed)}/${Math.round(cfg.b.speed)}`);
+    console.log(`  ${preset.label.padEnd(32)} ${videoSeconds(cfg, o.time, o.winnerName).toFixed(1)} s  ${o.winnerName} wins${isComeback(o) ? ' from behind' : ''}  speeds ${Math.round(cfg.a.speed)}/${Math.round(cfg.b.speed)}`);
   }
 
   const base = mergeConfig(DEFAULT_CONFIG, { timing: { video } });
@@ -47,7 +47,7 @@ for (const video of lengths) {
       const o = predict(cfg);
       if (o.runnerUp >= 0.949) photo++;
       if (isComeback(o)) comebacks++;
-      if (Math.abs(videoSeconds(cfg, o.time) - video) > 1) off++;
+      if (Math.abs(videoSeconds(cfg, o.time, o.winnerName) - video) > 1) off++;
       if (cfg.a.special !== 'none' || cfg.b.special !== 'none') powered++;
       if (cfg.a.count > 1 || cfg.b.count > 1) crowds++;
     }
@@ -81,7 +81,8 @@ for (const video of lengths) {
         continue;
       }
       if (!kept(cfg.a, start.a) || (keep.b.ball && !kept(cfg.b, start.b))) changed++;
-      if (Math.abs(videoSeconds(cfg, predict(cfg).time) - video) > 1) off++;
+      const p = predict(cfg);
+      if (Math.abs(videoSeconds(cfg, p.time, p.winnerName) - video) > 1) off++;
     }
     console.log(`  30 rolls ${label}: ${nothing} found nothing, ${changed} changed what was kept, ${off} more than 1 s off length`);
   }
@@ -95,7 +96,7 @@ for (const video of lengths) {
       const cfg = randomMatchup(String(i * 7919), gapBase) ?? gapBase;
       const o = predict(cfg);
       const [a, b] = finishTimes(cfg, o.time + gap + 30);
-      if (Math.abs(videoSeconds(cfg, o.time) - video) > 1) offLength++;
+      if (Math.abs(videoSeconds(cfg, o.time, o.winnerName) - video) > 1) offLength++;
       if (!(Math.abs(Math.abs(a - b) - gap) <= 1)) offGap++;
     }
     console.log(`  100 random, ${String(gap).padStart(2)} s gap: ${((performance.now() - gapStarted) / 100).toFixed(1)} ms each, ${offLength} more than 1 s off length, ${offGap} more than 1 s off the gap`);

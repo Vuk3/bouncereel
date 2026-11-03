@@ -1,6 +1,6 @@
 # Recording and export
 
-How a recording is made and why it ends on its exact length, the file it produces, what
+How a recording is made and where it ends, the file it produces, what
 YouTube Shorts, TikTok and Reels want, and the ffmpeg line for anything else.
 
 | I need to change... | Touch |
@@ -73,18 +73,20 @@ clock, said 30.0 s. A warm device moves the clock within 12–66 ms, so the wait
 - **On a plan with the watermark**, the frame Record captures carries it, as the preview
   does ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)).
 
-## 2. Ending on the exact length
+## 2. Where it ends
 
 The race was balanced to `timing.video` minus the frame around it
-([pacing](./matchups-and-balancing.md#2-the-video-length)), and the page counts real
-playback time from the start of the run. The winner card stays up until that count
-reaches the video length less `END_PAD` (0.5 s), it has been up at least 1.5 s, and the
-winner line has ended plus 0.4 s; then `END_PAD` more, and the file downloads. With
+([pacing](./matchups-and-balancing.md#2-the-video-length)), the winner card planned for its
+hold or for the winner line. The card stays up its hold (`timing.hold`; 2.5 s with the follow
+button; at least 1.5 s) and 0.3 s past the narrator's last word (`AFTER_OUTRO`), whichever is
+later, and then `END_PAD` (0.5 s) more, and the file downloads. It never waits for the video's
+length: once the race is called, a card held silent is where viewers scroll away. With
 `look.loop` (the default) those last 0.5 s fade into the run's first frame and end on it,
 so the file's last frame is its first and a platform's replay has no seam
-([look and layout](./look-and-layout.md#6-the-end-a-loop)). A recording comes
-out within a few hundredths of a second of the requested length unless the winner line
-runs longer than planned, in which case the video waits for it.
+([look and layout](./look-and-layout.md#6-the-end-a-loop)). A recording without a narrator
+comes out within a few hundredths of a second of the requested length; one with a narrator
+as far from it as the winner line from the time planned for it, within about half a second
+with Heart, the default voice ([sound and narration](./sound-and-narration.md)).
 
 ## 3. The file
 
@@ -199,3 +201,4 @@ falls.
 - 2026-10-24 - that text only for a superadmin, with the library id.
 - 2026-10-27 - a stalled sound (the output device changing mid-take) is said on the bar as it happens and on the sheet after, with Record again; the bar asks not to connect or switch headphones.
 - 2026-10-30 - the text to copy after a take says when the video asks viewers to follow.
+- 2026-11-03 - the winner card ends 0.3 s after the narrator's last word, or at its hold, and no longer waits for the video's length; a narrated recording lands within about half a second of it.

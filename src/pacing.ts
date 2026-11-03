@@ -37,10 +37,25 @@ export function openingShown(sinceRace: number | null): number {
   return sinceRace === null ? 1 : Math.max(0, Math.min(1, 1 - (sinceRace - OPENING_LINGER) / OPENING_FADE));
 }
 
-/** Kokoro says about 12 characters a second; slightly slow, so the guess errs long. */
-const SPOKEN_CHARS_PER_SECOND = 11;
-/** The card stays at least this long after the winner line ends. */
-export const AFTER_OUTRO = 0.4;
+/**
+ * How fast Kokoro speaks, measured on the winner lines of 80 rolled videos, with and without
+ * "Follow for more!", each clip cut to the voice (narration.ts `synthesize`): about 17 characters
+ * a second, a time read out as words, and SENTENCE_PAUSE between two sentences. Heart, the default,
+ * and Fenrir come within 0.4 s of it nine lines in ten and within 0.6 s always; Nicole speaks slower,
+ * up to 2 s over. A line the guess makes short ends the video that much past its length, one it
+ * makes long that much before it: the card waits for the line, never for the length.
+ */
+const SPOKEN_CHARS_PER_SECOND = 17;
+/** Kokoro's own silence after one sentence and before the next, with the breath between them. */
+const SENTENCE_PAUSE = 0.85;
+/** How a time ("{time} seconds") is said: "32.4" takes as long as these words. */
+const TIME_SAID = 'thirty-two point four';
+/**
+ * The card stays this long after the narrator's last word: a beat, then the fade into the first
+ * frame (END_PAD), 0.8 s from the last word to the loop. Once the race is called, a silent card
+ * is where viewers scroll away.
+ */
+export const AFTER_OUTRO = 0.3;
 /**
  * The card stays at least this long when the video asks viewers to follow (`look.follow`): the
  * follow button under it is tapped 1.5 s in (src/render/renderer.ts, FOLLOW_TAP), and the
@@ -53,29 +68,43 @@ export function narrated(cfg: Config): boolean {
   return cfg.sound.track === 'narrator';
 }
 
+/** The guess at how long Kokoro takes to say `line`, in seconds, split into sentences as narration.ts splits it. */
+export function spokenSeconds(line: string): number {
+  const pauses = line.trim().split(/(?<=[.!?])\s+/).length - 1;
+  return line.replace(/\d+\.\d/g, TIME_SAID).length / SPOKEN_CHARS_PER_SECOND + pauses * SENTENCE_PAUSE;
+}
+
+/** The shortest the winner card stays: the hold, or FOLLOW_CARD with the follow button. */
+export function cardHold(cfg: Config): number {
+  return cfg.look.follow ? Math.max(cfg.timing.hold, FOLLOW_CARD) : cfg.timing.hold;
+}
+
 /**
- * How long the winner card is planned to stay up: the hold (with the follow button, at
- * least FOLLOW_CARD), or long enough to say the longer of the two winner lines, whichever is
- * more. The lines, not the names: a crowd wins as "the crowd of 100 Millionaire Balls", longer
- * than its name. The page then stretches the card to land the video on its exact length.
+ * How long the winner card is planned to stay up: the hold (cardHold), or long enough to say the
+ * winner line, whichever is more. The line said for `winner` when it is known (balancing picks the
+ * winner before it sets the speeds), else the longer of the two: a crowd wins as "the crowd of 100
+ * Millionaire Balls", and a card planned for that line when the other ball wins ends the video a
+ * second or more short. The page ends the card a beat after the line it says, so a guess off by a
+ * few tenths moves the video's end, never holds a silent card.
  */
-export function cardSeconds(cfg: Config): number {
-  const hold = cfg.look.follow ? Math.max(cfg.timing.hold, FOLLOW_CARD) : cfg.timing.hold;
+export function cardSeconds(cfg: Config, winner?: string): number {
+  const hold = cardHold(cfg);
   if (!narrated(cfg)) return hold;
-  const longest = Math.max(...[cfg.a.name, cfg.b.name].map((winner) => spokenOutro(cfg, { winner, time: '00.0' }).length));
-  return Math.max(hold, longest / SPOKEN_CHARS_PER_SECOND + AFTER_OUTRO);
+  const names = winner === undefined ? [cfg.a.name, cfg.b.name] : [winner];
+  const longest = Math.max(...names.map((name) => spokenSeconds(spokenOutro(cfg, { winner: name, time: '00.0' }))));
+  return Math.max(hold, longest + AFTER_OUTRO);
 }
 
 /** Seconds of video that are not race: everything above except the race itself. */
-export function overhead(cfg: Config): number {
-  return cfg.timing.startDelay + SLOWMO_LEAD * (1 / SLOWMO - 1) + SLOWMO_TAIL + cardSeconds(cfg) + END_PAD;
+export function overhead(cfg: Config, winner?: string): number {
+  return cfg.timing.startDelay + SLOWMO_LEAD * (1 / SLOWMO - 1) + SLOWMO_TAIL + cardSeconds(cfg, winner) + END_PAD;
 }
 
-/** How long the race should take for the video to come out at the requested length. */
-export function raceSeconds(cfg: Config): number {
-  return Math.max(8, cfg.timing.video - overhead(cfg));
+/** How long the race should take for the video to come out at the requested length, `winner` winning. */
+export function raceSeconds(cfg: Config, winner?: string): number {
+  return Math.max(8, cfg.timing.video - overhead(cfg, winner));
 }
 
-export function videoSeconds(cfg: Config, race: number): number {
-  return race + overhead(cfg);
+export function videoSeconds(cfg: Config, race: number, winner?: string): number {
+  return race + overhead(cfg, winner);
 }

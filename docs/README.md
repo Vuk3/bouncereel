@@ -30,7 +30,7 @@ anything else.
   voices and how they load, and how the narrator is timed so it never talks over itself.
 
 - **[Recording and export](./recording-and-export.md)** - how a recording is made and
-  ends on its exact length, the file it produces, what the platforms want, and the
+  where it ends, the file it produces, what the platforms want, and the
   ffmpeg line for anything else.
 
 - **[Development](./development.md)** - setup, scripts, `npm run tune`, the control panel,

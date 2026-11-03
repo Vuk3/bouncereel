@@ -9,7 +9,7 @@ import { DEFAULT_CONFIG, PRESETS, SKINS, mergeConfig, savedConfig, type Config, 
 import { addToLibrary, APP_VERSION, postPrompt, retryPending, type Saved } from './library.ts';
 import { download, describeType, pickType, Recorder } from './record/recorder.ts';
 import { Renderer, followAt } from './render/renderer.ts';
-import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL, narrated, openingShown, videoSeconds } from './pacing.ts';
+import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL, cardHold, narrated, openingShown, spokenSeconds, videoSeconds } from './pacing.ts';
 import { KEEP_ALL, balance, balanceProblem, diceName, keptWhole, plainName, randomMatchup, relayer, sizeFor, type Keep } from './sim/balance.ts';
 import { SEQUENCES, formatBig } from './sim/sequences.ts';
 import { STEP } from './sim/types.ts';
@@ -285,9 +285,10 @@ export class App {
         break;
       case 'winner': {
         this.simulate(dt * SLOWMO);
-        // The card stays until the video reaches its length, and never cuts the winner line short.
-        const said = !this.outroPending && this.winnerAge >= this.outroEnds + AFTER_OUTRO && this.winnerAge >= 1.5;
-        if (said && this.elapsed >= this.cfg.timing.video - END_PAD) this.setPhase('done');
+        // The card stays its hold and a beat past the winner line, and no longer: it does not wait
+        // for the video's length, since a card held silent after the race is called is where
+        // viewers scroll away.
+        if (!this.outroPending && this.winnerAge >= Math.max(1.5, cardHold(this.cfg), this.outroEnds + AFTER_OUTRO)) this.setPhase('done');
         break;
       }
       case 'done':
@@ -324,7 +325,9 @@ export class App {
       this.winnerAge = 0;
       this.renderer.celebrate(this.world);
       this.outroPending = this.narrating();
-      this.outroEnds = 0;
+      // A narrated video played without the narrator holds the card as long as the line would
+      // take, so the preview ends where the video will.
+      this.outroEnds = this.outroPending ? 0 : this.lineSeconds();
     }
   }
 
@@ -351,10 +354,11 @@ export class App {
 
   /**
    * The run's phases at their real lengths, from the prediction and pacing.ts: the hold, the race
-   * up to the slow-down, slow motion into and out of the win, the winner card up to the video's
-   * length, and its last END_PAD (the fade into the first frame, or a held end). A timed-out race
-   * has no slow motion. The card stays at least 1.5 s (advance), so a race that ends late pushes
-   * the end past the length; a winner line that runs long does too, which the clock shows.
+   * up to the slow-down, slow motion into and out of the win, the winner card for its hold or a
+   * beat past the winner line (lineSeconds), whichever is longer, at least 1.5 s (advance), and the
+   * last END_PAD (the fade into the first frame, or a held end). A timed-out race has no slow
+   * motion. The run ends where its line does, a few tenths either side of the video's length; a
+   * race that ends late pushes it past, which the clock shows.
    */
   private buildTimeline(): void {
     const t = this.cfg.timing;
@@ -362,12 +366,13 @@ export class App {
     const race = o.timedOut ? o.time : Math.max(0, o.time - SLOWMO_LEAD);
     const slow = o.timedOut ? 0 : SLOWMO_LEAD / SLOWMO + SLOWMO_TAIL;
     const card = t.startDelay + race + slow;
-    this.timelineEnd = Math.max(t.video, card + 1.5 + END_PAD);
+    const shown = Math.max(1.5, cardHold(this.cfg), this.lineSeconds() + AFTER_OUTRO);
+    this.timelineEnd = card + shown + END_PAD;
     const phases: [string, string, number][] = [
       ['hold', 'Hold', t.startDelay],
       ['race', 'Race', race],
       ['slow', 'Slow motion', slow],
-      ['card', 'Winner', this.timelineEnd - END_PAD - card],
+      ['card', 'Winner', shown],
       ['end', this.cfg.look.loop ? 'Loop' : 'End', END_PAD],
     ];
     const segments = phases
@@ -794,6 +799,8 @@ export class App {
     try {
       while (missing().length) await this.voices.prepare(audio.ctx, voiceOf(this.cfg), plannedLines(this.cfg, this.outcome), (s) => this.setVoiceStatus(s));
       this.setVoiceStatus('Voice ready');
+      // The timeline's winner card was the guess at the line; it is the line's own clip now.
+      this.buildTimeline();
     } catch (err) {
       this.setVoiceStatus('');
       this.flash(`Voice failed: ${err instanceof Error ? err.message : String(err)}. Playing without it.`);
@@ -844,6 +851,18 @@ export class App {
     this.outroPending = false;
     const winner = this.world.teams.find((t) => t.id === this.world.winner);
     this.outroEnds = this.winnerAge + this.say(outroLine(this.cfg, winner?.name ?? '', this.world.winTime));
+  }
+
+  /**
+   * How long the predicted winner's line takes: its clip once generated, else pacing.ts's guess,
+   * which a run without the narrator keeps too; 0 when the video has no narrator or no line.
+   */
+  private lineSeconds(): number {
+    const o = this.outcome;
+    const text = narrated(this.cfg) && o.winner !== null ? outroLine(this.cfg, o.winnerName, o.time) : '';
+    if (!text) return 0;
+    const clip = this.narrating() ? this.voices.get(voiceOf(this.cfg), text) : undefined;
+    return clip?.duration ?? spokenSeconds(text);
   }
 
   private setVoiceStatus(text: string): void {
@@ -909,7 +928,7 @@ export class App {
 
   private setConfig(cfg: Config): void {
     // A video from the library or a file made on a plan with the follow button: off on one without,
-    // where its switch cannot be turned off. The card comes out shorter, and stays up to the length.
+    // where its switch cannot be turned off. The card comes out shorter, and so does the video.
     if (!this.features.follow) cfg.look.follow = false;
     this.cfg = cfg;
     this.before = { a: structuredClone(cfg.a), b: structuredClone(cfg.b) };
@@ -1369,7 +1388,7 @@ export class App {
 
   private showPrediction(): void {
     const o = this.outcome;
-    const video = videoSeconds(this.cfg, o.time);
+    const video = videoSeconds(this.cfg, o.time, o.winnerName);
     const gap = this.cfg.timing.gap;
     // As close as asked: a photo finish, or within 1.5 s of the chosen gap.
     const close = gap > 0 ? Math.abs(this.margin - gap) <= 1.5 : this.margin <= 1.5;

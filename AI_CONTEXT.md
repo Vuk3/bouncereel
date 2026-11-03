@@ -207,7 +207,7 @@ library is full, and asks before the day's last video. Then the same as Play, ex
 the narration is ready the server takes one of today's videos (`POST /api/account/day`; a no
 stops it there), and a `MediaRecorder` on the canvas and the audio engine's stream (none for a
 silent video) starts with the first frame. The winner card
-stays until the video reaches its length (and the winner line has ended); the last half second
+stays its hold, or until a beat after the winner line, never waiting for the length; the last half second
 fades into the run's first frame, so the video loops without a cut; then the file downloads,
 and the video (its config, the prediction's winner and margin, the file name) is posted to the
 account's library, where the Worker checks the length, the sound, the look, powers, the follow button and the

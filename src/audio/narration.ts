@@ -180,8 +180,19 @@ function loadKokoro(onStatus: (text: string) => void): Promise<KokoroInstance> {
 const MODEL = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 
 /**
+ * Below this a sample is Kokoro's own silence. It pads every sentence with 0.2–0.4 s before the
+ * first word and 0.4–0.8 s after the last, depending on the voice, and its padding peaks under
+ * -68 dB. A clip that kept them would start late, and hold the winner card up that long after
+ * the narrator stops.
+ */
+const QUIET = 10 ** (-50 / 20);
+/** Kept either side of the voice, so a word's first breath and last release are whole. */
+const EDGE = 0.05;
+
+/**
  * Turns one line into audio in `voice`. Kokoro reads at most ~500 tokens at once, so it goes
- * sentence by sentence, joined with a short breath between sentences.
+ * sentence by sentence, joined with a short breath between sentences, and the clip is cut to
+ * the voice: it starts on the first word and ends on the last.
  */
 export async function synthesize(ctx: BaseAudioContext, voice: string, text: string, onStatus: (text: string) => void): Promise<AudioBuffer> {
   const tts = await loadKokoro(onStatus);
@@ -197,15 +208,23 @@ export async function synthesize(ctx: BaseAudioContext, voice: string, text: str
   for (const sentence of sentences) {
     const audio = await tts.generate(sentence, { voice: voice as never });
     rate = audio.sampling_rate;
-    parts.push(audio.audio as Float32Array, new Float32Array(Math.round(rate * 0.12)));
+    if (parts.length) parts.push(new Float32Array(Math.round(rate * 0.12)));
+    parts.push(audio.audio as Float32Array);
   }
-  const length = parts.reduce((n, p) => n + p.length, 0);
-  const buffer = ctx.createBuffer(1, Math.max(1, length), rate);
+  const joined = new Float32Array(parts.reduce((n, p) => n + p.length, 0));
   let offset = 0;
   for (const p of parts) {
-    buffer.copyToChannel(p as Float32Array<ArrayBuffer>, 0, offset);
+    joined.set(p, offset);
     offset += p.length;
   }
+  let first = 0;
+  while (first < joined.length && Math.abs(joined[first]) < QUIET) first++;
+  let last = joined.length;
+  while (last > first && Math.abs(joined[last - 1]) < QUIET) last--;
+  const edge = Math.round(rate * EDGE);
+  const voiced = joined.subarray(Math.max(0, first - edge), Math.min(joined.length, last + edge));
+  const buffer = ctx.createBuffer(1, Math.max(1, voiced.length), rate);
+  buffer.copyToChannel(voiced, 0);
   return buffer;
 }
 

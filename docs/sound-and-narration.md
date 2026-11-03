@@ -99,8 +99,8 @@ seconds:
   Millionaire Balls" is read as nothing, in the opening, the winner line and a voice's
   preview. A crowd wins as one: "The crowd of 100 Millionaire Balls wins!", where its name
   alone would read "100 Millionaire Balls wins" (`spokenOutro`). The winner card is planned
-  for the longer of the two winner lines as said, not the longer name (`cardSeconds`), since
-  the crowd's line is longer than its name.
+  for the winner's line as said, not its name (`cardSeconds`, for the winner balancing picks),
+  since the crowd's line is longer than its name.
 - When both share a sequence: "Both hit with Fibonacci numbers. Growing gets bigger,
   Speeding gets faster."
 - The fact is one of a sequence's `facts` (two or three each), from a ball whose name shows
@@ -185,6 +185,10 @@ Voice tab counts the percentage.
   to generate.
 - ⚠️ Its `stream()` never yields the last sentence of a plain string, so lines are split
   into sentences here and generated one by one, with a 0.12 s breath between them.
+- ⚠️ **Kokoro pads every sentence with silence**: 0.2–0.4 s before the first word and 0.4–0.8 s
+  after the last, by voice (under -68 dB). A line's clip is cut to its voice (`synthesize`:
+  below -50 dB, 0.05 s kept either side), or the narrator would start late and the winner card
+  would stand silent after the line; the pauses between its sentences, about 0.85 s, stay.
 
 **The clip cache** (`VoiceCache`) keeps every generated line for the session, keyed by
 voice and text, so recording the same matchup again costs nothing. Lines are generated one
@@ -203,10 +207,15 @@ end. Then:
 
 - **The opening** starts with the run.
 - **The winner line** waits for the opening to end if it is still going (a short race or
-  a long opening), then plays; the winner card stays until it has ended, plus 0.4 s
-  (`AFTER_OUTRO` in [pacing.ts](../src/pacing.ts)), and at least until the video reaches
-  its length. "Follow for more!" lengthens the line, and the card is planned for it
-  (`cardSeconds`), so balancing gives the race that much less.
+  a long opening), then plays; the winner card stays 0.3 s past its last word (`AFTER_OUTRO`
+  in [pacing.ts](../src/pacing.ts)) and at least its hold, then the half-second fade into the
+  first frame, and no longer: it does not wait for the video's length. Balancing plans the card
+  for the winner's line from a guess at how long Kokoro takes (`spokenSeconds`: about 17
+  characters a second, a time read as words, 0.85 s between sentences), so the race gets the
+  rest and the video lands within about half a second of its length with Heart, the default;
+  Nicole, the slowest, can run up to 2 s past it. "Follow for more!" lengthens the line, and
+  the card is planned for it. A run played without the narrator holds the card as long as the
+  guess, so the preview ends where the video will.
 
 ## Changelog
 
@@ -221,3 +230,4 @@ end. Then:
 - 2026-10-27 - Hear the music in the Sound tab; the Play with the narrator switch replaces Play without voice.
 - 2026-10-30 - "Follow for more!" after the winner line when the video asks viewers to follow; a run that starts over while it plays (a new matchup, length or layers) generates its lines before its first frame, so the winner line is never missing.
 - 2026-11-02 - a crowd in the opening ("Each of the 100 Millionaire Balls always hits for a million") and at the win ("The crowd of 100 Millionaire Balls wins!"); the × in a crowd's name read as nothing; the winner card planned for the longer winner line as said; a crowd's hits one quiet note at most every 0.12 s and its walls silent, so the narrator is heard over it.
+- 2026-11-03 - a line's clip cut to its voice: Kokoro's own silence before the first word and after the last goes; the winner card ends 0.3 s after the last word, not at the video's length, so the end is 0.8 s past the narrator rather than 1.4–1.9 s; the card planned for the winner's own line, from a guess measured on the eight voices.
