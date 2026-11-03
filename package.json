@@ -1,7 +1,7 @@
 {
   "name": "bouncereel",
   "private": true,
-  "version": "1.0.11",
+  "version": "1.0.12",
   "type": "module",
   "scripts": {
     "predev": "CI=true wrangler d1 migrations apply bouncereel --local",
