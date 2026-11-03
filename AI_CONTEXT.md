@@ -121,7 +121,7 @@ enough to read whole before the real work starts.
 | **margin** | seconds between the winner and the loser touching the line; "wins by 0.3 s" |
 | **finish gap** | `timing.gap`, the margin balancing aims for: 0 is a photo finish (0.15–1.1 s, by the seed), else 1–10 s |
 | **prediction**, `Outcome` | a whole run simulated without drawing, to the win: winner, time, the loser's progress, lead changes, and the ones the video marks (`leads`) |
-| **opening title** | the names, a big VS and the opening's question over the first frame, through the hold and the race's first second: what a viewer sees before swiping |
+| **opening title** | over the first frame and the race's first second: each ball's name and what it does on an opaque panel across the top of its box, the VS, and the opening's question under it: what a viewer sees before swiping |
 | **LEAD CHANGE** | the flash (and the sting) when the lead changes hands for good, from the prediction's `leads`, beside a meter per ball |
 | **opening**, **winner line** | the narrator's two lines: before the race, and at the end (none when the winner line is empty) |
 | **voice** | one of Kokoro's English voices (`VOICES` in [narration.ts](src/audio/narration.ts)), `voice.voice` in the config; Heart by default |
@@ -190,7 +190,8 @@ has a narrator (the Sound set to Narrator and music, a plan that includes it), i
 are generated first (the opening, and the winner line for the predicted winner), from the
 session cache when it can. Then the frame loop runs the phases: hold → race → slow motion from
 0.6 s of race before the predicted win → winner card → done. The first frame carries the
-opening title (the names, the VS, the question), which fades out a second into the race; a
+opening title (each ball's name and what it does on a panel, the VS, the question), over a race
+already moving (no hold by default), gone a second and a half in; a
 lead change the prediction marked flashes LEAD CHANGE with a sting; the card says the margin
 ("Won by 0.3 s"). The opening plays as the run starts and the race runs without a word; at the
 win every ball stops, the loser's too, and the winner line plays once the opening has ended.

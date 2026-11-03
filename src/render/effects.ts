@@ -33,8 +33,6 @@ interface FloatText {
   size: number;
   /** Its drawn width at that size, px. */
   width: number;
-  /** Covered by a newer number: it fades out four times as fast. */
-  covered: boolean;
 }
 
 const MAX_PIECES = 700;
@@ -100,18 +98,15 @@ export class Effects {
   }
 
   /**
-   * A number at `size` px, `width` wide. One it would cover fades out fast: a big hit's number is
-   * up to twice the size of a small one's, so numbers cross often, and the newest is the one to read.
+   * A number at `size` px, `width` wide. One it would touch, outlines and all, goes at once: a big
+   * hit's number is up to twice the size of a small one's, so numbers cross often, the newest is
+   * the one to read, and a number fading under another read as a smudge. They all rise at one
+   * speed, so two that clear each other now never meet later.
    */
   float(x: number, y: number, text: string, color: string, size = 32, width = 0): void {
-    for (const t of this.texts) {
-      if (Math.abs(t.y - y) < (t.size + size) * 0.55 && Math.abs(t.x - x) < (t.width + width) / 2) {
-        t.covered = true;
-        t.life = Math.min(t.life, TEXT_LIFE / 2);
-      }
-    }
+    this.texts = this.texts.filter((t) => Math.abs(t.y - y) >= (t.size + size) * 0.55 || Math.abs(t.x - x) >= (t.width + width) / 2 + (t.size + size) * 0.11);
     if (this.texts.length >= MAX_TEXTS) this.texts.shift();
-    this.texts.push({ x, y, text, color, life: TEXT_LIFE, size, width, covered: false });
+    this.texts.push({ x, y, text, color, life: TEXT_LIFE, size, width });
   }
 
   kick(amount: number): void {
@@ -135,7 +130,7 @@ export class Effects {
     }
     this.pieces = this.pieces.filter((p) => p.life > 0);
     for (const t of this.texts) {
-      t.life -= dt * (t.covered ? 4 : 1);
+      t.life -= dt;
       t.y -= 70 * dt;
     }
     this.texts = this.texts.filter((t) => t.life > 0);

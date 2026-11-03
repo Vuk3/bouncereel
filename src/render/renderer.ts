@@ -1,6 +1,6 @@
 import { SITE_HOST } from '../../shared/site.ts';
 import { openingQuestion } from '../audio/opening.ts';
-import type { Config, Skin, Special } from '../config.ts';
+import type { Config, Contestant, Skin, Special } from '../config.ts';
 import { BORDER, BOX, FINISH_H, H, INSET, PILL_H, STACK, VS_Y, W, finishTop, type Panel } from '../layout.ts';
 import type { Team } from '../sim/duel.ts';
 import { createRng } from '../sim/rng.ts';
@@ -67,11 +67,24 @@ const POWER_TAGS: Record<Exclude<Special, 'none'>, string> = { faster: 'SPEEDS U
 const TAG_H = 50;
 const TAG_FILL = '#ffd23f';
 /**
- * The power tag on the opening title, alone where the name row stands: 65 px tall, as tall as
- * that row has room for between the platforms' top bar and the card, so it reads on a profile
- * grid's tile, where the race's own 50 px tag is a smudge.
+ * The power tag on the opening title, over its ball's name: 60 px tall, so it reads on a profile
+ * grid's tile, where the race's own 50 px tag is a smudge, and leaves the name its size.
  */
-const OPENING_TAG = 1.3;
+const OPENING_TAG = 1.2;
+/**
+ * How far above each floor the opening title's panel stops (drawOpening): the strip a ball is seen
+ * in from the first frame, coming down to its first hits, whole at the default 26 px. Above it the
+ * panel hides the race, so no ball or hit number ever shows through or around a letter.
+ */
+const BALL_ROOM = 84;
+/**
+ * The opening's name and its rule ("×1.618 EVERY HIT", `ruleOf`) at most, in px: a long one shrinks
+ * to 800 px. Laid out on Rubik's capitals, 0.7 of the size, so tag, name and rule stand evenly in
+ * the panel with a tag (220 px of its 256) or without.
+ */
+const TITLE_NAME = 110;
+const TITLE_RULE = 44;
+const CAP = 0.7;
 /** A lightning bolt in a 1 × 1 box, at the start of the power tag. */
 const BOLT: [number, number][] = [
   [0.62, 0],
@@ -199,10 +212,10 @@ interface Deck {
 
 /**
  * The opening title's colours (drawOpening): the wash over the cards, what the names are written
- * on (for `legible`; null writes them as they are) and their outline, and the VS and the question
+ * on (for `legible`; null writes them as they are) and their outline, and the rules under them
  * with theirs. Paper and cards write the colours as they are under an ink outline, which holds a
  * name up on a profile grid's tile; night lightens them on the dark, where ink would not show.
- * The wash only quiets the race under the words: heavier, and the frame people decide on reads
+ * The wash only quiets the race around the panels: heavier, and the frame people decide on reads
  * as a faded page rather than the game.
  */
 const OPENINGS: Record<Skin, { wash: string; ground: string | null; nameOutline: string; text: string; textOutline: string }> = {
@@ -292,7 +305,7 @@ export class Renderer {
   /**
    * 0..1 of the race's labels (each name row, the chips or stats line): none under the opening
    * title, which says the names itself, coming in over the second half of its fade, once the
-   * title's own power tag, standing where the row does, has gone (drawOpening).
+   * title's panels have gone from where the chips and rows stand (drawOpening).
    */
   private labels = 1;
 
@@ -465,67 +478,120 @@ export class Renderer {
   // ── The opening, the lead, the last layer ────────────────────────────────
 
   /**
-   * The video's first second (pacing.ts `openingShown`): over the cards at rest, a light wash, the
-   * balls over it at full strength, each ball's name large in its colour in the empty part of its
-   * own box, a ball's power as a big tag where its name row stands (the row itself waits, see
-   * `labels`), a big VS between the cards, and the opening's question under the bottom name
-   * (src/audio/opening.ts). It is the frame a viewer swipes past or stays for, every platform's
-   * cover, and the one a looping video fades back into. The words keep between the platforms' top
-   * bar and their caption and inside the side buttons' column (§9); the watermark, drawn after,
-   * stays over it. `sx`, `sy` are the frame's shake, which the balls under it move by.
+   * The video's first second (pacing.ts `openingShown`): over the race, already moving, a light
+   * wash; the balls over it at full strength; across the top of each box, wall to wall, a panel in
+   * its ball's tint with the ball's words on it (`drawTitle`), leaving the strip over the floor
+   * where the ball is seen coming down to its first hits (BALL_ROOM); the race's VS, and under it
+   * the opening's question in a pill (src/audio/opening.ts). The race's name rows and chips wait
+   * (`labels`). It is the frame a viewer swipes past or stays for, every platform's cover, and the
+   * one a looping video fades back into. The words keep between the platforms' top bar and their
+   * caption and inside the side buttons' column (§9); the watermark, drawn after, stays over it.
+   * `sx`, `sy` are the frame's shake, which all of it but the wash moves by, with the race.
    */
   private drawOpening(world: World, cfg: Config, shown: number, sx: number, sy: number): void {
     const ctx = this.ctx;
     const skin = cfg.look.skin;
     const look = OPENINGS[skin];
-    const [top, bottom] = world.teams;
+    const box = skin === 'paper' ? PAPER.box : DECKS[skin].box;
+    // Over the fade's first quarter the words go, on panels still whole, then over the second the
+    // bare panels: a ball is never seen through a fading letter. The race's labels come in over the
+    // second half, where the panels stood (`labels`).
+    const words = Math.max(0, Math.min(1, (shown - 0.75) * 4));
+    const panels = Math.max(0, Math.min(1, (shown - 0.5) * 4));
     ctx.save();
     ctx.globalAlpha = shown;
     ctx.fillStyle = look.wash;
     ctx.fillRect(0, 0, W, H);
+    // With the race under it, so a panel never slides off its box.
+    ctx.translate(sx, sy);
+    if (skin === 'paper') this.drawPlainVs(PAPER);
+    else this.drawVs(DECKS[skin]);
     for (const t of world.teams) {
       ctx.save();
-      ctx.translate(sx, sy);
       roundRect(ctx, BOX.left, t.panel.top, BOX.right - BOX.left, finishTop(t.panel) + FINISH_H - t.panel.top, 6);
       ctx.clip();
       if (skin === 'paper') this.drawGlowingBalls(t, PAPER);
       else this.drawBalls(t, DECKS[skin]);
+      // Opaque, in the tint of the ball's chips: a ball or a hit number under it is hidden whole,
+      // where under bare words a ball's edge showed below a letter and read as a stray glyph.
+      ctx.globalAlpha = panels;
+      ctx.fillStyle = mix(box, t.color, 0.16);
+      ctx.fillRect(BOX.left, t.panel.top, BOX.right - BOX.left, t.panel.floor - BALL_ROOM - t.panel.top);
       ctx.restore();
-      const tag = this.powerTag(t);
-      if (!tag || shown <= 0.5) continue;
-      // Gone over the first half of the fade, before the name row comes in where it stands (`labels`).
+    }
+    if (words > 0) {
+      ctx.globalAlpha = words;
+      for (const t of world.teams) this.drawTitle(t, cfg);
+      // As the format writes it ("WHO BREAKS THROUGH FIRST?"), where the bottom name row stands in
+      // the race: not on the VS's row, which the free plan's watermark has.
+      this.drawQuestionPill(openingQuestion(cfg).toUpperCase(), world.teams[1].panel.title, skin);
+    }
+    ctx.restore();
+  }
+
+  /**
+   * A ball's words on its opening panel, centred in it as one block: its power tag when it has one,
+   * its name large in its colour, and under it what it does (`ruleOf`), the side a viewer picks in
+   * the second they decide whether to stay, as the format writes it.
+   */
+  private drawTitle(t: Team, cfg: Config): void {
+    const ctx = this.ctx;
+    const skin = cfg.look.skin;
+    const look = OPENINGS[skin];
+    const tag = this.powerTag(t);
+    // The tag's own height and the cards' hard shadow under it.
+    const tagH = TAG_H * OPENING_TAG + 6;
+    const block = (tag ? tagH + 18 : 0) + TITLE_NAME * CAP + 28 + TITLE_RULE * CAP;
+    let y = (t.panel.top + t.panel.floor - BALL_ROOM - block) / 2;
+    if (tag) {
       ctx.save();
-      ctx.globalAlpha = 2 * shown - 1;
-      ctx.translate(W / 2, t.panel.title);
+      ctx.translate(W / 2, y + (TAG_H * OPENING_TAG) / 2);
       ctx.scale(OPENING_TAG, OPENING_TAG);
       this.drawTag(tag, -this.tagWidth(tag) / 2, 0, skin === 'paper' ? PAPER.ink : DECKS[skin].ink, skin !== 'paper');
       ctx.restore();
+      y += tagH + 18;
     }
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    const name = t.name.toUpperCase();
+    fitFont(ctx, name, 800, TITLE_NAME, 900);
+    centredLine(ctx, name, y + (TITLE_NAME * CAP) / 2, look.ground ? legible(t.color, look.ground) : t.color, look.nameOutline, 16);
+    y += TITLE_NAME * CAP + 28;
+    const rule = ruleOf(t.rule, cfg.look.separator);
+    ctx.letterSpacing = '1px';
+    fitFont(ctx, rule, 800, TITLE_RULE, 800);
+    centredLine(ctx, rule, y + (TITLE_RULE * CAP) / 2, look.text, look.textOutline, 10);
+    ctx.letterSpacing = '0px';
+  }
+
+  /**
+   * The opening's question centred on `y`, between the VS and the bottom card: gold capitals on an
+   * ink pill, as the format's question pill, as tall as a name pill. One line, from 44 px down to 30
+   * to fit; a longer one (a creator's own, up to 48 characters) takes two at 30 px in an 83 px pill,
+   * still 8 px clear of the VS above and of the card below.
+   */
+  private drawQuestionPill(text: string, y: number, skin: Skin): void {
+    const ctx = this.ctx;
+    const room = 820;
+    ctx.letterSpacing = '1px';
+    let size = 44;
+    ctx.font = `900 ${size}px ${FONT}`;
+    while (ctx.measureText(text).width > room && size > 30) {
+      size -= 2;
+      ctx.font = `900 ${size}px ${FONT}`;
+    }
+    const lines = ctx.measureText(text).width > room ? wrapLines(ctx, text, room).slice(0, 2) : [text];
+    const step = size * 1.15;
+    const width = Math.max(...lines.map((line) => ctx.measureText(line).width)) + 64;
+    const height = lines.length > 1 ? step * lines.length + 14 : PILL_H;
+    ctx.fillStyle = skin === 'paper' ? PAPER.ink : DECKS[skin].ink;
+    roundRect(ctx, W / 2 - width / 2, y - height / 2, width, height, Math.min(height / 2, 44));
+    ctx.fill();
+    ctx.fillStyle = TAG_FILL;
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    // The top name in the middle of its box's empty part, the bottom one high in its, the question under it.
-    const names = [(top.panel.top + top.panel.floor) / 2, bottom.panel.top + (bottom.panel.floor - bottom.panel.top) * 0.24];
-    for (const t of world.teams) {
-      const name = t.name.toUpperCase();
-      fitFont(ctx, name, 800, 124, 900);
-      outlined(ctx, name, W / 2, names[t.id], look.ground ? legible(t.color, look.ground) : t.color, look.nameOutline, 16);
-    }
-    fitFont(ctx, 'VS', 120, 140, 900);
-    outlined(ctx, 'VS', W / 2, VS_Y + 6, look.text, look.textOutline, 14);
-    // Two lines at most, smaller if it takes that, centred between the bottom name and the layers.
-    const question = openingQuestion(cfg);
-    let size = 60;
-    ctx.font = `800 ${size}px ${FONT}`;
-    let lines = wrapLines(ctx, question, 760);
-    while (lines.length > 2 && size > 44) {
-      size -= 8;
-      ctx.font = `800 ${size}px ${FONT}`;
-      lines = wrapLines(ctx, question, 760);
-    }
-    const centre = (names[1] + 45 + bottom.panel.floor) / 2;
-    const step = size * 1.2;
-    lines.forEach((line, i) => outlined(ctx, line, W / 2, centre + (i - (lines.length - 1) / 2) * step, look.text, look.textOutline, 12));
-    ctx.restore();
+    lines.forEach((line, i) => ctx.fillText(line, W / 2, y + (i - (lines.length - 1) / 2) * step + size * 0.06));
+    ctx.letterSpacing = '0px';
   }
 
   /** Moves each team's top-layer number on toward its hit points: a hit starts a new count from wherever the last one is. */
@@ -1703,6 +1769,15 @@ function smoothstep(t: number): number {
   return k * k * (3 - 2 * k);
 }
 
+/**
+ * What a ball does, as the opening title writes it under its name: its sequence's rule, Always the
+ * same's by its strength ("EVERY HIT = 1.000"), and a crowd's count in front ("100 BALLS · …").
+ */
+function ruleOf(c: Contestant, separator: '.' | ','): string {
+  const rule = c.sequence === 'ones' ? `EVERY HIT = ${formatBig(BigInt(Math.max(1, Math.round(c.strength || 1))), separator)}` : SEQUENCES[c.sequence].rule;
+  return c.count > 1 ? `${c.count} BALLS · ${rule}` : rule;
+}
+
 /** `text` in lines no wider than `width` at the context's font, broken at spaces. */
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, width: number): string[] {
   const lines: string[] = [];
@@ -1780,6 +1855,12 @@ function outlined(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
   }
   ctx.fillStyle = fill;
   ctx.fillText(text, x, y);
+}
+
+/** `outlined` across the frame's middle with its letters' own ink centred on `y`, at any size, on the alphabetic baseline. */
+function centredLine(ctx: CanvasRenderingContext2D, text: string, y: number, fill: string, stroke: string, width: number): void {
+  const m = ctx.measureText(text);
+  outlined(ctx, text, W / 2, y + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2, fill, stroke, width);
 }
 
 /** Sets the largest font up to `max` px at which `text` fits in `width`. */

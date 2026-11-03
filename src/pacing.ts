@@ -19,13 +19,13 @@ export const SLOWMO_TAIL = 1.2;
  */
 export const END_PAD = 0.5;
 /**
- * The opening title over the first frame (the names, the VS, the question; src/render): whole
- * through the hold and the race's first OPENING_LINGER seconds, then gone over OPENING_FADE. With
- * the default 0.5 s hold it is up for about 1.2 s: the time its words take to read. A hold that
- * long would take a second from every race; the first second of a race is the balls dropping to
- * their first layer, which the title can fade over.
+ * The opening title over the first frame (the names, what each does, the VS, the question;
+ * src/render): whole through the hold and the race's first OPENING_LINGER seconds, then gone over
+ * OPENING_FADE, about 1.5 s with no hold: the time its words take to read. The race does not wait
+ * for it: the balls move under it from the first frame, since the second a viewer decides in is
+ * no time for a still picture.
  */
-const OPENING_LINGER = 0.4;
+const OPENING_LINGER = 0.9;
 const OPENING_FADE = 0.6;
 
 /**

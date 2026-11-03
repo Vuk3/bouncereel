@@ -35,6 +35,12 @@ export interface SequenceDef {
   facts: string[];
   /** What the ball wears in the paper look: one to three characters Rubik has, or φ, which the renderer draws itself (Rubik has no Greek). */
   mark: string;
+  /**
+   * What it does, in a few capital words under its name on the first frame, as the format writes it
+   * ("×1.618 EVERY HIT"): what a viewer weighs to pick a side in the second they decide whether to
+   * stay. Only characters Rubik's Latin set has.
+   */
+  rule: string;
   term(n: number): bigint;
 }
 
@@ -95,6 +101,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       'Fibonacci numbers lead straight to the golden ratio.',
     ],
     mark: 'F',
+    rule: 'ADDS UP ITS LAST TWO HITS',
     term: table((o, n) => (n < 2 ? 1n : o[n - 1] + o[n - 2])),
   },
   factorial: {
@@ -109,6 +116,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       'A deck of cards can be shuffled in more ways than there are atoms on Earth.',
     ],
     mark: 'n!',
+    rule: 'MULTIPLIES BY THE NEXT NUMBER',
     term: table((o, n) => (n === 0 ? 1n : o[n - 1] * BigInt(n + 1))),
   },
   doubling: {
@@ -123,6 +131,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       'Computers count in powers of two.',
     ],
     mark: '×2',
+    rule: 'DOUBLES EVERY HIT',
     term: table((o, n) => (n === 0 ? 1n : o[n - 1] * 2n)),
   },
   tripling: {
@@ -133,6 +142,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     brief: 'triples every hit',
     facts: ['Twenty hits in, Tripling hits for over a billion.', 'Ten triplings turn one into almost sixty thousand.'],
     mark: '×3',
+    rule: 'TRIPLES EVERY HIT',
     term: table((o, n) => (n === 0 ? 1n : o[n - 1] * 3n)),
   },
   squares: {
@@ -143,6 +153,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     brief: 'hits with square numbers',
     facts: ['A square number is just a number times itself.', 'Add up the odd numbers in order and you always land on a square.'],
     mark: 'n²',
+    rule: 'HITS 1, 4, 9, 16, 25…',
     term: (n) => BigInt((n + 1) * (n + 1)),
   },
   cubes: {
@@ -153,6 +164,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     brief: 'hits with cube numbers',
     facts: ['Ten hits in, a cube hits for a thousand.', 'Seventeen twenty-nine is the sum of two cubes in two different ways.'],
     mark: 'n³',
+    rule: 'HITS 1, 8, 27, 64, 125…',
     term: (n) => BigInt((n + 1) * (n + 1) * (n + 1)),
   },
   primes: {
@@ -167,6 +179,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       'Every whole number above one is built from primes.',
     ],
     mark: 'P',
+    rule: 'HITS WITH PRIME NUMBERS',
     term: (n) => PRIMES[Math.min(Math.max(0, n), LENGTH - 1)],
   },
   triangular: {
@@ -177,6 +190,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     brief: 'hits a little harder every time',
     facts: ['Triangular numbers stack like bowling pins.', 'Add up one to a hundred and you land on a triangular number.'],
     mark: 'T',
+    rule: 'HITS 1, 3, 6, 10, 15…',
     term: (n) => BigInt(((n + 1) * (n + 2)) / 2),
   },
   tribonacci: {
@@ -190,6 +204,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       'Tribonacci counts the ways to climb stairs one, two or three steps at a time.',
     ],
     mark: 'Tr',
+    rule: 'ADDS UP ITS LAST THREE HITS',
     term: table((o, n) => (n < 2 ? 1n : n === 2 ? 2n : o[n - 1] + o[n - 2] + o[n - 3])),
   },
   lucas: {
@@ -203,6 +218,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       'The man behind Lucas numbers also invented the Tower of Hanoi.',
     ],
     mark: 'L',
+    rule: 'ADDS UP ITS LAST TWO, FROM 2 AND 1',
     term: LUCAS,
   },
   golden: {
@@ -217,6 +233,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       "Round the golden ratio's powers and out come the Lucas numbers.",
     ],
     mark: 'φ',
+    rule: '×1.618 EVERY HIT',
     // The golden ratio's powers, rounded, so each hit is 1.618 times the last: 1, 1.618 → 2, 2.618 → 3,
     // 4.236 → 4… From the second power on, that is exactly the Lucas numbers (φⁿ + ψⁿ is a whole
     // number and |ψⁿ| < 0.5), so the terms are exact however far they go.
@@ -233,6 +250,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       'Catalan numbers count the ways to cut a polygon into triangles.',
     ],
     mark: 'C',
+    rule: 'HITS 1, 1, 2, 5, 14, 42…',
     // C(n) = C(n−1) · 2(2n−1) / (n+1), which always divides exactly.
     term: table((o, n) => (n === 0 ? 1n : (o[n - 1] * BigInt(2 * (2 * n - 1))) / BigInt(n + 1))),
   },
@@ -244,6 +262,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     brief: 'adds a zero every hit',
     facts: ['By its tenth hit, Tenfold hits for a billion.', 'A googol is just a one with a hundred zeros after it.'],
     mark: '×10',
+    rule: '×10 EVERY HIT',
     term: (n) => 10n ** BigInt(n),
   },
   collatz: {
@@ -257,6 +276,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
       'From twenty-seven, it climbs past nine thousand before falling to one.',
     ],
     mark: '3n',
+    rule: 'JUMPS UP AND DOWN: 27, 82, 41…',
     // From 27, the famous long one: 111 steps up to 9,232 and down to 1, far past any race's hits;
     // a ball still hitting after that goes round 4, 2, 1.
     term: table((o, n) => (n === 0 ? 27n : o[n - 1] === 1n ? 4n : o[n - 1] % 2n ? 3n * o[n - 1] + 1n : o[n - 1] / 2n)),
@@ -269,6 +289,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     brief: 'hits one harder every time',
     facts: ['Counting looks harmless, but it never stops climbing.', 'Counting is the first sequence anyone ever learns.'],
     mark: '+1',
+    rule: '+1 EVERY HIT',
     term: (n) => BigInt(n + 1),
   },
   pi: {
@@ -284,6 +305,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     ],
     // Rubik's Latin set has no π.
     mark: 'Pi',
+    rule: 'HITS THE DIGITS OF PI',
     term: (n) => PI[Math.min(Math.max(0, n), LENGTH - 1)],
   },
   ones: {
@@ -294,6 +316,7 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
     brief: 'always hits for one',
     facts: ['The same hit every time: slow, steady, and never tired.', 'It never grows, and it never stops.'],
     mark: '1',
+    rule: 'THE SAME HIT EVERY TIME',
     term: () => 1n,
   },
 };

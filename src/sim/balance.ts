@@ -200,12 +200,29 @@ function pickLayers(rng: Rng, a: Hitter, b: Hitter): string | null {
   const count = Math.min(top - 1, pick(rng, [2, 3, 3, 3, 4]));
   const powers: number[] = [];
   for (let i = 1; i <= count; i++) powers.push(Math.max(2 + i - 1, Math.round((top * i) / count)));
-  return powers
-    .map((p, i) => {
-      const mantissa = i === count - 1 ? last : pick(rng, [1, 1, 1, 2, 5]);
-      return p <= 5 ? String(mantissa * 10 ** p) : `${mantissa}e${p}`;
-    })
-    .join(', ');
+  const values = powers.map((p, i) => [i === count - 1 ? last : pick(rng, [1, 1, 1, 2, 5]), p] as const);
+  // A small layer first, when there are three or fewer, so four at most share the stack.
+  const starter = count <= 3 ? starterLayer(a, b) : null;
+  const [m0, p0] = values[0];
+  const head = starter !== null && starter * 5n <= BigInt(m0) * 10n ** BigInt(p0) ? [String(starter)] : [];
+  return [...head, ...values.map(([m, p]) => (p <= 5 ? String(m * 10 ** p) : `${m}e${p}`))].join(', ');
+}
+
+/**
+ * A first layer small enough that both balls break it within their first four hits: a crack, a
+ * shake and the box growing down in the first second or two, before a viewer has decided whether to
+ * stay. The round number (1, 2 or 5 times a power of ten) at or under the smaller of the two balls'
+ * first four hits together, counted for the team, so a crowd's come in a fraction of a second; at
+ * least 2. pickLayers keeps it only when it is well under the layer after it.
+ */
+function starterLayer(a: Hitter, b: Hitter): bigint | null {
+  const firstFour = (s: Hitter) => [0, 1, 2, 3].reduce((sum, n) => sum + SEQUENCES[s.sequence].term(n), 0n) * BigInt(Math.max(1, Math.round(s.strength)));
+  const most = [a, b].map(firstFour).reduce((x, y) => (x < y ? x : y));
+  if (most < 2n) return null;
+  // The biggest 1, 2 or 5 times a power of ten that is not more than `most`.
+  let power = 1n;
+  while (power * 10n <= most) power *= 10n;
+  return [5n, 2n, 1n].map((m) => m * power).find((v) => v <= most) ?? null;
 }
 
 /** A crowd's balls, smaller the more there are: two hundred at 9 px are a swarm with room to move. */

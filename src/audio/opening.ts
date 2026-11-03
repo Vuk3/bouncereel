@@ -9,7 +9,7 @@ import { createRng } from '../sim/rng.ts';
 /**
  * The last line of the opening: a question that sends people to the comments. Twenty, so a run
  * of videos does not keep asking the same thing; none leans to a ball, and none is longer than
- * "Which one are you betting on?", which already takes the first frame's two lines.
+ * "Which one are you betting on?", which already fills the first frame's pill on one line.
  */
 export const QUESTIONS = [
   "Who's your pick?",

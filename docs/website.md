@@ -239,8 +239,8 @@ built-in matchups that have none (nor a crowd), and rolls with powers and crowds
 sequence against sequence, with nothing the opening would have to explain. Under the phone,
 the two names and the look.
 
-- **The first paint is a still frame** ([public/hero/first-frame-3.webp](../public/hero/first-frame-3.webp),
-  540×960, 31 KB, the night look, the video's opening title over it), an `<img>` with `fetchpriority="high"`: the LCP. The engine loads after the
+- **The first paint is a still frame** ([public/hero/first-frame-4.webp](../public/hero/first-frame-4.webp),
+  540×960, ~34 KB, the night look, the video's opening title over it), an `<img>` with `fetchpriority="high"`: the LCP. The engine loads after the
   page has (`requestIdleCallback`), waits for Rubik (a canvas never loads a web font itself),
   draws the same first frame over the still and fades it in, so the swap does not show.
 - It draws **at half the video's size** (540×960 under a 0.5 scale): the phone shows it at most
@@ -326,7 +326,7 @@ All drawn by the studio's renderer, so they are what a video looks like, by
 
 | File | What | Size |
 | --- | --- | --- |
-| [public/hero/first-frame-3.webp](../public/hero/first-frame-3.webp) | the hero's first frame, its opening title and all: Fibonacci vs Slow Factorial balanced to 30 s, night; also the first paint of the steps' phone and of step 3, whose defaults are that race. The `-3` is a new name for a frame that changed in a way that shows (the title, then its lighter wash): a browser keeps `/hero` a week, and the old name would show the old still under the new first frame | 540×960, ~31 KB |
+| [public/hero/first-frame-4.webp](../public/hero/first-frame-4.webp) | the hero's first frame, its opening title and all: Fibonacci vs Slow Factorial balanced to 30 s, night; also the first paint of the steps' phone and of step 3, whose defaults are that race. The `-4` is a new name for a frame that changed in a way that shows (the title, its lighter wash, then its panels): a browser keeps `/hero` a week, and the old name would show the old still under the new first frame | 540×960, ~34 KB |
 | [public/looks/](../public/looks/) `paper.webp`, `cards.webp`, `night.webp` | the same race 55 % of the way, the top box as the studio's look picker crops it | 480×416, 15–17 KB each |
 | [public/og.png](../public/og.png) | the Open Graph and Twitter image, as the hero: the ink, the mark and the name, the headline, one line on what it makes, and at the bottom the address (`SITE_HOST`, narrowed if it would reach the phones), then a violet rule and "Free to start"; two phones (night, paper) in the balls' light. Made again when the address changes | 1200×630, ~300 KB |
 | [brand/profile.png](../brand/profile.png) | not for the site: the profile picture for Instagram, YouTube and TikTok, the mark on the ink in the balls' light, sized to stay inside the circle each shows it in (offered at `./brand/profile.png` on the stills page) | 1080×1080, ~940 KB |
@@ -483,3 +483,4 @@ used for.
 - 2026-10-25 - the sequences card lists fourteen sequences and 65 pairings (Lucas, Catalan, Tenfold and Collatz added).
 - 2026-10-29 - a superadmin sees "Your plan" on no pricing card, and Open studio on the free one.
 - 2026-11-02 - the sequences card lists fifteen sequences and 79 pairings (Golden ratio added); the hero rolls and plays no crowds.
+- 2026-11-03 - the opening title on panels, with what each ball does, the question under the VS, and the race starting on a small layer with no hold, so the still (`hero/first-frame-4.webp`), the looks and the share image were made again. The gallery is still the earlier recordings.

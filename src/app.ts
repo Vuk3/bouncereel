@@ -1170,7 +1170,13 @@ export class App {
         localStorage.removeItem(STORAGE_KEY);
       }
       const saved = localStorage.getItem(key);
-      if (saved) return savedConfig(JSON.parse(saved));
+      if (saved) {
+        const cfg = savedConfig(JSON.parse(saved));
+        // The half-second hold before the start was the default nobody chose: today's is none, since
+        // a still first second is when viewers scroll on. A hold set to anything else stays.
+        if (cfg.timing.startDelay === 0.5) cfg.timing.startDelay = 0;
+        return cfg;
+      }
     } catch {
       // Private window or corrupt JSON: start from the default.
     }

@@ -179,11 +179,14 @@ const BASE: Config = {
   // (src/sim/balance.ts) so the race fits the video length and ends close.
   a: { name: 'Fibonacci Ball', color: '#7c4dff', sequence: 'fibonacci', speed: 1300, special: 'none', amount: 0, radius: 26, count: 1, strength: 1 },
   b: { name: 'Slow Factorial Ball', color: '#0ea5e9', sequence: 'factorial', speed: 300, special: 'none', amount: 0, radius: 26, count: 1, strength: 1 },
-  layers: '1000, 1e10, 1e15',
+  // A small first layer, broken within the first four hits: something happens in the first second.
+  // The top is 10^14 rather than the format's 10^15, which with it would take Fibonacci past 3,200 px/s at 30 s.
+  layers: '5, 1000, 1e10, 1e14',
   physics: { gravity: 0, maxSpeed: 5000 },
   sound: { melody: 'ode', timbre: 'marimba', volume: 0.8, track: 'narrator' },
   voice: { voice: 'af_heart', script: '', outro: WINNER_LINES[0] },
-  timing: { video: 40, gap: 0, startDelay: 0.5, hold: 3.5, maxSeconds: 150 },
+  // No hold before the start: the balls move from the first frame, under the opening title.
+  timing: { video: 40, gap: 0, startDelay: 0, hold: 3.5, maxSeconds: 150 },
   // The last line answers the opening's question and sends viewers to the comments.
   look: { skin: 'paper', question: '', cta: LAST_LINES[0], loop: true, follow: false, separator: '.', safeZones: false },
 };
@@ -207,7 +210,7 @@ export const PRESETS: Preset[] = [
     seed: '19',
     a: { name: 'Doubling Ball', color: '#ef4444', sequence: 'doubling', speed: 750 },
     b: { name: 'Fibonacci Ball', color: '#7c4dff', sequence: 'fibonacci', speed: 1050 },
-    layers: '1000, 1e8, 1e12',
+    layers: '5, 1000, 1e8, 1e12',
     sound: { melody: 'elise' },
   }),
   preset('primes-vs-squares', 'Primes vs Squares', {
@@ -215,7 +218,7 @@ export const PRESETS: Preset[] = [
     // Primes lead early (2, 3, 5, 7 beat 1, 4, 9 at first); squares overtake late.
     a: { name: 'Prime Ball', color: '#f59e0b', sequence: 'primes', speed: 1200 },
     b: { name: 'Square Ball', color: '#10b981', sequence: 'squares', speed: 550 },
-    layers: '150, 1500, 8000',
+    layers: '10, 150, 1500, 8000',
     sound: { melody: 'twinkle' },
   }),
   preset('speeding-vs-doubling', 'Speeding Ball vs Doubling', {
@@ -224,7 +227,7 @@ export const PRESETS: Preset[] = [
     // Counting needs ~60 hits for 2000; at 3 % a hit that is 6× the starting speed, under the limit.
     a: { name: 'Speeding Ball', color: '#ec4899', sequence: 'counting', speed: 550, special: 'faster', amount: 3 },
     b: { name: 'Doubling Ball', color: '#ef4444', sequence: 'doubling', speed: 240 },
-    layers: '100, 500, 2000',
+    layers: '10, 100, 500, 2000',
     sound: { melody: 'scale' },
   }),
   preset('multiplying-vs-fibonacci', 'Multiplying Ball vs Fibonacci', {
@@ -232,6 +235,8 @@ export const PRESETS: Preset[] = [
     // Every hit adds a ball, so hits come exponentially faster until the box holds MAX_BALLS.
     a: { name: 'Multiplying Ball', color: '#14b8a6', sequence: 'counting', speed: 800, special: 'split', amount: 1, radius: 18 },
     b: { name: 'Fibonacci Ball', color: '#7c4dff', sequence: 'fibonacci', speed: 700 },
+    // No small first layer: a box that splits on every hit is busy from the first one, and its
+    // chaos would not balance at every length with one.
     layers: '1000, 1e5, 1e6',
     sound: { melody: 'scale', timbre: 'pluck' },
   }),
@@ -240,14 +245,14 @@ export const PRESETS: Preset[] = [
     // Same damage, different power-up: a bigger ball has less far to fall, a faster one gets there sooner.
     a: { name: 'Growing Ball', color: '#22c55e', sequence: 'fibonacci', speed: 600, special: 'grow', amount: 10, radius: 18 },
     b: { name: 'Speeding Ball', color: '#ec4899', sequence: 'fibonacci', speed: 600, special: 'faster', amount: 2, radius: 18 },
-    layers: '1000, 1e8, 1e12',
+    layers: '5, 1000, 1e8, 1e12',
     sound: { melody: 'elise', timbre: 'bell' },
   }),
   preset('tribonacci-vs-tripling', 'Tribonacci vs Tripling', {
     seed: '2',
     a: { name: 'Tribonacci Ball', color: '#8b5cf6', sequence: 'tribonacci', speed: 1200 },
     b: { name: 'Tripling Ball', color: '#f97316', sequence: 'tripling', speed: 650 },
-    layers: '1000, 1e9, 1e14',
+    layers: '5, 1000, 1e9, 1e14',
     sound: { melody: 'ode', timbre: 'pluck' },
   }),
   preset('golden-vs-tripling', 'Golden Ratio vs Tripling', {
@@ -255,7 +260,7 @@ export const PRESETS: Preset[] = [
     // 1.618 times a hit against 3 times: tripling is ahead on every hit, so the golden ball has to be quick.
     a: { name: 'Golden Ratio Ball', color: '#f59e0b', sequence: 'golden', speed: 1200 },
     b: { name: 'Tripling Ball', color: '#0ea5e9', sequence: 'tripling', speed: 600 },
-    layers: '50000, 4e9, 3e15',
+    layers: '10, 50000, 4e9, 5e14',
     sound: { melody: 'twinkle' },
   }),
   preset('millionaires-vs-doubling', '100× Millionaire Balls vs Doubling', {
@@ -263,7 +268,7 @@ export const PRESETS: Preset[] = [
     // Spam against skill: a hundred balls hitting for a million each, against one ball that doubles from one.
     a: { name: '100× Millionaire Balls', color: '#10b981', sequence: 'ones', speed: 500, radius: 11, count: 100, strength: 1_000_000 },
     b: { name: 'Doubling Ball', color: '#ef4444', sequence: 'doubling', speed: 600 },
-    layers: '1e6, 1e9, 2e9',
+    layers: '10, 1e6, 1e9, 2e9',
     sound: { melody: 'scale', timbre: 'chip' },
   }),
 ];

@@ -95,7 +95,7 @@ surrounds the race:
 
 | Part | Seconds |
 | --- | --- |
-| hold before the start | `timing.startDelay` (0.5) |
+| hold before the start | `timing.startDelay` (0: the balls move from the first frame, under the opening title) |
 | slow motion into the win | the last 0.6 s of race play at 0.3×, so 1.4 s extra |
 | slow motion after the win | 1.2 |
 | winner card | `cardSeconds`: `timing.hold` (3.5), or, when the video is narrated, the winner line's length at 11 characters a second + 0.4 s, whichever is more. Narrated (`narrated`) means a narrator is picked and the Sound is Narrator and music; music only and silent videos plan the hold alone |
@@ -134,7 +134,11 @@ in a few milliseconds:
    is too few and 10,000 too many. Pick from the upper half of what fits (big numbers are
    half the fun), then 2–4 layers rising to it, as round values (1, 2 or 5 × a power of ten).
    10^18 is the cap so every value, and the damage that breaks it, fits a card as whole
-   digits.
+   digits. In front of three or fewer goes a **small first layer** (`starterLayer`): the
+   biggest round value both balls deal within their first four hits, at least 2 and kept only
+   when it is at most a fifth of the layer after it. Something breaks in the first second
+   (the median is 0.9 s in `npm run tune`), with a shake and the box growing down, while a
+   viewer is still deciding whether to stay.
 4. **Colours** from `COLORS`, at least 75° apart in hue (two greens read as one team).
 5. **Often a power** (a special; the panel says power): with the **Powers in random
    matchups** switch on, about every other matchup gets one (39 to 56 of 100 in
@@ -239,10 +243,13 @@ floor hit, a BigInt, precomputed 400 terms deep.
 
 Each also has a `brief` (one clause for the opening: "adds up its last two hits"),
 `facts` (two or three true lines the opening can add, the seed picking one: "Fibonacci
-numbers hide in sunflowers and pine cones.") and a `mark`, the one to three characters its ball wears in the paper look (F, n!,
+numbers hide in sunflowers and pine cones."), a `mark`, the one to three characters its ball wears in the paper look (F, n!,
 ×2, n², P…; only characters Rubik's Latin set has, and the golden ratio's φ, which the
-renderer draws). Adding a sequence is one entry with all six; the panel, the generator, the
-narrator and the renderer pick it up. ⚠️ A table runs 400 terms deep (`LENGTH`): a crowd makes
+renderer draws), and a `rule`, what it does in a few capitals under its name on the first frame
+("ADDS UP ITS LAST TWO HITS", "×1.618 EVERY HIT", "HITS 1, 4, 9, 16, 25…"; Always the same
+writes its strength instead, [look and layout](./look-and-layout.md) §11). Adding a sequence is
+one entry with all of them (`id`, `label`, `hint`, `noun`, `brief`, `facts`, `mark`, `rule`,
+`term`); the panel, the generator, the narrator and the renderer pick it up. ⚠️ A table runs 400 terms deep (`LENGTH`): a crowd makes
 thousands of hits, so what a crowd hits with, Always the same, has a formula instead; past 400 a
 table repeats its last term.
 
@@ -253,15 +260,18 @@ table repeats its last term.
 
 | Matchup | Notes |
 | --- | --- |
-| Fibonacci vs Slow Factorial | the original format: 1.000 / 10 billion / 10^15 |
-| Doubling vs Fibonacci | 1.000 / 10^8 / 10^12 |
-| Primes vs Squares | primes lead early, squares overtake late; 150 / 1.500 / 8.000 |
-| Speeding Ball vs Doubling | counting that speeds up 3 % a hit; layers kept small so it stays under the speed limit |
-| Multiplying Ball vs Fibonacci | counting that splits; up to 64 balls |
-| Growing vs Speeding | both Fibonacci: bigger against faster |
-| Tribonacci vs Tripling | 1.000 / 10^9 / 10^14 |
-| Golden Ratio vs Tripling | 1.618 times a hit against 3 times; 50.000 / 4 billion / 3 × 10^15, after the reel this follows |
-| 100× Millionaire Balls vs Doubling | a crowd of a hundred hitting for a million against one ball doubling from 1; 1 million / 1 billion / 2 billion |
+| Fibonacci vs Slow Factorial | the original format: 5 / 1.000 / 10 billion / 10^14 (the format's 10^15 would take Fibonacci past 3,200 px/s at 30 s) |
+| Doubling vs Fibonacci | 5 / 1.000 / 10^8 / 10^12 |
+| Primes vs Squares | primes lead early, squares overtake late; 10 / 150 / 1.500 / 8.000 |
+| Speeding Ball vs Doubling | counting that speeds up 3 % a hit; 10 / 100 / 500 / 2.000, kept small so it stays under the speed limit |
+| Multiplying Ball vs Fibonacci | counting that splits; up to 64 balls; 1.000 / 10^5 / 10^6, no small first layer: a box that splits on every hit is busy from the first, and would not balance at every length with one |
+| Growing vs Speeding | both Fibonacci: bigger against faster; 5 / 1.000 / 10^8 / 10^12 |
+| Tribonacci vs Tripling | 5 / 1.000 / 10^9 / 10^14 |
+| Golden Ratio vs Tripling | 1.618 times a hit against 3 times; 10 / 50.000 / 4 billion / 5 × 10^14, after the reel this follows |
+| 100× Millionaire Balls vs Doubling | a crowd of a hundred hitting for a million against one ball doubling from 1; 10 / 1 million / 1 billion / 2 billion |
+
+Every one but Multiplying Ball starts on a small layer, broken within the first four hits, as
+the dice's do.
 
 A new one: add a `preset(...)` call, then `npm run tune` must show it balancing at 30, 40
 and 60 s. Speeds in a preset are only a starting point; balancing replaces them. Loading one keeps
@@ -280,3 +290,4 @@ the narrator, video length, finish gap and look.
 - 2026-10-25 - five more sequences: Lucas, Catalan, Tenfold and Collatz on the dice (65 pairings, from 33), Digits of pi by hand.
 - 2026-10-26 - the dice deals the words too (`words:<seed>`): the seed's question, a new last line and winner line, keeping a creator's own; sequences carry two or three `facts`.
 - 2026-11-02 - crowds (`count`, up to 200 balls), Always the same's alone: about one roll in four, of 30–200 balls at a strength of 1 to a million (`strength`), on layers chosen per ball (`CROWD_HITS`, tops of 2 and 5 × a power of ten); the Balls and Hit strength fields; locks for a ball, its count and its strength (New opponent, New layers, Roll the rest); a ball changed by hand renamed and balanced again, on new layers or against a new opponent when it must; the golden ratio; Golden Ratio vs Tripling and 100× Millionaire Balls vs Doubling.
+- 2026-11-03 - a small first layer (`starterLayer`), broken within both balls' first four hits, in front of three or fewer rolled layers and on every built-in matchup but Multiplying Ball (Fibonacci vs Slow Factorial tops at 10^14, Golden Ratio vs Tripling at 5 × 10^14); no hold before the start by default; a `rule` per sequence for the first frame.

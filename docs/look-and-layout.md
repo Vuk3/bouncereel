@@ -147,9 +147,12 @@ keeps layers at or under 10^18, and a value too long for its space gets a smalle
 (`fitFont`). Floating damage numbers rise from the hit, one per box every 0.09 s (0.3 s in
 a box of more than three balls, which can hit a hundred times a second), **sized by their
 digits**, the log of the damage: 27 px for a 1, 32 px at three digits, 64 px from fifteen up
-(`floatDamage`), narrowed to fit and moved to stay 40 px inside the box. A new one fades out
-the ones it would cover four times as fast: a big hit's number is up to twice a small one's,
-so they cross often, and the newest is the one to read. Their outline is the box's colour
+(`floatDamage`), narrowed to fit and moved to stay 40 px inside the box. A new one takes
+away at once any it would touch, outlines and all (`float` in
+[effects.ts](../src/render/effects.ts)): a big hit's number is up to twice a small one's, so
+they cross often, the newest is the one to read, and two numbers are never drawn over each
+other. They all rise at one speed, so two that clear each other at the start never meet
+later. Their outline is the box's colour
 (white on cards and paper, near-black on night), 7 px at 32 px and in proportion.
 
 **A layer's number counts down** to its new value after a hit instead of jumping: over
@@ -265,8 +268,8 @@ picture says which ball has a power: a gold pill (`#ffd23f`, 50 px tall, ink out
 an ink lightning bolt and what the power does, in Rubik 900 27 px: `SPEEDS UP`,
 `SLOWS DOWN`, `GROWS` or `SPLITS` (`POWER_TAGS`). It is the same gold in every look, a
 power-up's colour in a game, and it shows only when the power has an amount. On the opening
-title it stands alone where the name row does, 1.3 times as big (`OPENING_TAG`, §11), and the
-narrator says the same in words ("…, and it speeds up").
+title it stands over the ball's name on its panel, 1.2 times as big (`OPENING_TAG`, §11), and
+the narrator says the same in words ("…, and it speeds up").
 
 **The watermark**, on a plan whose `watermark` feature is on
 ([accounts and billing](./accounts-and-billing.md)): the BounceReel mark (42 px) and the site's
@@ -274,7 +277,8 @@ host (`SITE_HOST` in [shared/site.ts](../shared/site.ts), `bouncereel.vukcvetkov
 Rubik 800 up to 32 px, narrowed to fit between 40 px from the frame's edge and the VS (that host
 comes out at about 27 px), right-aligned 64 px left of the frame's centre, on
 the VS line (y 962). That is the gap between the two cards: it is in every frame of every
-look, under no platform's buttons (§9), and nothing of the race is drawn there. Ink at
+look, under no platform's buttons (§9), and nothing of the race is drawn there; the opening's
+question stands under the VS for it (§11). Ink at
 68 % on paper and cards, white at 78 % on night. It is drawn last, over the loop's fade
 too, so it holds still while the frame changes under it. The preview draws it exactly as
 Record writes it, so what a free account sees is what its file gets.
@@ -289,36 +293,55 @@ loaded from [public/mark.svg](../public/mark.svg), so a frame never waits for an
 
 The first frame is what a viewer swipes past or stays for, and every platform's cover (a
 profile grid shows it as a tile about a third of the screen wide), so it carries a title
-(`drawOpening`): over the cards at rest, a light wash in the look's colours (`OPENINGS`); the
-balls over it at full strength, the characters, under the words; each ball's name large in its
-colour in the empty part of its own box (Rubik 900, up to 124 px in 800 px; the top one in the
-middle of its box above the layers, y 460, the bottom one high in its, y 1184); a ball's power
-tag alone where its name row stands, 1.3 times as big (§10); a big **VS** between the cards
-(120 px wide, at the VS line); and under the bottom name the opening's question (Rubik 800
-60 px in 760 px, two lines at most, smaller if it takes that).
+(`drawOpening`) over the race, which is already moving under it (no hold by default,
+`timing.startDelay` 0): a light wash in the look's colours (`OPENINGS`); the balls over it at
+full strength; across the top of each box, wall to wall, an opaque **panel** in its ball's
+tint (the box's colour 16 % of the way to the ball's, as its chips are), from the box's top
+down to 84 px over the floor (`BALL_ROOM`), with the ball's words on it; the race's VS, drawn
+again over the wash; and under the VS, where the bottom name row stands in the race, the
+opening's question in a pill.
 
-The race's own labels wait under it: the name rows (pills or names, with their tags) and the
-chips or stats line are not drawn while the title is whole, so a name is never said twice and
-`NEXT HIT 1` does not clutter the cover (`labels` in the renderer). The wash is light for the
-same reason: at 70–80 % the cards, layers and balls read as a faded page on a grid, and the
-title's outlines hold the words up without it. The question is the narrator's last line of
-the opening: the creator's own last sentence when that is a short question, else the one
-typed under More → Video (`look.question`), else the seed's pick of twenty
-(`openingQuestion` in [src/audio/opening.ts](../src/audio/opening.ts);
+On each panel, centred as one block (`drawTitle`): the ball's power tag when it has one,
+1.2 times the race's (§10); its name large in its colour (Rubik 900, up to 110 px in 800 px);
+and under it what it does, in capitals (Rubik 800, up to 44 px in 800 px): `ruleOf`, from the
+sequence's `rule` ("ADDS UP ITS LAST TWO HITS", "×1.618 EVERY HIT"), Always the same saying its
+strength ("EVERY HIT = 1.000"), a crowd its count first ("100 BALLS · …"). They are laid out
+on Rubik's capitals (`CAP`, 0.7 of the size), so a block with a tag takes 220 px of the
+panel's 256 and one without stands in its middle.
+
+⚠️ **Nothing of the race shows through the words.** The panel hides whatever is under it
+whole: a ball, a hit number, debris. Over bare words a ball's edge showed below a letter and
+read as a stray glyph on the cover. The strip it leaves over the floor is where the ball is
+seen from the first frame, coming down to its first hits.
+
+**The question** is gold capitals (`TAG_FILL`) on the look's ink, in a pill as tall as a name
+pill (62 px), Rubik 900 from 44 px down to 30 to fit 820 px; a longer one takes two lines at
+30 px in an 83 px pill, still 8 px clear of the VS and of the card (`drawQuestionPill`). It
+stands under the VS rather than on its row, which the free plan's watermark has (§10). It is
+the narrator's last line of the opening: the creator's own last sentence when that is a short
+question, else the one typed under More → Video (`look.question`), else the seed's pick of
+twenty (`openingQuestion` in [src/audio/opening.ts](../src/audio/opening.ts);
 [sound and narration](./sound-and-narration.md) §3), shown with every sound.
 
-| | wash | names | VS and question |
+The race's own labels wait under it: the name rows (pills or names, with their tags) and the
+chips or stats line are not drawn while the title is up, so a name is never said twice and
+`NEXT HIT 1` does not clutter the cover (`labels` in the renderer). The wash is light: at
+70–80 % the cards, layers and balls read as a faded page on a grid.
+
+| | wash | names | rules |
 | --- | --- | --- | --- |
 | paper | the page, 45 % | as they are, ink outline | ink, cream outline |
 | cards | white, 40 % | as they are, ink outline | ink, white outline |
 | night | near-black, 40 % | lightened to 3:1 (`legible`), near-black outline | white, near-black outline |
 
-It shows whole through the hold and the race's first 0.4 s, then fades out over 0.6 s
-(`openingShown` in [pacing.ts](../src/pacing.ts)): about 1.2 s with the default 0.5 s hold,
-the time its words take to read. Its power tags go over the first half of that fade and the
-labels come in over the second, so the big tag and the row it stands on never show together. A longer hold would take that second from every race; the
-race's first second is the balls dropping to their first layer, which the title fades over.
-The watermark is drawn after it, so it stays over the wash.
+It shows whole through any hold and the race's first 0.9 s, then goes over 0.6 s
+(`openingShown` in [pacing.ts](../src/pacing.ts)): the words and the question over the first
+quarter of that, on panels still whole, then the bare panels over the second, so a ball is
+never seen through a fading letter; the race's labels come in over the second half, where the
+panels stood. About 1.5 s in all, the time its words take to read, while the first layer, kept
+small, breaks in about a second ([matchups and balancing](./matchups-and-balancing.md) §3).
+All of it but the wash shakes with the race, so a panel never slides off its box. The
+watermark is drawn after it, so it stays over the wash.
 
 ⚠️ It is frame 0: the frame a looping video fades back into (§6), and the home page's
 still, its looks and the share image (remade with it, [website](./website.md) §5).
@@ -422,3 +445,4 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-11-02 - the follow button's tap: Microsoft's 3D 👆 (public/hand/) that strikes, presses and lets go, in the race too; a ripple, the words rolling to FOLLOWING, a bounce and a burst instead of the ring.
 - 2026-11-02 - a soft afterglow behind every ball in every look (paper's comet trail gone); NEXT HIT for DAMAGE on the chips and the stats line; BALLS for a crowd; a crowd of more than 24 drawn plain; the golden ratio ball's φ.
 - 2026-10-30 - the looks come in the order paper, night, cards: in the studio, the admin's plan form, a plan's words and the home page.
+- 2026-11-03 - the opening title on panels: each ball's tag, name and what it does (`rule`) on an opaque panel in its tint across the top of its box, over the strip where the ball comes down to its first hits; the race's VS over the wash and the question in a gold-on-ink pill under it, clear of the watermark; the words go before the panels. A damage number takes away any it would touch: nothing is drawn through or over anything else.
