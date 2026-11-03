@@ -30,7 +30,7 @@ every field and keeps the texts with the video; the path after it is ignored the
 | `Winner: …` | **for you only**: the story, never told (see *No spoilers*) |
 | `Lead changes: N` | a fact you may use, within the spoiler rules |
 | `Video: 45 s, paper look, narrator and music` | the length is a fact you may use; the look and the sound are not for viewers |
-| `First frame: the two names, VS and "…"` | the question the video opens on, which the narrator asks too: the posts pose the same choice |
+| `First frame: the two names with what each does, VS and "…"` | the question the video opens on, which the narrator asks too: the posts pose the same choice. The cover already says each ball's rule ("DOUBLES EVERY HIT"), so a title can lean on it |
 | `Last line on the winner card: "…"` | what the video ends on: the posts' closing question agrees with it, without copying it |
 | `Asks viewers to follow: …` | the video asks for a follow itself, with a button and the narrator's "Follow for more!": the posts need not ask again |
 | `Seed`, `File`, `Library id` | for the JSON only (`file`, `video`), never in a text |

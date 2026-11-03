@@ -50,7 +50,7 @@ export function postPrompt(video: Pick<VideoSummary, 'title' | 'fileName' | 'vid
   }
   if (cfg) {
     lines.push(`Video: ${video.videoLength} s, ${LOOK_LABELS[cfg.look.skin].toLowerCase()} look, ${SOUND_LABELS[cfg.sound.track].toLowerCase()}`);
-    lines.push(`First frame: the two names, VS and "${openingQuestion(cfg)}"`);
+    lines.push(`First frame: the two names with what each does, VS and "${openingQuestion(cfg)}"`);
     if (cfg.look.cta.trim()) lines.push(`Last line on the winner card: "${cfg.look.cta.trim()}"`);
     if (cfg.look.follow) lines.push(`Asks viewers to follow: a follow button in the race and under the winner card, and the narrator's "${FOLLOW_LINE}"`);
   } else lines.push(`Video: ${video.videoLength} s`);

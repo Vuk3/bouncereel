@@ -312,7 +312,10 @@ panel's 256 and one without stands in its middle.
 ⚠️ **Nothing of the race shows through the words.** The panel hides whatever is under it
 whole: a ball, a hit number, debris. Over bare words a ball's edge showed below a letter and
 read as a stray glyph on the cover. The strip it leaves over the floor is where the ball is
-seen from the first frame, coming down to its first hits.
+seen from the first frame, coming down to its first hits. On the cover itself, the first 0.05 s
+(`COVER`, so the file's first frame whichever it is), a ball only partly in that strip is left
+out (`shownBodies`): half a ball under a panel's edge is a cut ball on a thumbnail, where a moment
+later it is a ball going behind the panel.
 
 **The question** is gold capitals (`TAG_FILL`) on the look's ink, in a pill as tall as a name
 pill (62 px), Rubik 900 from 44 px down to 30 to fit 820 px; a longer one takes two lines at
@@ -445,4 +448,4 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-11-02 - the follow button's tap: Microsoft's 3D 👆 (public/hand/) that strikes, presses and lets go, in the race too; a ripple, the words rolling to FOLLOWING, a bounce and a burst instead of the ring.
 - 2026-11-02 - a soft afterglow behind every ball in every look (paper's comet trail gone); NEXT HIT for DAMAGE on the chips and the stats line; BALLS for a crowd; a crowd of more than 24 drawn plain; the golden ratio ball's φ.
 - 2026-10-30 - the looks come in the order paper, night, cards: in the studio, the admin's plan form, a plan's words and the home page.
-- 2026-11-03 - the opening title on panels: each ball's tag, name and what it does (`rule`) on an opaque panel in its tint across the top of its box, over the strip where the ball comes down to its first hits; the race's VS over the wash and the question in a gold-on-ink pill under it, clear of the watermark; the words go before the panels. A damage number takes away any it would touch: nothing is drawn through or over anything else.
+- 2026-11-03 - the opening title on panels: each ball's tag, name and what it does (`rule`) on an opaque panel in its tint across the top of its box, over the strip where the ball comes down to its first hits; the race's VS over the wash and the question in a gold-on-ink pill under it, clear of the watermark; the words go before the panels; the cover leaves out a ball half under a panel. A damage number takes away any it would touch: nothing is drawn through or over anything else.

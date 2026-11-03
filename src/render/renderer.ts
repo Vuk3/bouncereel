@@ -78,6 +78,13 @@ const OPENING_TAG = 1.2;
  */
 const BALL_ROOM = 84;
 /**
+ * The cover, seconds: the opening's first frames, the first of which a file starts on whichever it
+ * is (the thumbnail, the home page's still, the frame a loop fades into). On them only a ball
+ * wholly in that strip is drawn (`shownBodies`): one half under the panel is a cut ball on a still,
+ * where a moment later it is a ball going behind the panel.
+ */
+const COVER = 0.05;
+/**
  * The opening's name and its rule ("×1.618 EVERY HIT", `ruleOf`) at most, in px: a long one shrinks
  * to 800 px. Laid out on Rubik's capitals, 0.7 of the size, so tag, name and rule stand evenly in
  * the panel with a tag (220 px of its 256) or without.
@@ -308,6 +315,8 @@ export class Renderer {
    * title's panels have gone from where the chips and rows stand (drawOpening).
    */
   private labels = 1;
+  /** This frame is the cover (COVER): a ball partly under the opening's panel is left out. */
+  private cover = false;
 
   constructor(canvas: HTMLCanvasElement) {
     canvas.width = W;
@@ -416,6 +425,7 @@ export class Renderer {
     }
     this.leadAge += dt;
     this.labels = Math.max(0, 1 - 2 * (overlay.opening ?? 0));
+    this.cover = (overlay.opening ?? 0) >= 1 && world.time < COVER;
 
     ctx.globalAlpha = 1;
     ctx.drawImage(this.page(skin), 0, 0);
@@ -1105,8 +1115,9 @@ export class Renderer {
     // The glow reaches further as the damage grows: a ball that hits for quadrillions should look it.
     const digits = Math.min(19, t.damage.toString().length);
     const reach = 1.5 + (1.7 * digits) / 19;
-    for (const b of t.bodies) this.drawAfterglow(b, t.color, 0.42 * strength);
-    for (const b of t.bodies) {
+    const bodies = this.shownBodies(t);
+    for (const b of bodies) this.drawAfterglow(b, t.color, 0.42 * strength);
+    for (const b of bodies) {
       const r = b.r * reach;
       const glow = ctx.createRadialGradient(b.x, b.y, b.r * 0.6, b.x, b.y, r);
       glow.addColorStop(0, rgba(t.color, Math.min(0.62, 0.32 * strength)));
@@ -1117,7 +1128,7 @@ export class Renderer {
       ctx.fill();
     }
     const mark = crowded ? '' : t.rule.sequence === 'ones' ? strengthMark(t.rule.strength) : SEQUENCES[t.rule.sequence].mark;
-    for (const b of t.bodies) {
+    for (const b of bodies) {
       const sphere = ctx.createRadialGradient(b.x - b.r * 0.35, b.y - b.r * 0.4, b.r * 0.1, b.x, b.y, b.r);
       sphere.addColorStop(0, mix(t.color, WHITE, 0.55));
       sphere.addColorStop(0.45, t.color);
@@ -1164,9 +1175,10 @@ export class Renderer {
   /** A swarm's balls, in every look: the ball's colour in an ink ring with a highlight, and nothing behind them. */
   private drawPlainBalls(t: Team, ink: string): void {
     const ctx = this.ctx;
+    const bodies = this.shownBodies(t);
     ctx.fillStyle = t.color;
     ctx.beginPath();
-    for (const b of t.bodies) {
+    for (const b of bodies) {
       ctx.moveTo(b.x + b.r, b.y);
       ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
     }
@@ -1178,7 +1190,7 @@ export class Renderer {
     ctx.beginPath();
     // All in one path: each highlight starts where its ellipse does, so none is joined to the last.
     const [cos, sin] = [Math.cos(-0.6), Math.sin(-0.6)];
-    for (const b of t.bodies) {
+    for (const b of bodies) {
       const [cx, cy] = [b.x - b.r * 0.34, b.y - b.r * 0.38];
       ctx.moveTo(cx + b.r * 0.26 * cos, cy + b.r * 0.26 * sin);
       ctx.ellipse(cx, cy, b.r * 0.26, b.r * 0.18, -0.6, 0, Math.PI * 2);
@@ -1504,6 +1516,13 @@ export class Renderer {
     ctx.fillRect(BOX.left, top, width, 5);
   }
 
+  /** The balls a frame draws: every one, but on the cover only those wholly under the opening's panel (COVER). */
+  private shownBodies(t: Team): Body[] {
+    if (!this.cover) return t.bodies;
+    const edge = t.panel.floor - BALL_ROOM;
+    return t.bodies.filter((b) => b.y - b.r >= edge);
+  }
+
   private drawBalls(t: Team, deck: Deck): void {
     const ctx = this.ctx;
     if (t.rule.count > SWARM) {
@@ -1512,8 +1531,9 @@ export class Renderer {
     }
     // Brighter on the dark cards, where the same light would barely show.
     const glow = (deck.dark ? 0.55 : 0.36) * (t.bodies.length > CROWD ? 0.4 : 1);
-    for (const b of t.bodies) this.drawAfterglow(b, t.color, glow);
-    for (const b of t.bodies) {
+    const bodies = this.shownBodies(t);
+    for (const b of bodies) this.drawAfterglow(b, t.color, glow);
+    for (const b of bodies) {
       ctx.beginPath();
       ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
       ctx.fillStyle = t.color;
