@@ -280,6 +280,12 @@ export interface Overlay {
   start?: CanvasImageSource;
   /** The free plan's mark (drawWatermark): the studio passes its plan's `watermark`. */
   watermark?: boolean;
+  /**
+   * The free plan's preview marks (drawPreviewMarks): the site's host across the whole frame while
+   * the studio plays a preview, never in a take, so a screen recording of the preview is no video
+   * to post and the file carries the watermark alone.
+   */
+  preview?: boolean;
   /** 0..1 of the opening title over the cards (drawOpening; pacing.ts `openingShown`). */
   opening?: number;
   /** The lead changes to mark, from the prediction (Outcome.leads): each shows LEAD CHANGE as the race reaches it. */
@@ -298,6 +304,8 @@ export class Renderer {
   readonly ctx: CanvasRenderingContext2D;
   effects = new Effects('');
   private pages = new Map<Skin, HTMLCanvasElement>();
+  /** The preview marks, painted once per colour (paintPreviewMarks): a frame only lays them on. */
+  private previewMarks = new Map<string, HTMLCanvasElement>();
   /** The hand that taps the follow button (HAND_SRC), asked for once a video with the button is set up. */
   private hand: HTMLImageElement | null = null;
   /** Per team: how bright the top layer flashes after a hit. */
@@ -476,6 +484,29 @@ export class Renderer {
     }
     // Over everything, the loop's fade too: the mark holds still while the frame changes under it.
     if (overlay.watermark) this.drawWatermark(skin);
+    if (overlay.preview) this.drawPreviewMarks(skin);
+  }
+
+  /**
+   * The free plan's preview marks: the site's host tilted 30° and repeated over the whole frame, at
+   * 14 %, so the race still reads and a screen recording cannot be posted. The owner chose the
+   * strength from four drawn ones: at 7 % a recording could still pass, at 17 % the race tired the
+   * eye. Ink on paper and cards, white on night, as the watermark.
+   */
+  private drawPreviewMarks(skin: Skin): void {
+    const color = skin === 'night' ? WHITE : INK;
+    let layer = this.previewMarks.get(color);
+    if (!layer) {
+      layer = paintPreviewMarks(color);
+      // Painted before Rubik has arrived, a layer would keep the fallback face for good: it is used
+      // for this frame then, and kept only once the face is there.
+      if (document.fonts.check(PREVIEW_MARK_FONT)) this.previewMarks.set(color, layer);
+    }
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.drawImage(layer, 0, 0);
+    ctx.restore();
   }
 
   /**
@@ -2023,6 +2054,30 @@ function readableOn(hex: string): string {
 function easeOutBack(t: number): number {
   const c = 1.7;
   return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2;
+}
+
+const PREVIEW_MARK_FONT = `700 56px ${FONT}`;
+
+/**
+ * The preview marks at full strength (drawPreviewMarks fades them): rows 182 px apart, each a half
+ * step along from the last, tilted about the centre and wide enough to reach the corners (the
+ * frame's half diagonal is 1,101 px).
+ */
+function paintPreviewMarks(color: string): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const g = canvas.getContext('2d')!;
+  g.fillStyle = color;
+  g.font = PREVIEW_MARK_FONT;
+  g.textBaseline = 'middle';
+  g.translate(W / 2, H / 2);
+  g.rotate(-Math.PI / 6);
+  const step = g.measureText(WATERMARK).width + 90;
+  for (let y = -H, row = 0; y <= H; y += 182, row++) {
+    for (let x = -1.6 * W + (row % 2) * (step / 2); x <= 1.6 * W; x += step) g.fillText(WATERMARK, x, y);
+  }
+  return canvas;
 }
 
 /** The cards and night page, painted once: a three-colour gradient with a faint dot grid. */

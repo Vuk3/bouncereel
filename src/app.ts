@@ -123,6 +123,11 @@ export class App {
   private paused = true;
   private starting = false;
   /**
+   * From the press of Record until its recorder exists: the preview marks are already off, so the
+   * canvas the recorder starts from never has them (record, drawFrame).
+   */
+  private takePending = false;
+  /**
    * The "Play with the narrator" switch: off, Play and Restart run with every sound but the
    * narrator, so nothing is generated and the race starts at once. Record ignores it.
    */
@@ -173,6 +178,7 @@ export class App {
   constructor(account: AccountResponse, plans: PublicPlan[] | null) {
     this.account = account;
     this.features = account.features;
+    $('#preview-note').hidden = !this.features.watermark;
     this.plans = plans;
     this.cfg = this.fitPlan(this.load());
     this.before = { a: structuredClone(this.cfg.a), b: structuredClone(this.cfg.b) };
@@ -242,26 +248,33 @@ export class App {
       this.advance(dt);
       this.sayOutroWhenFree();
     }
+    this.drawFrame(this.paused ? 0 : dt);
+    this.updateStatus();
+    this.syncTimeline();
+    this.syncRecBar();
+    this.watchSound();
+    requestAnimationFrame((t) => this.frame(t));
+  }
+
+  /** One frame on the canvas: the preview, or the take Record captures from it. */
+  private drawFrame(dt: number): void {
     const showing = this.phase === 'winner' || this.phase === 'done';
-    this.renderer.draw(this.world, this.cfg, this.paused ? 0 : dt, {
+    this.renderer.draw(this.world, this.cfg, dt, {
       winner: showing ? Math.min(1, this.winnerAge / 0.35) : 0,
       age: showing ? this.winnerAge : 0,
       // The end of a looping video: the first frame fades in over most of END_PAD and holds for
       // the last few frames, so the file's last frame is the first one and the loop has no seam.
       loop: this.phase === 'done' && this.cfg.look.loop ? this.phaseAge / (END_PAD * 0.8) : 0,
       start: this.still.canvas,
-      // The preview shows what Record writes: on a plan with the watermark, both carry it.
+      // On a plan with the watermark, the preview and the file both carry it; the preview alone
+      // has the marks across it too (#preview-note says so), gone from the press of Record on.
       watermark: this.features.watermark,
+      preview: this.features.watermark && !this.recorder && !this.takePending,
       opening: openingShown(this.raceAt === null ? null : this.elapsed - this.raceAt),
       leads: this.outcome.leads,
       margin: this.margin,
       follow: this.cfg.look.follow ? { at: this.followTime } : undefined,
     });
-    this.updateStatus();
-    this.syncTimeline();
-    this.syncRecBar();
-    this.watchSound();
-    requestAnimationFrame((t) => this.frame(t));
   }
 
   private advance(dt: number): void {
@@ -485,13 +498,19 @@ export class App {
     if (day.limit !== null && day.limit - day.used === 1 && !(await this.confirmRecord(day.limit))) return;
     // The server takes the video once the narration is ready and the sound flows, before the
     // first frame (soundFlowing, takeVideo). The narrator switch is Play's: Record follows Sound alone.
-    if (!(await this.play(true, true, async () => (await this.soundFlowing()) && this.takeVideo()))) return;
+    // The preview marks go now and the canvas is drawn without them at once: the recorder captures
+    // the canvas from whatever it holds, and the take must not open on a marked frame.
+    this.takePending = true;
+    this.drawFrame(0);
     try {
+      if (!(await this.play(true, true, async () => (await this.soundFlowing()) && this.takeVideo()))) return;
       // Silent: a file with no sound track at all (docs/recording-and-export.md says why).
       this.recorder = new Recorder(this.canvas, this.cfg.sound.track === 'silent' ? null : this.audio!.stream);
     } catch (err) {
       this.flash(err instanceof Error ? err.message : String(err));
       return;
+    } finally {
+      this.takePending = false;
     }
     this.startTake();
   }

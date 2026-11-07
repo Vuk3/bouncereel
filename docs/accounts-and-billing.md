@@ -240,7 +240,7 @@ again on every request, which is what protects the data.
 | `powers` | a ball with a power: the dice's switch, the Power field, the classics with one | the studio; Record refuses a matchup with one; the server on save |
 | `perDay` | videos a day, 1 or more; null is no limit. A day is the UTC calendar day: a new one starts at midnight UTC | the server as Record starts (`POST /api/account/day`, `claimDay`); the studio's Record button shows it |
 | `library` | videos kept; null is no limit | the server on save (inside the INSERT) |
-| `watermark` | a small BounceReel watermark (the mark and the site's host) between the two cards of every video ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)) | the studio: it draws the video, in the preview as in the file. The server cannot see the pixels; the [terms](../terms.html#licence) ask that it stays on |
+| `watermark` | a small BounceReel watermark (the mark and the site's host) between the two cards of every video ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)) | the studio: it draws the video, in the preview as in the file, and the preview alone has the preview marks across it. The server cannot see the pixels; the [terms](../terms.html#licence) ask that it stays on |
 | `follow` | the follow button: the studio's Ask viewers to follow switch (`look.follow`), a follow button once in the race and under the winner card, and "Follow for more!" after the winner line ([look and layout](./look-and-layout.md#14-the-follow-button)). On every plan but Rookie (0009_follow_button.sql) | the studio (the switch is locked; a config made with it, from the library or a file, loads with it off); the server on save (`look.follow`) |
 | `allGames` | every game BounceReel makes, each new one as it comes out | nothing yet: ball races are the one game, and every plan makes it. A second game checks it before it opens |
 
@@ -271,9 +271,10 @@ worth posting, then record it. **Record takes the day's video from the server as
 (`POST /api/account/day`), once the narration is ready and before the first frame: `claimDay`
 takes one in a single conditional `UPDATE`, or answers `day_used` and nothing is recorded. So a
 second tab, a page left open since the last count, or a save that never arrives cannot make one
-more. Recording the screen still can, and gets the plan's look and watermark, which the
-preview carries too; nothing in a browser stops someone who changes the page's own code, since
-the video is made there. The save that follows does not count
+more. Recording the screen still can, but on a plan with the watermark the preview carries the
+preview marks across the whole frame, which the file never has, so that recording is no video to
+post ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)); nothing in a
+browser stops someone who changes the page's own code, since the video is made there. The save that follows does not count
 again, and deleting a video does not give the day's video back, since its MP4 was made. Before
 the day's last video the studio asks first ("Record this race? This uses your video for today…",
 `confirmRecord`), since it cannot be had back until tomorrow; on a plan with a daily limit the
@@ -518,3 +519,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-10-30 - the `follow` feature (0009_follow_button.sql: on every plan but the default one): the studio's Ask viewers to follow switch, locked on a plan without it, and checked on save.
 - 2026-11-07 - mail from `hello@bouncereel.com`, replies to the same address (Cloudflare Email Routing forwards it).
 - 2026-11-07 - sign-ups closed while the site is being finished (`SIGNUPS_OPEN`): the API answers 403 `signups_closed`, every "Start free" reads "Coming soon", /signup says the site opens soon, the plan cards wait alike; how to open them again.
+- 2026-11-07 - a screen recording of the free preview carries the preview marks, which the file never has.

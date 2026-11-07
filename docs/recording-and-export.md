@@ -71,7 +71,11 @@ clock, said 30.0 s. A warm device moves the clock within 12–66 ms, so the wait
   (sound 1.52 s short) and the same warning, which is how it was checked. A silent take is not
   watched: it has no sound to lose.
 - **On a plan with the watermark**, the frame Record captures carries it, as the preview
-  does ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)).
+  does, and none of the preview's marks across the frame
+  ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)). The recorder
+  takes the canvas from whatever it holds, so the marks go as Record is pressed: `record` sets
+  `takePending` and draws a frame without them (`drawFrame`) before anything else, and from then
+  until the take ends no frame has them.
 
 ## 2. Where it ends
 
@@ -202,3 +206,4 @@ falls.
 - 2026-10-27 - a stalled sound (the output device changing mid-take) is said on the bar as it happens and on the sheet after, with Record again; the bar asks not to connect or switch headphones.
 - 2026-10-30 - the text to copy after a take says when the video asks viewers to follow.
 - 2026-11-03 - the winner card ends 0.3 s after the narrator's last word, or at its hold, and no longer waits for the video's length; a narrated recording lands within about half a second of it.
+- 2026-11-07 - the preview marks go as Record is pressed, a frame drawn without them before the recorder starts, so no take opens on one.

@@ -281,7 +281,21 @@ look, under no platform's buttons (§9), and nothing of the race is drawn there;
 question stands under the VS for it (§11). Ink at
 68 % on paper and cards, white at 78 % on night. It is drawn last, over the loop's fade
 too, so it holds still while the frame changes under it. The preview draws it exactly as
-Record writes it, so what a free account sees is what its file gets.
+Record writes it.
+
+**The preview marks**, on the same plans and in the preview alone (`drawPreviewMarks`, the
+overlay's `preview`): the site's host in Rubik 700 56 px, tilted 30° and repeated over the whole
+frame in rows 182 px apart, each a half step along from the last, 90 px between the words, at
+14 % (ink on paper and cards, white on night), drawn after the watermark. They make a screen
+recording of the free preview no video to post, since Play is unlimited and Record is one a day
+([accounts and billing](./accounts-and-billing.md#6-plans-and-features)). The owner chose the strength
+from four drawn ones: at 7 % a recording could still pass, at 17 % the race tired the eye. The
+layer is painted once per colour and laid on each frame; painted before Rubik has loaded it is
+used for that frame only. **They are never in the file**: they go as Record is pressed, and the
+studio draws a frame without them at once, before the recorder starts from the canvas
+([recording and export](./recording-and-export.md)). Over the top of the preview, outside the
+canvas, the studio says so (`#preview-note`: "Preview only. Your video has no diagonal marks,
+just the small watermark in the middle."), hidden while a take records.
 
 **The mark** (`drawMark`): the violet ball with a fading comet trail, falling onto three
 sky-blue layers, the top one broken; drawn on the canvas on a 32-unit grid rather than
@@ -461,3 +475,4 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-11-03 - LAST LAYER! in a ball's name row for 2 s as it reaches its last layer, the row going before it and coming back after.
 - 2026-11-07 - the watermark says `bouncereel.com`, at the full 32 px.
 - 2026-11-07 - the site's PNG icons are drawn from favicon.svg, so a change to the mark makes them again.
+- 2026-11-07 - the preview marks: on a plan with the watermark, the site's host tilted 30° across the preview at 14 %, never in the file, with a note over the preview.

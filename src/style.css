@@ -1539,6 +1539,36 @@ a.button {
   height: 100%;
   background: #e8dbbe;
 }
+/*
+ * The free plan's note over the top of the preview (#preview-note): there, not under it, since the
+ * preview already takes all the height the screen has (.screen). The top of every frame is page
+ * with nothing of the race on it. Not in the file: the recorder takes the canvas alone.
+ */
+.preview-note {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  translate: -50% 0;
+  width: max-content;
+  max-width: calc(100% - 20px);
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
+}
+.preview-note b {
+  color: var(--ink);
+}
+.recording .preview-note {
+  display: none;
+}
 
 /*
  * Under the preview, this run's phases at their real lengths (app.ts buildTimeline): each phase a
