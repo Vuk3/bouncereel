@@ -223,7 +223,8 @@ export const SEQUENCES: Record<SequenceId, SequenceDef> = {
   },
   golden: {
     id: 'golden',
-    label: 'Golden ratio (×1.618)',
+    // The name alone, as every other label: the ×1.618 is the rule's and the brief's to say.
+    label: 'Golden ratio',
     hint: '1, 2, 3, 4, 7, 11, 18, 29…',
     noun: 'Golden Ratio',
     brief: 'hits 1.618 times harder every time',

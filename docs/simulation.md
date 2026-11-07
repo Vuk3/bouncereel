@@ -148,3 +148,4 @@ line was generated for the ball that wins, and balancing measures the race that 
   moves (`npm run tune` unchanged).
 - 2026-11-02 - crowds: a team may start with up to 200 balls (`count`), its extra balls from a stream of their own; a hit is its term times the ball's strength (Always the same at 1 to a million); the golden ratio (exact, as the Lucas numbers).
 - 2026-11-03 - the prediction says how the race was won (`decided`, `trailed`, `led`), for the comebacks balancing makes; read only, nothing in a race moves.
+- 2026-11-07 - the golden ratio's label is "Golden ratio", the name alone like the others (the ×1.618 stays in its rule and brief): the studio's picker, the Videos page, the winner card's "… reached", the narrator's "Both hit with … numbers" and the post text say it so.

@@ -322,17 +322,22 @@
   display: grid;
   gap: 8px;
 }
+/* One line always: a name too long for the column is cut with an ellipsis, the numbers never move under it. */
 .meter-label {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 4px 12px;
+  gap: 12px;
   font-size: 14px;
+  white-space: nowrap;
 }
 .meter-label span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--muted);
 }
 .meter-label strong {
+  flex: none;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }

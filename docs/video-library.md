@@ -176,7 +176,8 @@ address, redirects here. It shows the signed-in account's videos only.
   with a bar, and "Nobody finished" when a race timed out. Balls raced: every sequence, how
   many of the races it was in and how many it won ("4 videos · 3 won"), most raced first,
   with a bar for its share of the races, faint, and the share it won over it in full colour;
-  a video with the same sequence on both sides counts once. The ones not used yet stay at the
+  a video with the same sequence on both sides counts once. Each row is one line: a name too long
+  for the column ends in an ellipsis rather than pushing the numbers under it. The ones not used yet stay at the
   end as "not yet", to show what the next roll could try. Counted in the page from the list it
   already has (`winner` has been kept with every video since the first schema), so it needs
   no request or column of its own; hidden while the library has no race. Narrower than
@@ -292,3 +293,4 @@ by in a migration; `NewVideo` gets a variant per game, and `toSummary` in
 - 2026-10-26 - Who won beside Balls raced: how many races the top and the bottom ball won, and how many each sequence won, from the `winner` the list already carries.
 - 2026-10-30 - the follow button (`look.follow`) checked on save; the text a superadmin copies for posts says when a video asks viewers to follow.
 - 2026-11-02 - All on each row of the Videos page: ticks YouTube, TikTok and Instagram at once.
+- 2026-11-07 - a meter's row stays on one line (the name cut with an ellipsis when it must), and the golden ratio is named "Golden ratio" without its ×1.618.
