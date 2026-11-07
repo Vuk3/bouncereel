@@ -1,13 +1,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <!-- The phone's browser bar in the page's colour, in both themes (--bg in site.css and --paper
+         in style.css: change them together). The script below and src/ui/theme.ts switch it. -->
+    <meta name="theme-color" content="#eff1f5" data-light="#eff1f5" data-dark="#07090e" />
     <!-- Behind the sign-in: out of search results (the Worker also sends X-Robots-Tag). -->
     <meta name="robots" content="noindex, nofollow" />
     <script>
       // A saved dark theme applies before first paint (src/ui/theme.ts; light is the default).
       try {
-        if (localStorage.getItem('bouncereel:theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+        if (localStorage.getItem('bouncereel:theme') === 'dark') {
+          document.documentElement.dataset.theme = 'dark';
+          const bar = document.querySelector('meta[name="theme-color"]');
+          bar.content = bar.dataset.dark;
+        }
       } catch {}
     </script>
     <link rel="stylesheet" href="/src/style.css" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- One drawing at three sizes (scripts/stills.ts): the tab's 32 px, 512 px for search results,
+         180 px for the iOS home screen. -->
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

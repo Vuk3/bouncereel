@@ -18,7 +18,7 @@ the legal pages. Accounts, plans and the admin area are in
 | indexing: robots, noindex, the sitemap | `INDEXED` in [shared/site.ts](../shared/site.ts), [public/robots.txt](../public/robots.txt), [public/sitemap.xml](../public/sitemap.xml), [public/_headers](../public/_headers), `noindex` in a page's `site:head` line (§7) |
 | an old address that moved | [public/_redirects](../public/_redirects) |
 | the contact address, the canonical origin, who runs the site (the legal pages) | [shared/site.ts](../shared/site.ts) `CONTACT_EMAIL`, `SITE_URL`, `OPERATOR_NAME`, `OPERATOR_PLACE` |
-| the logo | [public/mark.svg](../public/mark.svg) (`.mark` in site.css, `.logo` in src/style.css), [public/favicon.svg](../public/favicon.svg); on a canvas `drawMark` in [src/render/renderer.ts](../src/render/renderer.ts) |
+| the logo | [public/mark.svg](../public/mark.svg) (`.mark` in site.css, `.logo` in src/style.css), [public/favicon.svg](../public/favicon.svg) and the PNG icons drawn from it (§5); on a canvas `drawMark` in [src/render/renderer.ts](../src/render/renderer.ts) |
 
 ## 1. Pages and addresses
 
@@ -60,7 +60,7 @@ plugin in [vite.config.ts](../vite.config.ts), `sitePartials`, from
 
 | Placeholder | Becomes |
 | --- | --- |
-| `<!-- site:head /path -->` | charset, viewport, the canonical URL (`SITE_URL` + the path), Open Graph and Twitter tags built from the page's own `<title>` and `<meta name="description">`, the favicon, the font preload, the boot script, the stylesheet. `<!-- site:head /path noindex -->` adds a robots `noindex` |
+| `<!-- site:head /path -->` | charset, viewport, the canonical URL (`SITE_URL` + the path), Open Graph and Twitter tags built from the page's own `<title>` and `<meta name="description">`, the browser bar's colour (§3), the icons (§5), the sitemap link, the font preload, the boot script, the stylesheet. `<!-- site:head /path noindex -->` adds a robots `noindex` |
 | `<!-- site:header -->`, `<!-- site:footer -->` | the header (Pricing, Sign in, Start free / Open studio, the theme toggle) and the footer (the plans, the legal pages, the contact address) |
 | `<!-- app:head -->`, `<!-- app:theme -->`, `<!-- admin:nav -->` | the same for the account page and the admin area, which use the studio's stylesheet |
 | `%CONTACT_EMAIL%`, `%SITE_URL%`, `%SITE_HOST%`, `%OPERATOR_NAME%`, `%OPERATOR_PLACE%` | the constants in [shared/site.ts](../shared/site.ts) (`%SITE_HOST%` is the address without `https://`, as the legal pages name the site) |
@@ -98,6 +98,12 @@ modern and plain, so the videos (which have looks of their own) are what stands 
   trail, falling onto three sky-blue layers, the top one broken: the video's own picture in
   one shape. It sits before the name in the header, the studio and the admin area, with no
   tile behind it; the favicon is the same mark on an ink tile, so it reads on any tab.
+
+The phone's browser bar takes the page's colour (`<meta name="theme-color">` in every head:
+`#eff1f5`, and `#07090e` in the dark theme, from its `data-dark`): the head's boot script sets
+it before first paint, and the theme toggle with the theme
+([src/ui/theme.ts](../src/ui/theme.ts)). ⚠️ It repeats `--bg` (site.css) and `--paper`
+(style.css) and has to change with them.
 
 The pieces, each used where it carries information:
 
@@ -329,6 +335,7 @@ All drawn by the studio's renderer, so they are what a video looks like, by
 | [public/hero/first-frame-4.webp](../public/hero/first-frame-4.webp) | the hero's first frame, its opening title and all: Fibonacci vs Slow Factorial balanced to 30 s, night; also the first paint of the steps' phone and of step 3, whose defaults are that race. The `-4` is a new name for a frame that changed in a way that shows (the title, its lighter wash, then its panels): a browser keeps `/hero` a week, and the old name would show the old still under the new first frame | 540×960, ~34 KB |
 | [public/looks/](../public/looks/) `paper.webp`, `cards.webp`, `night.webp` | the same race 55 % of the way, the top box as the studio's look picker crops it | 480×416, 15–17 KB each |
 | [public/og.png](../public/og.png) | the Open Graph and Twitter image, as the hero: the ink, the mark and the name, the headline, one line on what it makes, and at the bottom the address (`SITE_HOST`, narrowed if it would reach the phones), then a violet rule and "Free to start"; two phones (night, paper) in the balls' light. Made again when the address changes | 1200×630, ~300 KB |
+| [public/favicon-32.png](../public/favicon-32.png), [public/favicon.png](../public/favicon.png), [public/apple-touch-icon.png](../public/apple-touch-icon.png) | the icons every head links (the app's too), one drawing at three sizes: [public/favicon.svg](../public/favicon.svg) drawn from the vector at each size, never scaled down from a bigger PNG (that is what makes a favicon soft in the tab strip). 32 px for the tab, with the tile's rounded corners; 512 px for Google's results and Search Console and 180 px for the iOS home screen, filled to the edge with the ink, since those crop or round the square themselves and iOS turns a transparent corner black. The SVG is no longer linked: the PNGs are what every browser and Google read | 32, 512 and 180 px square |
 | [brand/profile.png](../brand/profile.png) | not for the site: the profile picture for Instagram, YouTube and TikTok, the mark on the ink in the balls' light, sized to stay inside the circle each shows it in (offered at `./brand/profile.png` on the stills page) | 1080×1080, ~940 KB |
 | [public/voice/opening-heart.m4a](../public/voice/opening-heart.m4a) | not an image: the narrator card's opening, the classic's `introLine` said by Kokoro in Heart, the studio's own narrator (the page's "Make the opening" button; a WAV, then `ffmpeg -i opening-heart.wav -ac 1 -c:a aac -b:a 48k -movflags +faststart opening-heart.m4a`) | 16.8 s, AAC 48 kb/s mono, ~95 KB |
 | [public/gallery/](../public/gallery/) `primes-vs-squares-3`, `doubling-vs-fibonacci-3`, `tribonacci-vs-tripling-3`, each `.mp4` and `.webp` (`-3` for the same reason as the still: recorded again when the first frame changed) | not from the stills page: the gallery, three takes made with Record on an account with every look (the built-in matchup of that name, 30 s, music only or silent, since the file drops its sound; paper, cards and night; ⚠️ Chrome holds a page's second download until it is allowed, so take each file as it lands), then `ffmpeg -i take.mp4 -an -vf fps=30,scale=540:960:flags=lanczos -c:v libx264 -profile:v high -preset veryslow -tune animation -crf 30 -pix_fmt yuv420p -movflags +faststart <name>.mp4`; the poster is the take's first frame as a WebP at 0.86, made through a canvas in the browser (this ffmpeg has no WebP encoder). Check a take's frame 0 before using it: it must be the race's first, the opening title over it | 540×960, 30 fps, no sound, 0.87–1.03 MB; posters 31–36 KB |
@@ -485,3 +492,4 @@ used for.
 - 2026-11-02 - the sequences card lists fifteen sequences and 79 pairings (Golden ratio added); the hero rolls and plays no crowds.
 - 2026-11-03 - the opening title on panels, with what each ball does, the question under the VS, and the race starting on a small layer with no hold, so the still (`hero/first-frame-4.webp`), the looks, the share image and the gallery (`<name>-3`, 0.87–1.03 MB) were made again; the cover leaves out a ball half under a panel, and the gallery has the 2 s winner card, LAST LAYER! and races won from behind.
 - 2026-11-07 - on `bouncereel.com` and listed: `INDEXED` on, robots.txt disallowing only `/app`, `/account`, `/admin` and `/api` and naming `public/sitemap.xml` (the eight public pages), `X-Robots-Tag` off the `/*` rule; the share image made again with the new address.
+- 2026-11-07 - the icons as on vukcvetkovic-web: `favicon-32.png`, `favicon.png` (512 px) and `apple-touch-icon.png` drawn from favicon.svg on the stills page and linked from every head instead of the SVG; the browser bar's colour (`theme-color`) follows the theme; a `rel="sitemap"` link on the public pages.

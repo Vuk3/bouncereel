@@ -1,6 +1,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
+    <!-- The phone's browser bar in the page's colour, in both themes (--bg in site.css and --paper
+         in style.css: change them together). The script below and src/ui/theme.ts switch it. -->
+    <meta name="theme-color" content="#eff1f5" data-light="#eff1f5" data-dark="#07090e" />
     %ROBOTS%
     <link rel="canonical" href="%URL%" />
     <meta property="og:type" content="website" />
@@ -16,14 +19,23 @@
     <meta name="twitter:title" content="%TITLE%" />
     <meta name="twitter:description" content="%DESCRIPTION%" />
     <meta name="twitter:image" content="%SITE_URL%/og.png" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- One drawing at three sizes (scripts/stills.ts): the tab's 32 px, 512 px for search results,
+         180 px for the iOS home screen. -->
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap.xml" />
     <link rel="preload" href="/fonts/rubik-latin.woff2" as="font" type="font/woff2" crossorigin />
     <script>
       // Before first paint: a saved dark theme (src/ui/theme.ts; light is the default), and
       // whether this browser has a session, from the hint cookie the Worker sets beside the
       // session (worker/auth/session.ts). A hint only: it swaps "Sign in" for "Open studio".
       try {
-        if (localStorage.getItem('bouncereel:theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+        if (localStorage.getItem('bouncereel:theme') === 'dark') {
+          document.documentElement.dataset.theme = 'dark';
+          const bar = document.querySelector('meta[name="theme-color"]');
+          bar.content = bar.dataset.dark;
+        }
       } catch {}
       if (/(?:^|;\s*)br_hint=1/.test(document.cookie)) document.documentElement.dataset.member = '';
     </script>

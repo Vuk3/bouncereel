@@ -287,7 +287,8 @@ Record writes it, so what a free account sees is what its file gets.
 sky-blue layers, the top one broken; drawn on the canvas on a 32-unit grid rather than
 loaded from [public/mark.svg](../public/mark.svg), so a frame never waits for an image.
 ⚠️ The two are one drawing: a change to one goes to the other, and to
-[public/favicon.svg](../public/favicon.svg) (the same mark on a tile).
+[public/favicon.svg](../public/favicon.svg) (the same mark on a tile), from which the stills page
+draws the site's PNG icons again ([website](./website.md#5-the-images)).
 
 ## 11. The first second
 
@@ -459,3 +460,4 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-11-03 - the opening title on panels: each ball's tag, name and what it does (`rule`) on an opaque panel in its tint across the top of its box, over the strip where the ball comes down to its first hits; the race's VS over the wash and the question in a gold-on-ink pill under it, clear of the watermark; the words go before the panels; the cover leaves out a ball half under a panel. A damage number takes away any it would touch: nothing is drawn through or over anything else.
 - 2026-11-03 - LAST LAYER! in a ball's name row for 2 s as it reaches its last layer, the row going before it and coming back after.
 - 2026-11-07 - the watermark says `bouncereel.com`, at the full 32 px.
+- 2026-11-07 - the site's PNG icons are drawn from favicon.svg, so a change to the mark makes them again.

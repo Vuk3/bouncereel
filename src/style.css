@@ -24,7 +24,7 @@
  * white, so the eye finds the way forward.
  */
 :root {
-  --paper: light-dark(#eff1f5, #07090e);
+  --paper: light-dark(#eff1f5, #07090e); /* the site's --bg, and the theme-color tag in every head */
   --surface: light-dark(#ffffff, #10131b);
   --sunken: light-dark(#f4f5f8, #161a24);
   --raised: light-dark(#ffffff, #1b2030);

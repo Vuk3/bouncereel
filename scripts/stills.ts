@@ -157,7 +157,30 @@ async function main(): Promise<void> {
   drawMark(av, 540 - 16 * k, 540 - 17 * k, 680);
   offer(avatar, 'brand/profile.png', 'image/png', undefined, '.');
 
-  // 5. The classic's opening in the default voice, for the home page's narrator card: a WAV here,
+  // 5. The site's icons, one drawing at three sizes: public/favicon.svg (the mark on its ink tile),
+  // drawn from the vector at each size, never scaled down from a larger PNG, which is what makes a
+  // favicon look soft in the tab strip. 32 px is the tab's, with the tile's rounded corners; 512 px
+  // (Google's results and Search Console) and the 180 px touch icon (iOS home screen) are filled to
+  // the edge with the ink, since those crop or round the square themselves and iOS turns a
+  // transparent corner black.
+  const tab = new Image();
+  tab.src = '/favicon.svg';
+  await tab.decode();
+  const icon = (size: number, square: boolean) => {
+    const canvas = Object.assign(document.createElement('canvas'), { width: size, height: size });
+    const ctx = canvas.getContext('2d')!;
+    if (square) {
+      ctx.fillStyle = '#0b0e16';
+      ctx.fillRect(0, 0, size, size);
+    }
+    ctx.drawImage(tab, 0, 0, size, size);
+    return canvas;
+  };
+  offer(icon(32, false), 'favicon-32.png', 'image/png');
+  offer(icon(512, true), 'favicon.png', 'image/png');
+  offer(icon(180, true), 'apple-touch-icon.png', 'image/png');
+
+  // 6. The classic's opening in the default voice, for the home page's narrator card: a WAV here,
   // an AAC file under public/voice/ after ffmpeg (docs/website.md). On a press, since Kokoro
   // downloads its model the first time.
   const make = Object.assign(document.createElement('button'), { type: 'button', textContent: `Make the opening (Kokoro, ${VOICES[0].name})` });

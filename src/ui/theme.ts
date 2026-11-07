@@ -17,6 +17,9 @@ export function bindThemeToggle(button: HTMLElement): void {
     const dark = root.dataset.theme !== 'dark';
     if (dark) root.dataset.theme = 'dark';
     else delete root.dataset.theme;
+    // The phone's browser bar follows the page (its two colours are on the tag, in every head).
+    const bar = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (bar) bar.content = (dark ? bar.dataset.dark : bar.dataset.light) ?? bar.content;
     try {
       localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
     } catch {

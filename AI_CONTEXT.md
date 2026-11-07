@@ -287,7 +287,8 @@ takes effect when it passes, with nothing scheduled.
 - **The logo is one drawing in three places**: [public/mark.svg](public/mark.svg),
   [public/favicon.svg](public/favicon.svg) (on an ink tile) and `drawMark` in
   [renderer.ts](src/render/renderer.ts), which draws it on canvases (the watermark, the share
-  image). Change all three together.
+  image). Change all three together, then make the PNG icons again from favicon.svg on the
+  stills page ([website](docs/website.md#5-the-images)).
 - **The site's images are drawn by the renderer** ([scripts/stills.ts](scripts/stills.ts)):
   remake them after a change to the renderer, the layout or the first built-in matchup, or the
   hero's still frame no longer matches its first live frame ([website](docs/website.md#5-the-images)).
