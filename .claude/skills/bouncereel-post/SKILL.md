@@ -110,7 +110,8 @@ treated as one.
 
 ### Ask, do not instruct
 
-The description and the captions end on a question between the two (before their hashtags),
+The description and the captions end on a question between the two (before their hashtags,
+and in the description before its credit line),
 made concrete with the colours when they can be told apart: "green or purple?" rather than
 "who will win?". No text gives an instruction:
 no "Comment green below", "drop a 🟢", "like if", "tag a friend", "follow for more". Meta
@@ -150,8 +151,9 @@ same numbers is fine: doubling is powers of two.
   characters carry it even when the rest is cut: the balls first, then the hook. When the two
   names leave no room for the hook in those 40, name the balls by sequence or colour.
 - `description`: the Shorts feed does not show it; search reads it. One or two sentences that
-  say what the video is (*Words people search*) and end on the question, then one line of 3–5
-  hashtags: the matchup's first, since only the first three show above the title on the watch
+  say what the video is (*Words people search*) and end on the question, then the credit line
+  `Made with bouncereel.com` on its own line, exactly so (the site's address, `SITE_HOST` in
+  shared/site.ts), then one line of 3–5 hashtags: the matchup's first, since only the first three show above the title on the watch
   page, and `#shorts` last (YouTube files a vertical clip under Shorts by itself, so the tag
   only costs a place).
 - `tags`: 5–10, lowercase, no `#`, under 500 characters together. YouTube says tags play a
@@ -214,7 +216,7 @@ a text is `\"`, no trailing commas.
   "file": "nova-vs-blaze-seed-k3x9.mp4",
   "youtube": {
     "title": "…",
-    "description": "…\n#ballrace … #shorts",
+    "description": "…\nMade with bouncereel.com\n#ballrace … #shorts",
     "tags": ["ball race", "…"],
     "pinnedComment": "…"
   },
@@ -291,6 +293,8 @@ const texts = [t.youtube.title, t.youtube.description, t.youtube.pinnedComment, 
 check("title <= 60", n(t.youtube.title) <= 60, n(t.youtube.title));
 check("youtube hashtags 3-5", h(t.youtube.description) >= 3 && h(t.youtube.description) <= 5, h(t.youtube.description));
 check("#shorts last", (t.youtube.description.match(/#\w+/g) || []).pop() === "#shorts", "");
+check("credit line before the hashtags", t.youtube.description.split("\n").slice(-2)[0] === "Made with bouncereel.com", "");
+check("site only in the description", !texts.filter((s) => s !== t.youtube.description).some((s) => /bouncereel\.com/i.test(s)), "");
 check("tags 5-10", t.youtube.tags.length >= 5 && t.youtube.tags.length <= 10, t.youtube.tags.length);
 check("tags lowercase, < 500", t.youtube.tags.every((x) => x === x.toLowerCase()) && t.youtube.tags.join(",").length < 500, t.youtube.tags.join(",").length);
 check("tiktok < 250", n(t.tiktok.caption) < 250, n(t.tiktok.caption));
@@ -317,5 +321,6 @@ Then read it once more for what no script sees:
 - the description and both captions say in words that it is a ball race and name the
   sequences, without reading as a keyword list;
 - every fact is in the block;
-- the description and the captions end on a question, and no text tells people what to do;
+- the description's sentences and the captions end on a question (after it, the description
+  has only its credit line and its hashtags), and no text tells people what to do;
 - the three pinned comments are three different questions.
