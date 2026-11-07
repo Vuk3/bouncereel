@@ -273,9 +273,9 @@ the narrator says the same in words ("…, and it speeds up").
 
 **The watermark**, on a plan whose `watermark` feature is on
 ([accounts and billing](./accounts-and-billing.md)): the BounceReel mark (42 px) and the site's
-host (`SITE_HOST` in [shared/site.ts](../shared/site.ts), `bouncereel.vukcvetkovic.com` for now) in
+host (`SITE_HOST` in [shared/site.ts](../shared/site.ts), `bouncereel.com`) in
 Rubik 800 up to 32 px, narrowed to fit between 40 px from the frame's edge and the VS (that host
-comes out at about 27 px), right-aligned 64 px left of the frame's centre, on
+fits at the full 32 px: 271 of the 384 px), right-aligned 64 px left of the frame's centre, on
 the VS line (y 962). That is the gap between the two cards: it is in every frame of every
 look, under no platform's buttons (§9), and nothing of the race is drawn there; the opening's
 question stands under the VS for it (§11). Ink at
@@ -458,3 +458,4 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-10-30 - the looks come in the order paper, night, cards: in the studio, the admin's plan form, a plan's words and the home page.
 - 2026-11-03 - the opening title on panels: each ball's tag, name and what it does (`rule`) on an opaque panel in its tint across the top of its box, over the strip where the ball comes down to its first hits; the race's VS over the wash and the question in a gold-on-ink pill under it, clear of the watermark; the words go before the panels; the cover leaves out a ball half under a panel. A damage number takes away any it would touch: nothing is drawn through or over anything else.
 - 2026-11-03 - LAST LAYER! in a ball's name row for 2 s as it reaches its last layer, the row going before it and coming back after.
+- 2026-11-07 - the watermark says `bouncereel.com`, at the full 32 px.

@@ -3,24 +3,26 @@
 
 /**
  * The canonical address: canonical links, Open Graph, the legal pages, the watermark on free
- * videos, links in mails from production. A subdomain of vukcvetkovic.com for now; the site moves
- * to its own domain once it is the full product (docs/build-and-deploy.md §5: SITE_URL in
- * wrangler.jsonc names it too).
+ * videos, links in mails from production. SITE_URL in wrangler.jsonc names it too, and
+ * PRODUCTION_URL in scripts/admin.mjs (docs/build-and-deploy.md §5).
  */
-export const SITE_URL = 'https://bouncereel.vukcvetkovic.com';
+export const SITE_URL = 'https://bouncereel.com';
 
 /**
- * Whether search engines may list the public pages. Off while the site is on the subdomain:
- * every page carries a robots `noindex, nofollow` (vite.config.ts), and public/_headers and
- * public/robots.txt say the same, which turning it on has to undo (docs/website.md §7).
+ * Whether search engines may list the public pages. Off, every page would carry a robots
+ * `noindex, nofollow` (vite.config.ts); public/_headers, public/robots.txt and
+ * public/sitemap.xml have to agree with it (docs/website.md §7).
  */
-export const INDEXED = false;
+export const INDEXED = true;
 
 /** The site's host, as text: the watermark, the legal pages. */
 export const SITE_HOST = new URL(SITE_URL).host;
 
-/** The address for questions, shown in the footer, the legal pages and every mail: Vuk's own, as on vukcvetkovic.com. */
-export const CONTACT_EMAIL = 'vuk@vukcvetkovic.com';
+/**
+ * The address for questions, shown in the footer, the legal pages and every mail (as Reply-To).
+ * Cloudflare Email Routing forwards it to Vuk's own mailbox; there is no mailbox on the domain.
+ */
+export const CONTACT_EMAIL = 'hello@bouncereel.com';
 
 /**
  * Who runs BounceReel: the controller the privacy page names and the party the terms are with.

@@ -7,8 +7,12 @@ import { isLocal } from '../site.ts';
 // Hoops. The key is the Worker secret RESEND_API_KEY; the sender's domain must be verified in
 // Resend first.
 
-/** The sender, on vukcvetkovic.com, which is verified in Resend already (Hoops sends from it). */
-export const MAIL_FROM = 'BounceReel <bouncereel@vukcvetkovic.com>';
+/**
+ * The sender. bouncereel.com has to be verified in Resend (its DNS records in the zone) before
+ * a deploy with this goes live: from an unverified domain Resend refuses every mail, and no
+ * sign-up can confirm its address nor anyone set a new password.
+ */
+export const MAIL_FROM = 'BounceReel <hello@bouncereel.com>';
 
 /** Long enough for a slow answer, short enough that a sign-up does not hang on it. */
 const TIMEOUT_MS = 8000;

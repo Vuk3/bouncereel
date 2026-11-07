@@ -1,5 +1,10 @@
-# Nothing here is for search engines while BounceReel is on this subdomain: no crawling at all,
-# and every page and file says noindex too (public/_headers, INDEXED in shared/site.ts). When it
-# moves to its own domain and goes public, this lists what stays out instead (docs/website.md §7).
+# The public pages are for search engines; the studio, the account, the admin area and the API are
+# not (they answer noindex too: public/_headers, worker/lib/http.ts). /reset and /verify are not
+# disallowed on purpose: a crawler has to fetch them to read their noindex (docs/website.md §7).
 User-agent: *
-Disallow: /
+Disallow: /app
+Disallow: /account
+Disallow: /admin
+Disallow: /api
+
+Sitemap: https://bouncereel.com/sitemap.xml

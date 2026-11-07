@@ -2,8 +2,8 @@
 
 How BounceReel runs on Cloudflare: the Worker and its local D1 in dev, the settings and
 secrets it needs, the headers Kokoro needs on every page, which pages search engines may
-list, the production cut-over to `bouncereel.vukcvetkovic.com` and the later move to the site's
-own domain, releases, and the free plan's limits.
+list, the production cut-over on `bouncereel.com` with its mail, releases, and
+the free plan's limits.
 Accounts and the session check themselves: [accounts-and-billing](./accounts-and-billing.md).
 
 | I need to change... | Touch |
@@ -11,7 +11,7 @@ Accounts and the session check themselves: [accounts-and-billing](./accounts-and
 | a script | [package.json](../package.json) |
 | the Worker's config: domain, D1, vars, assets, which paths reach the Worker first | [wrangler.jsonc](../wrangler.jsonc), then `npm run cf-typegen` |
 | a header on the pages or their files | [public/_headers](../public/_headers) (production), [vite.config.ts](../vite.config.ts) (dev and preview), [worker/pages.ts](../worker/pages.ts) (the pages behind the sign-in) |
-| what search engines may list (nothing, for now) | `INDEXED` in [shared/site.ts](../shared/site.ts), [public/robots.txt](../public/robots.txt), [public/_headers](../public/_headers) ([website](./website.md#7-search-engines)) |
+| what search engines may list (the public pages) | `INDEXED` in [shared/site.ts](../shared/site.ts), [public/robots.txt](../public/robots.txt), [public/sitemap.xml](../public/sitemap.xml), [public/_headers](../public/_headers) ([website](./website.md#7-search-engines)) |
 | a secret | `npx wrangler secret put NAME`, declared in [worker/env.d.ts](../worker/env.d.ts) |
 | the build: pages, the Worker, the version | [vite.config.ts](../vite.config.ts) |
 | the release flow | [release.js](../release.js) |
@@ -76,7 +76,7 @@ npm run admin -- you@example.com     # a local superadmin: open the printed link
 
 | Name | Kind | Without it |
 | --- | --- | --- |
-| `SITE_URL` | var, `https://bouncereel.vukcvetkovic.com` (the same as in shared/site.ts) | in production every request the Worker answers is a 500 `not_configured`: **it fails closed** ([worker/site.ts](../worker/site.ts)) |
+| `SITE_URL` | var, `https://bouncereel.com` (the same as in shared/site.ts) | in production every request the Worker answers is a 500 `not_configured`: **it fails closed** ([worker/site.ts](../worker/site.ts)) |
 | `RESEND_API_KEY` | secret | no mail is sent; the forgot form answers 503 in production; sign-up still works, the confirmation waits for the banner's button |
 | `DB` | D1 binding | nothing works |
 | `ASSETS` | assets binding | the pages behind the sign-in cannot be served |
@@ -105,10 +105,9 @@ fetches its media whole and plays it from a blob URL (`wholeFile` in
 [src/site/home.ts](../src/site/home.ts), [website](./website.md#4-the-home-page)); a video or sound
 linked straight from `public/` would not play in Safari.
 
-**Nothing is indexed for now** ([website](./website.md#7-search-engines)): every page is
-`noindex, nofollow` (`INDEXED` off), every file answers `X-Robots-Tag: noindex, nofollow`, and
-[robots.txt](../public/robots.txt) disallows everything. On the site's own domain it opens: the
-public pages listed, everything behind the sign-in and the API still noindex.
+**The public pages are indexed** ([website](./website.md#7-search-engines)): `INDEXED` on, a
+[sitemap](../public/sitemap.xml), and [robots.txt](../public/robots.txt) keeping out `/app`,
+`/account`, `/admin` and `/api`; the pages behind the sign-in and the API answer noindex.
 
 `workers_dev` and `preview_urls` stay off: a `*.workers.dev` or preview URL would be a second
 copy of the site under another name.
@@ -123,55 +122,45 @@ the throttling and the order of the checks:
 
 ## 5. The production cut-over
 
-The first deploy of the public site, on **`bouncereel.vukcvetkovic.com`** for now, kept out of
-search engines (the move to the site's own domain is at the end of this section). **The owner runs
-these steps**; agents never deploy or run anything `--remote` without asking.
+The site is on **`bouncereel.com`**, registered with Cloudflare Registrar, so its zone is in the
+account with Cloudflare's nameservers. **The owner runs these steps**; agents never deploy or
+run anything `--remote` without asking. The database is tied to the Worker (`database_id`), not
+to the domain: a change of address keeps every account, password, video, plan and subscription.
 
 1. **The database**, if production has none yet: `npx wrangler login`, then
    `npx wrangler d1 create bouncereel`, and the printed `database_id` into
-   [wrangler.jsonc](../wrangler.jsonc) in place of the zeros (⚠️ the local database follows the
-   id: section 2).
-2. **Mail**: `vukcvetkovic.com` is verified in Resend already (Hoops sends from it), so
-   `npx wrangler secret put RESEND_API_KEY` with a key of that Resend account is all. The sender
-   is `MAIL_FROM` ([worker/mail/resend.ts](../worker/mail/resend.ts),
-   `BounceReel <bouncereel@vukcvetkovic.com>`), replies go to `CONTACT_EMAIL`
-   ([shared/site.ts](../shared/site.ts), `vuk@vukcvetkovic.com`).
-3. **Deploy**: `npm run deploy`. It builds, applies the migrations to the production database
-   (the accounts and plans tables, an owner column on the videos), uploads the Worker and the
-   files, and attaches `bouncereel.vukcvetkovic.com` as a custom domain (DNS record and
-   certificate; the zone is in the account already). `SITE_URL` is already in
-   [wrangler.jsonc](../wrangler.jsonc).
-4. **The superadmin**: `npm run admin -- <your address> --remote`, then open the printed
-   link and set the password. Making the first superadmin gives it the videos recorded before
-   accounts.
-5. **Sign in** on `https://bouncereel.vukcvetkovic.com/login`, open the studio and the Videos
-   page, record something short, and open `/admin`.
-6. **Check from a private window**: `https://bouncereel.vukcvetkovic.com/` shows the home page,
-   `/app` goes to the login page, `/api/videos` answers 401 JSON, `/admin` goes to the login
-   page, and `/robots.txt` disallows everything.
+   [wrangler.jsonc](../wrangler.jsonc) (⚠️ the local database follows the id: section 2).
+2. **Mail, before the deploy**: `bouncereel.com` verified in Resend (Domains → Add domain, its
+   DNS records into the zone), and `npx wrangler secret put RESEND_API_KEY` with a key of that
+   Resend account if it is not set yet. The sender is `MAIL_FROM`
+   ([worker/mail/resend.ts](../worker/mail/resend.ts), `BounceReel <hello@bouncereel.com>`);
+   replies go to `CONTACT_EMAIL` ([shared/site.ts](../shared/site.ts), `hello@bouncereel.com`),
+   which **Cloudflare Email Routing** forwards to the owner's own mailbox (the zone → Email →
+   Email Routing, a custom address `hello`). ⚠️ From an unverified domain Resend refuses every
+   mail: no sign-up can confirm its address and no one can set a new password.
+3. **Deploy**: `npm run deploy`. It builds, applies the migrations to the production database,
+   uploads the Worker and the files, and attaches `bouncereel.com` as its custom domain (DNS
+   record and certificate; a new certificate takes a few minutes). It is the only address: the
+   Worker has no other domain, workers.dev or preview URL.
+4. **`www`**: in the bouncereel.com zone, a proxied `AAAA` record `www` → `100::` and a redirect
+   rule from the template "Redirect from WWW to root" (301).
+5. **The superadmin**, on a new production database: `npm run admin -- <your address> --remote`,
+   then open the printed link and set the password. Making the first superadmin gives it the
+   videos recorded before accounts.
+6. **Sign in** on `https://bouncereel.com/login`, open the studio and the Videos page, record
+   something short, and open `/admin`.
+7. **Check from a private window**: `https://bouncereel.com/` shows the home page, `/app` goes to
+   the login page, `/api/videos` answers 401 JSON, `/admin` goes to the login page, `/robots.txt`
+   keeps out `/app`, `/account`, `/admin` and `/api` and names the sitemap, and
+   `https://www.bouncereel.com/` answers 301 to `https://bouncereel.com/`.
 
-**Later, the move to the site's own domain** (as the full product). The database is tied to the
-Worker (`database_id`), not to the domain: every account, password, video, plan and
-subscription stays, and step 1 is not done again.
-
-1. **The domain in Cloudflare**: add it as a zone in the account (Websites → Add a domain) and
-   point the registrar's nameservers at Cloudflare; wait until it is Active. A redirect rule
-   from `www.` to the apex if `www` should work.
-2. **The address**: `SITE_URL` in [shared/site.ts](../shared/site.ts) (canonical links, Open
-   Graph, the legal pages, the watermark on free videos) and in [wrangler.jsonc](../wrangler.jsonc)
-   (links in mails) with its `routes` (keep the old one beside it while both should answer),
-   `PRODUCTION_URL` in [scripts/admin.mjs](../scripts/admin.mjs); then the share image made again
-   on the stills page ([website](./website.md#5-the-images)).
-3. **Search engines**: open the site to them ([website](./website.md#7-search-engines): `INDEXED`,
-   _headers, robots.txt, a sitemap).
-4. **Mail**, if it should come from the new domain: verify it in Resend (its DNS records go in
-   the new zone), then `MAIL_FROM` and, with a mailbox there (Cloudflare's Email Routing can
-   forward one), `CONTACT_EMAIL`.
-5. **Deploy**, then check as in steps 5 and 6 on the new address.
-6. **The old address**: a 301 redirect from `bouncereel.vukcvetkovic.com` to the new domain (a
-   redirect rule in the vukcvetkovic.com zone), and its custom domain removed from the Worker
-   (Workers → bouncereel → Settings → Domains). ⚠️ The session cookie belongs to its host
-   (`__Host-`), so everyone signs in once more on the new domain, with the same password.
+**A change of address**: `SITE_URL` in [shared/site.ts](../shared/site.ts) and in
+[wrangler.jsonc](../wrangler.jsonc) with its `routes`, `PRODUCTION_URL` in
+[scripts/admin.mjs](../scripts/admin.mjs), the sitemap and robots.txt, `MAIL_FROM` and
+`CONTACT_EMAIL` if the mail moves too, the share image made again
+([website](./website.md#5-the-images)). The session cookie belongs to its host (`__Host-`), so
+everyone signs in once more on a new address; a redirect rule in the old address's zone (301,
+path and query kept) keeps links to it working, as long as it keeps a proxied DNS record.
 
 **Every later deploy** is `npm run deploy` from `main`, or a push to `main` once Workers
 Builds is connected (below). It **applies pending migrations to production before the new
@@ -240,3 +229,4 @@ Workers Free plan:
 - 2026-10-23 - `.nvmrc` pins Node 24.22.1, the Active LTS release with the October 2026 security fixes (a Brotli decoder RCE, TLS hostname checks) that 22.23.2 does not have.
 - 2026-10-24 - the site goes on `bouncereel.vukcvetkovic.com` for now, kept out of search, mail from `bouncereel@vukcvetkovic.com` (verified in Resend for Hoops); the cut-over without Access (nothing was deployed before); the later move to the site's own domain in its own steps; `.gitignore` keeps the gallery's videos and drops `.DS_Store`.
 - 2026-10-24 - Workers Builds runs `npm run deploy` (build command empty), so a release applies its migrations before the code goes live.
+- 2026-11-07 - the site on `bouncereel.com`: `SITE_URL` and its custom domain, `bouncereel.vukcvetkovic.com` taken off the Worker (it was never used), `www` to the apex, mail from `hello@bouncereel.com` (Resend before the deploy, Email Routing for replies), the public pages indexed, the steps for a later change of address.

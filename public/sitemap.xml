@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The public pages search engines may list, on SITE_URL (shared/site.ts). A new public page
+     goes here too; /reset, /verify and the 404 page never do (docs/website.md §7). No lastmod:
+     one kept by hand drifts, and search engines ignore a date they cannot trust. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://bouncereel.com/</loc></url>
+  <url><loc>https://bouncereel.com/pricing</loc></url>
+  <url><loc>https://bouncereel.com/signup</loc></url>
+  <url><loc>https://bouncereel.com/login</loc></url>
+  <url><loc>https://bouncereel.com/forgot</loc></url>
+  <url><loc>https://bouncereel.com/terms</loc></url>
+  <url><loc>https://bouncereel.com/privacy</loc></url>
+  <url><loc>https://bouncereel.com/refunds</loc></url>
+</urlset>

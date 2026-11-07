@@ -2,7 +2,7 @@ import { HttpError } from './lib/http.ts';
 import { log } from './lib/log.ts';
 
 // The one setting the Worker needs in production: the site's own address, SITE_URL in
-// wrangler.jsonc ("https://bouncereel.vukcvetkovic.com"). Links in mails are built from it, never from the
+// wrangler.jsonc ("https://bouncereel.com"). Links in mails are built from it, never from the
 // request, so nothing a caller sends can point a password link at another site.
 //
 // It fails closed: without SITE_URL, every request the Worker answers in production is a 500,

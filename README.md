@@ -2,7 +2,7 @@
 
 Game videos for YouTube Shorts, TikTok and Reels: vertical (1080×1920, 60 fps), recorded in
 the browser straight to MP4 with sound and a narrator. A public site on
-[bouncereel.vukcvetkovic.com](https://bouncereel.vukcvetkovic.com) for now: sign up, make videos on your plan, keep them in a
+[bouncereel.com](https://bouncereel.com): sign up, make videos on your plan, keep them in a
 library with their links.
 
 The first game is **ball races**. Two balls, one card each. Only a hit on the floor

@@ -8,11 +8,10 @@
 # vite.config.ts sends the same two in dev and preview. Every page has them, the public ones
 # too: a page without them could not be reached from the studio without a full reload.
 #
-# X-Robots-Tag on everything, pages, images and videos alike: nothing of the site is listed while
-# it is on the subdomain (INDEXED in shared/site.ts). Take that line out when it goes public; the
-# rules after these keep the private pages out then.
+# Search engines may list the public pages and their images (INDEXED in shared/site.ts); the
+# rules after these keep the private pages out. To hide the whole site again, put
+# `X-Robots-Tag: noindex, nofollow` back on /* (docs/website.md §7).
 /*
-  X-Robots-Tag: noindex, nofollow
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: credentialless
   X-Content-Type-Options: nosniff
@@ -20,8 +19,9 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
-# Once the site is listed: the public pages and nothing else; the pages behind the sign-in, the
-# API and the one-time-link pages stay out.
+# The public pages are listed and nothing else: the pages behind the sign-in and the one-time-link
+# pages stay out. The Worker says the same on what it answers itself (worker/pages.ts,
+# worker/lib/http.ts for the API).
 /app
   X-Robots-Tag: noindex, nofollow
 /app/*

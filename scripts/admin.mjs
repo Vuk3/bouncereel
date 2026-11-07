@@ -17,7 +17,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 
-const PRODUCTION_URL = 'https://bouncereel.vukcvetkovic.com';
+const PRODUCTION_URL = 'https://bouncereel.com';
 const LOCAL_URL = 'http://localhost:5173';
 const VALID_HOURS = 24;
 

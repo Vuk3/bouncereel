@@ -2,8 +2,8 @@
 
 ## What this is
 
-**BounceReel** is a public website, `https://bouncereel.vukcvetkovic.com` for now and kept out of
-search engines (`SITE_URL`, `INDEXED` in shared/site.ts), where creators make short
+**BounceReel** is a public website, `https://bouncereel.com`, listed by search engines
+(`SITE_URL`, `INDEXED` in shared/site.ts), where creators make short
 vertical game videos for YouTube Shorts, TikTok and Instagram Reels: 1080×1920, 60 fps,
 recorded in the browser straight to MP4, with synthesised sound and a narrator. Anyone can
 sign up; a **plan** decides what the account may make (the free plan's videos carry a small

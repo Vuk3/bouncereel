@@ -1,7 +1,7 @@
 # AGENTS.md
 
 This file orients Claude Code (and any AI agent) working in this repository:
-**BounceReel**, a public website (`https://bouncereel.vukcvetkovic.com` for now, kept out of search) where creators make game videos
+**BounceReel**, a public website (`https://bouncereel.com`) where creators make game videos
 for Shorts, TikTok and Reels, vertical (1080×1920, 60 fps) and recorded in the browser straight
 to MP4 with synthesised sound and a narrator. People sign up, a plan decides what they may
 make, and each account keeps its recordings in a video library (D1) with their links to the

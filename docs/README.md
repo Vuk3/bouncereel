@@ -38,8 +38,8 @@ anything else.
 
 - **[Build and deploy](./build-and-deploy.md)** - Cloudflare: the Worker and local D1 in
   dev, the settings and secrets (`SITE_URL`, `RESEND_API_KEY`), the isolation headers on every
-  page, which pages search engines may list (none, for now), the production cut-over to
-  `bouncereel.vukcvetkovic.com` and the later move to the site's own domain, releases, free-plan limits.
+  page, which pages search engines may list (the public ones), the production cut-over on
+  `bouncereel.com` with its mail, releases, free-plan limits.
 
 - **[Video library](./video-library.md)** - each account's database of recordings: why a
   config is enough, the schema, the `/api` routes, what the plan allows on save, what Record

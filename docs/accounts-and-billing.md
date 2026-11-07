@@ -123,8 +123,9 @@ neither the words nor the timing tell. **Sign-up does tell**: an address already
 below is what slows a script testing addresses.
 
 **Mail** goes through Resend ([worker/mail/resend.ts](../worker/mail/resend.ts), one `fetch`,
-no SDK), from `MAIL_FROM` (`BounceReel <bouncereel@vukcvetkovic.com>`, a domain verified in
-Resend for Hoops), replies to `CONTACT_EMAIL` (`vuk@vukcvetkovic.com`). **Without `RESEND_API_KEY` nothing is
+no SDK), from `MAIL_FROM` (`BounceReel <hello@bouncereel.com>`, a domain verified in
+Resend: from an unverified one every mail is refused), replies to `CONTACT_EMAIL`
+(`hello@bouncereel.com`, which Cloudflare Email Routing forwards to Vuk's own mailbox). **Without `RESEND_API_KEY` nothing is
 sent**: on localhost the link goes to the Worker's log instead (`Mail is off (no
 RESEND_API_KEY); the link it would carry`), so dev works; in production it is never logged
 (a link is a password), and the forgot form answers 503 `mail_unavailable` to everyone. The
@@ -472,3 +473,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-10-24 - the Videos page in the console look (src/console.css), with the account page's top bar; the console's selects keep their chevron; a page under the top bar is centred.
 - 2026-10-29 - a superadmin is on no plan in the admin area ("Everything", in no plan's count or filter, no subscription form) nor on the pricing page; deleting the plan its row names moves the row to the default plan.
 - 2026-10-30 - the `follow` feature (0009_follow_button.sql: on every plan but the default one): the studio's Ask viewers to follow switch, locked on a plan without it, and checked on save.
+- 2026-11-07 - mail from `hello@bouncereel.com`, replies to the same address (Cloudflare Email Routing forwards it).

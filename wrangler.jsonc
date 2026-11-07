@@ -27,14 +27,14 @@
 	"workers_dev": false,
 	"preview_urls": false,
 	"routes": [
-		{ "pattern": "bouncereel.vukcvetkovic.com", "custom_domain": true }
+		{ "pattern": "bouncereel.com", "custom_domain": true }
 	],
 
 	"vars": {
 		// The site's address, for the links in mails (worker/site.ts). Not a secret. Empty, every
 		// request the Worker answers in production is a 500: it fails closed. The same as SITE_URL in
-		// shared/site.ts; the move to the site's own domain changes both (docs/build-and-deploy.md §5).
-		"SITE_URL": "https://bouncereel.vukcvetkovic.com"
+		// shared/site.ts: a change of address changes both (docs/build-and-deploy.md §5).
+		"SITE_URL": "https://bouncereel.com"
 	},
 
 	"d1_databases": [

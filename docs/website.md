@@ -1,6 +1,6 @@
 # Website
 
-The public site on `https://bouncereel.vukcvetkovic.com` (`SITE_URL`; its own domain once it is the full product), kept out of search engines for now: which page is where, the parts the pages share,
+The public site on `https://bouncereel.com` (`SITE_URL`), listed by search engines: which page is where, the parts the pages share,
 the look, the home page and its live race, the images, speed, search engines, the words, and
 the legal pages. Accounts, plans and the admin area are in
 [accounts-and-billing](./accounts-and-billing.md); the studio is everywhere else.
@@ -9,13 +9,13 @@ the legal pages. Accounts, plans and the admin area are in
 | --- | --- |
 | a page's words | its HTML file at the root: [index.html](../index.html), [pricing.html](../pricing.html), [signup.html](../signup.html), [login.html](../login.html), [forgot.html](../forgot.html), [reset.html](../reset.html), [verify.html](../verify.html), [terms.html](../terms.html), [privacy.html](../privacy.html), [refunds.html](../refunds.html), [404.html](../404.html) |
 | the header, the footer, the shared head | [src/site/partials/](../src/site/partials/) (`header.html`, `footer.html`, `head.html`) |
-| a new page | its HTML file, its line in `PAGES` in [vite.config.ts](../vite.config.ts) (and in the sitemap, once there is one: §7) |
+| a new page | its HTML file, its line in `PAGES` in [vite.config.ts](../vite.config.ts), and its address in [public/sitemap.xml](../public/sitemap.xml) if search engines should list it (§7) |
 | the look: colours, type, components | [src/site/site.css](../src/site/site.css) (tokens at the top) |
 | the live race in the hero | [src/site/hero.ts](../src/site/hero.ts); when it loads: [src/site/home.ts](../src/site/home.ts) |
 | the pricing cards | [src/site/pricing.ts](../src/site/pricing.ts); what a plan includes, in words: `describeFeatures` in [shared/features.ts](../shared/features.ts) |
 | the sign-in forms | [src/site/auth.ts](../src/site/auth.ts) |
 | the hero's still frame, the looks, the share image | [scripts/stills.ts](../scripts/stills.ts) (section 5) |
-| indexing: robots, noindex (and a sitemap, once listed) | `INDEXED` in [shared/site.ts](../shared/site.ts), [public/robots.txt](../public/robots.txt), [public/_headers](../public/_headers), `noindex` in a page's `site:head` line (§7) |
+| indexing: robots, noindex, the sitemap | `INDEXED` in [shared/site.ts](../shared/site.ts), [public/robots.txt](../public/robots.txt), [public/sitemap.xml](../public/sitemap.xml), [public/_headers](../public/_headers), `noindex` in a page's `site:head` line (§7) |
 | an old address that moved | [public/_redirects](../public/_redirects) |
 | the contact address, the canonical origin, who runs the site (the legal pages) | [shared/site.ts](../shared/site.ts) `CONTACT_EMAIL`, `SITE_URL`, `OPERATOR_NAME`, `OPERATOR_PLACE` |
 | the logo | [public/mark.svg](../public/mark.svg) (`.mark` in site.css, `.logo` in src/style.css), [public/favicon.svg](../public/favicon.svg); on a canvas `drawMark` in [src/render/renderer.ts](../src/render/renderer.ts) |
@@ -400,30 +400,30 @@ height of what is already on screen.
 
 ## 7. Search engines
 
-**Nothing is listed while the site is on `bouncereel.vukcvetkovic.com`** (`INDEXED` off in
-[shared/site.ts](../shared/site.ts)); it opens to search engines on its own domain, as the full
-product:
+**The public pages are listed** (`INDEXED` on in [shared/site.ts](../shared/site.ts)); nothing
+behind the sign-in is:
 
-- every page's head has `<meta name="robots" content="noindex, nofollow">` (the `site:head`
-  partial, [vite.config.ts](../vite.config.ts), from `INDEXED`);
-- every page and file Workers Assets serves answers `X-Robots-Tag: noindex, nofollow` (the `/*`
-  rule in [public/_headers](../public/_headers)), so images and videos stay out of image search
-  too; the Worker's own answers (the API, the pages behind the sign-in) send it always
-  ([worker/lib/http.ts](../worker/lib/http.ts), [worker/pages.ts](../worker/pages.ts));
-- [robots.txt](../public/robots.txt) disallows everything, and there is no sitemap.
+- [public/sitemap.xml](../public/sitemap.xml) lists `/`, `/pricing`, `/signup`, `/login`,
+  `/forgot`, `/terms`, `/privacy` and `/refunds` on `SITE_URL`. A new public page goes in it. It
+  has no `lastmod`: a date kept by hand drifts, and search engines ignore one they cannot trust.
+- [robots.txt](../public/robots.txt) disallows `/app`, `/account`, `/admin` and `/api`, and names
+  the sitemap.
+- [public/_headers](../public/_headers) sends `X-Robots-Tag: noindex, nofollow` on `/app`,
+  `/account`, `/admin` and their pages, and `noindex` on `/reset` and `/verify`; the Worker's own
+  answers (the API, the pages behind the sign-in) send it always
+  ([worker/lib/http.ts](../worker/lib/http.ts), [worker/pages.ts](../worker/pages.ts)).
+- `/reset`, `/verify` and the 404 page are `noindex` in their `site:head` line too: a one-time
+  link indexed would be a page saying the link is invalid.
+- Each public page has a title, a description, a canonical URL on `SITE_URL` and the Open Graph
+  image (§2, §5).
 
-⚠️ A crawler that obeys robots.txt never fetches a page, so it never reads its noindex either: a
-page linked from elsewhere can still show up as a bare address with no text. The noindex is for
-crawlers that ignore robots.txt.
+⚠️ A crawler that obeys robots.txt never fetches a page it disallows, so it never reads its
+noindex either: such a page linked from elsewhere can still show up as a bare address with no
+text. That is why `/reset` and `/verify` are not in robots.txt: their noindex has to be read.
 
-**Going public** (with the move to the domain, docs/build-and-deploy.md §5): `INDEXED` on; the
-`X-Robots-Tag` line out of the `/*` rule in _headers (the rules for `/app`, `/account`, `/admin`,
-`/reset` and `/verify` stay); robots.txt back to disallowing only `/app`, `/account`, `/admin` and
-`/api`, with a `Sitemap:` line; and `public/sitemap.xml` listing `/`, `/pricing`, `/signup`,
-`/login`, `/forgot`, `/terms`, `/privacy` and `/refunds`. Then, as before: each public page has a
-title, a description, a canonical URL on `SITE_URL` and an Open Graph image; `/reset`, `/verify`
-and the 404 page stay noindex (their `site:head` line says so: a one-time link indexed would be a
-page saying the link is invalid).
+**To hide the whole site again**: `INDEXED` off (every page gets `noindex, nofollow`),
+`X-Robots-Tag: noindex, nofollow` back on the `/*` rule in _headers, robots.txt to `Disallow: /`,
+and the sitemap out.
 
 ## 8. The words
 
@@ -484,3 +484,4 @@ used for.
 - 2026-10-29 - a superadmin sees "Your plan" on no pricing card, and Open studio on the free one.
 - 2026-11-02 - the sequences card lists fifteen sequences and 79 pairings (Golden ratio added); the hero rolls and plays no crowds.
 - 2026-11-03 - the opening title on panels, with what each ball does, the question under the VS, and the race starting on a small layer with no hold, so the still (`hero/first-frame-4.webp`), the looks, the share image and the gallery (`<name>-3`, 0.87–1.03 MB) were made again; the cover leaves out a ball half under a panel, and the gallery has the 2 s winner card, LAST LAYER! and races won from behind.
+- 2026-11-07 - on `bouncereel.com` and listed: `INDEXED` on, robots.txt disallowing only `/app`, `/account`, `/admin` and `/api` and naming `public/sitemap.xml` (the eight public pages), `X-Robots-Tag` off the `/*` rule; the share image made again with the new address.
