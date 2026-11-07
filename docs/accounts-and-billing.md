@@ -37,6 +37,49 @@ plan**: the sign-up mail carries a link (`/verify?token=…`), and until it is o
 studio, the Videos page and the account page show a banner asking for it, with a button that
 sends it again (three an hour).
 
+### Sign-ups closed
+
+**Sign-ups are closed while the site is being finished**: `SIGNUPS_OPEN` is off in
+[shared/site.ts](../shared/site.ts). Nobody can make an account; everyone who has one signs in,
+resets a password and uses the studio and the admin area as before, and a superadmin is still
+made from the terminal (below).
+
+| Where | Open | Closed |
+| --- | --- | --- |
+| `POST /api/auth/signup` ([worker/routes/auth.ts](../worker/routes/auth.ts)) | makes the account | 403 `signups_closed`, before the body is read or the throttle counts |
+| the header, the home page's hero and close | "Start free", a link to `/signup` | "Coming soon", a disabled button |
+| the footer | "Start free" under Product | nothing |
+| `/login` | "New here? Start free" | "New here? Sign-ups open soon." |
+| `/signup` | the form, titled "Start free", with src/site/auth.ts | "Coming soon", a link to sign in, titled "Coming soon", with only src/site/chrome.ts |
+| the plan cards, to a guest ([src/site/pricing.ts](../src/site/pricing.ts)) | Rookie "Start free"; Pro and Champion "Upgrades open soon" (or "Choose …" once `BILLING` is on) | "Coming soon" on all three, and under them "BounceReel opens soon. These are the plans it will open with." |
+
+Each place in the HTML is written twice, once marked `data-signups="open"` and once
+`"closed"`, and the build keeps the side the flag names (`signups()` in
+[vite.config.ts](../vite.config.ts), [website](./website.md#2-the-shared-parts)). A signed-in
+visitor sees the plan cards as they work. Dev and preview follow the flag too.
+
+**Opening sign-ups**, when the owner says so:
+
+1. `SIGNUPS_OPEN = true` in [shared/site.ts](../shared/site.ts), and its comment no longer
+   says the site is being finished.
+2. `npm run check`, then `npx vite build`. In `dist/client`: no `data-signups` left in any
+   HTML file, no `>Coming soon<` in index.html, login.html or signup.html, and `>Start free<`
+   back (index.html: the header, the hero, the close and the footer; signup.html with
+   `id="form"`).
+3. `npx vite preview --port 4199 --strictPort`: the header and the hero say "Start free",
+   `/signup` shows the form, the plan cards say "Start free" and "Upgrades open soon". Sign up
+   once with `delivered@resend.dev` (Resend's test address: the mail is accepted and goes
+   nowhere), then delete that account on its own account page (sign-up signs it in), stop the
+   preview and quit the browser.
+4. This subsection out (the first paragraph of §1 describes sign-up again), the 403 off the
+   API table (§10), the closed side of the table in
+   [website](./website.md#2-the-shared-parts) kept as how to close them again, and a dated
+   line in both changelogs.
+5. The owner commits and releases; after the deploy, `https://bouncereel.com/signup` shows the
+   form and `curl` of the API no longer answers `signups_closed`.
+
+Closing them again is the same with `false`: the closed sides are still in the HTML.
+
 | Role | Can |
 | --- | --- |
 | `user` | the studio, its own library and account; what its plan includes |
@@ -371,7 +414,7 @@ The video routes (signed in, each account its own) are in
 
 | Method | Route | Access | Does |
 | --- | --- | --- | --- |
-| POST | `/api/auth/signup` | public | `{ email, password }` → the account, signed in; 409 `email_taken` |
+| POST | `/api/auth/signup` | public | `{ email, password }` → the account, signed in; 409 `email_taken`; 403 `signups_closed` while sign-ups are closed (§1) |
 | POST | `/api/auth/login` | public | `{ email, password }` → the account, signed in; 401 `invalid_credentials`, 403 `account_suspended` |
 | POST | `/api/auth/logout` | public | ends this browser's session |
 | POST | `/api/auth/forgot` | public | `{ email }` → `{ ok }` whatever the address; 503 `mail_unavailable` in production without a mail key |
@@ -474,3 +517,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-10-29 - a superadmin is on no plan in the admin area ("Everything", in no plan's count or filter, no subscription form) nor on the pricing page; deleting the plan its row names moves the row to the default plan.
 - 2026-10-30 - the `follow` feature (0009_follow_button.sql: on every plan but the default one): the studio's Ask viewers to follow switch, locked on a plan without it, and checked on save.
 - 2026-11-07 - mail from `hello@bouncereel.com`, replies to the same address (Cloudflare Email Routing forwards it).
+- 2026-11-07 - sign-ups closed while the site is being finished (`SIGNUPS_OPEN`): the API answers 403 `signups_closed`, every "Start free" reads "Coming soon", /signup says the site opens soon, the plan cards wait alike; how to open them again.

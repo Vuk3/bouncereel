@@ -1,4 +1,5 @@
 import type { MailResult, ResetInfo, SignedInResponse, VerifiedResponse } from '../../shared/api.ts';
+import { SIGNUPS_OPEN } from '../../shared/site.ts';
 import { DUMMY_PASSWORD_HASH, hashPassword, randomToken, sha256Hex, verifyPassword } from '../auth/crypto.ts';
 import { clearSessionCookies, sessionTokenHash, startSession, type AuthUser } from '../auth/session.ts';
 import {
@@ -127,6 +128,9 @@ function signedIn(row: UserRow, cookies: [string, string][]): Response {
 
 /** POST /api/auth/signup { email, password }: a new account on the default plan, signed in at once. */
 export async function signup(context: RouteContext): Promise<Response> {
+  // Closed before anything is read or counted: the pages offer no form then, so a request here
+  // came from outside them.
+  if (!SIGNUPS_OPEN) throw new HttpError(403, 'signups_closed', 'Sign-ups are closed for now: BounceReel opens soon.');
   const { request, env, url, now } = context;
   const body = await readJsonObject(request);
   const email = emailValue(body.email);

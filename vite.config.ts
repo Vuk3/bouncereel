@@ -1,7 +1,7 @@
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
-import { CONTACT_EMAIL, INDEXED, OPERATOR_NAME, OPERATOR_PLACE, SITE_HOST, SITE_URL } from './shared/site.ts';
+import { CONTACT_EMAIL, INDEXED, OPERATOR_NAME, OPERATOR_PLACE, SIGNUPS_OPEN, SITE_HOST, SITE_URL } from './shared/site.ts';
 
 // Cross-origin isolation lets the Kokoro voice model run ONNX on all CPU cores
 // (it needs SharedArrayBuffer); without it, it runs on one and a 20-second
@@ -48,6 +48,25 @@ function partial(name: string): string {
 const escapeAttr = (text: string) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 /**
+ * Each place that offers a sign-up is written twice, an element marked data-signups="open" and
+ * one marked "closed" (a side may be left out: nothing shows there then). The build keeps the
+ * side SIGNUPS_OPEN names, without the attribute, and drops the other. A marked element must not
+ * contain an element of its own tag: its end is the first closing tag of that name. A void one
+ * (`<meta … />`) has no end to find and is matched on its own.
+ */
+function signups(html: string): string {
+  const keep = SIGNUPS_OPEN ? 'open' : 'closed';
+  const pick = (side: string, element: string, newline: string) => (side === keep ? element + newline : '');
+  return html
+    .replace(/([ \t]*)<(meta|link)\b([^>]*?) data-signups="(open|closed)"([^>]*)>(\n?)/g, (_, indent, tag, before, side, after, newline) =>
+      pick(side, `${indent}<${tag}${before}${after}>`, newline),
+    )
+    .replace(/([ \t]*)<(\w+)\b([^>]*?) data-signups="(open|closed)"([^>]*)>([\s\S]*?)<\/\2>(\n?)/g, (_, indent, tag, before, side, after, inner, newline) =>
+      pick(side, `${indent}<${tag}${before}${after}>${inner}</${tag}>`, newline),
+    );
+}
+
+/**
  * The pages' shared parts, written in at build time (and on every request in dev), so a page
  * is complete HTML for a crawler and the first paint, with no framework:
  *
@@ -59,6 +78,7 @@ const escapeAttr = (text: string) => text.replace(/&/g, '&amp;').replace(/"/g, '
  *   <!-- site:header -->, <!-- site:footer -->   the public site's header and footer
  *   <!-- app:head -->, <!-- app:theme -->, <!-- admin:nav -->   the same for the pages behind
  *                                 the sign-in (account, admin), which use the studio's styles
+ *   data-signups="open" / "closed"   one of two versions of a sign-up offer (signups() above)
  *
  * `order: 'pre'` runs it before Vite reads the HTML, so the stylesheet and scripts the partials
  * name are bundled like any other.
@@ -68,7 +88,17 @@ function sitePartials(): Plugin {
     name: 'bouncereel-site-partials',
     transformIndexHtml: {
       order: 'pre',
-      handler(html) {
+      handler(page) {
+        // The partials go in first, so the sign-up pairs inside them are picked too, and the
+        // page's title and description are read from the side that was kept.
+        const html = signups(
+          page
+            .replace('<!-- site:header -->', partial('header'))
+            .replace('<!-- site:footer -->', partial('footer'))
+            .replace('<!-- app:head -->', partial('app-head'))
+            .replace('<!-- admin:nav -->', partial('admin-nav'))
+            .replace('<!-- app:theme -->', partial('theme-button')),
+        );
         const title = /<title>([^<]*)<\/title>/.exec(html)?.[1] ?? 'BounceReel';
         const description = /<meta name="description" content="([^"]*)"/.exec(html)?.[1] ?? '';
         return html
@@ -79,11 +109,6 @@ function sitePartials(): Plugin {
               .replaceAll('%DESCRIPTION%', escapeAttr(description))
               .replace('%ROBOTS%', !INDEXED ? '<meta name="robots" content="noindex, nofollow" />' : noindex ? '<meta name="robots" content="noindex" />' : ''),
           )
-          .replace('<!-- site:header -->', partial('header'))
-          .replace('<!-- site:footer -->', partial('footer'))
-          .replace('<!-- app:head -->', partial('app-head'))
-          .replace('<!-- admin:nav -->', partial('admin-nav'))
-          .replace('<!-- app:theme -->', partial('theme-button'))
           .replaceAll('%SITE_URL%', SITE_URL)
           .replaceAll('%SITE_HOST%', SITE_HOST)
           .replaceAll('%CONTACT_EMAIL%', CONTACT_EMAIL)

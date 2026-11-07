@@ -15,6 +15,16 @@ export const SITE_URL = 'https://bouncereel.com';
  */
 export const INDEXED = true;
 
+/**
+ * Whether anyone may create an account. Off while the site is being finished: the Worker refuses
+ * POST /api/auth/signup (403 signups_closed), the build keeps the "Coming soon" side of every
+ * `data-signups` pair in the HTML (vite.config.ts), and the pricing cards say "Coming soon" to a
+ * guest (src/site/pricing.ts). Signing in, the studio, the admin area and the accounts there are
+ * untouched. Opening is this line, then the checks and the deploy in
+ * docs/accounts-and-billing.md §1 ("Sign-ups closed").
+ */
+export const SIGNUPS_OPEN = false;
+
 /** The site's host, as text: the watermark, the legal pages. */
 export const SITE_HOST = new URL(SITE_URL).host;
 

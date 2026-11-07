@@ -1,5 +1,6 @@
 import type { AccountResponse, PlanTone, PlansResponse, Price, PublicPlan } from '../../shared/api.ts';
 import { describeFeatures } from '../../shared/features.ts';
+import { SIGNUPS_OPEN } from '../../shared/site.ts';
 import { api } from '../api.ts';
 
 // The plans, read from GET /api/plans: on the home page's pricing section and on /pricing.
@@ -85,6 +86,13 @@ function planCard(plan: PublicPlan, data: PlansResponse, current: number | null,
   let action: HTMLElement;
   if (current === plan.id) {
     action = el('p', 'current', 'Your plan');
+  } else if (!member && !SIGNUPS_OPEN) {
+    // Sign-ups closed (shared/site.ts): no plan can be had yet, the free one neither, so every
+    // card waits alike. A signed-in visitor (the owner) still sees the cards as they work.
+    const soon = el('button', 'btn btn-primary btn-wide', 'Coming soon');
+    soon.type = 'button';
+    soon.disabled = true;
+    action = soon;
   } else if (plan.isDefault) {
     // The free plan stays quiet: an outline button, so the eye goes to the plan the page points at.
     const start = el('a', 'btn btn-ghost btn-wide', member ? 'Open studio' : 'Start free');
@@ -121,7 +129,10 @@ export async function renderPlans(): Promise<PlansResponse | null> {
     list.replaceChildren(...data.plans.map((plan) => planCard(plan, data, current, account !== null, heading)));
     const note = document.querySelector<HTMLElement>('#plans-note');
     const free = data.plans.find((p) => p.isDefault);
-    if (note && !data.billing && data.plans.some((p) => !p.isDefault)) {
+    if (note && !SIGNUPS_OPEN && account === null) {
+      note.textContent = 'BounceReel opens soon. These are the plans it will open with.';
+      note.hidden = false;
+    } else if (note && !data.billing && data.plans.some((p) => !p.isDefault)) {
       note.textContent = `Paid plans cannot be bought yet: upgrades open soon. Everything ${free?.name ?? 'the free plan'} includes works today.`;
       note.hidden = false;
     }

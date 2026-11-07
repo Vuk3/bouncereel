@@ -282,6 +282,10 @@ takes effect when it passes, with nothing scheduled.
   day, the same for everyone. The server takes the video as Record starts
   (`POST /api/account/day`, `claimDay`), before the first frame; the save does not count
   again, and the studio's Record button only mirrors the count.
+- **Sign-ups are closed** while the site is being finished (`SIGNUPS_OPEN` in shared/site.ts):
+  the Worker refuses them and every "Start free" reads "Coming soon". Opening them is one
+  line and the checks in
+  [accounts-and-billing](docs/accounts-and-billing.md#sign-ups-closed).
 - **The watermark is drawn by the studio** from the plan's `watermark` feature: the server
   never sees the pixels, so it cannot check it, and the terms ask that it stays on.
 - **The logo is one drawing in three places**: [public/mark.svg](public/mark.svg),

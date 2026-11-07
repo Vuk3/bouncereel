@@ -2253,8 +2253,11 @@ input:focus-visible {
 .tone-bold .btn-primary:hover {
   background: rgb(255 255 255 / 0.9);
 }
+/* On the ink stage too (the hero's and the close's "Coming soon" while sign-ups are closed): the
+   page's light inset would make a disabled button a white pill with grey on it. */
 .tone-bold .btn:disabled,
-.tone-dark .btn:disabled {
+.tone-dark .btn:disabled,
+.stage .btn:disabled {
   background: rgb(255 255 255 / 0.12);
   border-color: rgb(255 255 255 / 0.18);
   color: rgb(255 255 255 / 0.85);
