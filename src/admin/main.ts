@@ -22,7 +22,7 @@ import { LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, MIN_VIDEO_SECONDS, SOUND_LABELS,
 import { api } from '../api.ts';
 import { loadAccount } from '../session.ts';
 import { formatPrice, planEmblem } from '../site/pricing.ts';
-import { avatar, displayName } from '../ui/avatar.ts';
+import { avatar, displayName, type Person } from '../ui/avatar.ts';
 import { bindThemeToggle } from '../ui/theme.ts';
 
 // The admin area (/admin, superadmins only: the Worker serves these pages to nobody else, and
@@ -195,15 +195,19 @@ function planOf(u: AdminUser): string {
   return u.role === 'superadmin' ? 'Everything' : (u.planName ?? '—');
 }
 
-function person(u: { id: number; email: string | null }): HTMLElement {
+/**
+ * An account in a list, as the users' list draws it: its picture, its name with the address under
+ * it, or the address alone when it has no name (and in the log, whose rows carry only the address).
+ */
+function person(u: Person): HTMLElement {
   const email = u.email ?? `account ${u.id} (deleted)`;
-  return el('div', 'person', avatar({ id: u.id, email }), u.email ? link(`/admin/user?id=${u.id}`, u.email) : el('span', '', email));
+  return el('div', 'person', avatar({ ...u, email }), u.email ? el('div', 'person-names', ...nameAndEmail(u)) : el('span', '', email));
 }
 
 /** A person's name with the address under it, or the address alone when the account has no name. */
-function nameAndEmail(u: AdminUser): Child[] {
+function nameAndEmail(u: Person): Child[] {
   const named = Boolean(u.firstName || u.lastName);
-  return [link(`/admin/user?id=${u.id}`, displayName(u)), named ? el('small', 'person-email', u.email) : null];
+  return [link(`/admin/user?id=${u.id}`, displayName(u)), named ? el('small', 'person-email', u.email ?? '') : null];
 }
 
 // ── Overview ──────────────────────────────────────────────────────────────
