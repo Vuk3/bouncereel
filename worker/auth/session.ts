@@ -18,6 +18,11 @@ export interface AuthUser {
   role: Role;
   verified: boolean;
   createdAt: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatarKey: string | null;
+  hasPassword: boolean;
+  google: boolean;
 }
 
 const SESSION_DAYS = 30;
@@ -74,7 +79,18 @@ export async function sessionTokenHash(request: Request): Promise<string | null>
 }
 
 export function toAuthUser(row: UserRow): AuthUser {
-  return { id: row.id, email: row.email, role: row.role, verified: row.email_verified_at !== null, createdAt: row.created_at };
+  return {
+    id: row.id,
+    email: row.email,
+    role: row.role,
+    verified: row.email_verified_at !== null,
+    createdAt: row.created_at,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    avatarKey: row.avatar_key,
+    hasPassword: row.password_hash !== '',
+    google: row.google_sub !== null,
+  };
 }
 
 /** The signed-in account, or null: no cookie, an expired or deleted session, or a suspended account. */

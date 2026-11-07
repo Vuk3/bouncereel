@@ -18,6 +18,7 @@ throttling, plans, subscriptions and the change log in
 | [0007_video_texts.sql](./0007_video_texts.sql) | `texts` on `videos`: a superadmin's texts for posting a video, as JSON |
 | [0008_posts_without_link.sql](./0008_posts_without_link.sql) | `posts.url` may be NULL: a platform ticked without a link (`posts` rebuilt; nothing references it) |
 | [0009_follow_button.sql](./0009_follow_button.sql) | `follow` on every plan's features: off on the default plan (Rookie), on on the others |
+| [0010_profiles.sql](./0010_profiles.sql) | `first_name`, `last_name`, `avatar_key` (a key in the R2 bucket) and `google_sub` (unique where set) on `users`; an account made with Google has `password_hash` '' |
 
 ## Rules
 

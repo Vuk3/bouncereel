@@ -1,4 +1,5 @@
 import type { Account, Role } from '../../shared/api.ts';
+import { avatarUrl } from '../files.ts';
 
 // Queries for accounts, sessions, one-time links and throttling (migrations/0002_accounts.sql).
 // Handlers never write SQL themselves.
@@ -12,12 +13,31 @@ export interface UserRow {
   last_login_at: string | null;
   email_verified_at: string | null;
   suspended_at: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  /** The profile picture's key in FILES (worker/files.ts), or null. */
+  avatar_key: string | null;
+  /** Google's id for the account, once it has signed in with Google. */
+  google_sub: string | null;
 }
 
-const USER_COLUMNS = 'id, email, password_hash, role, created_at, last_login_at, email_verified_at, suspended_at';
+const USER_COLUMNS =
+  'id, email, password_hash, role, created_at, last_login_at, email_verified_at, suspended_at, first_name, last_name, avatar_key, google_sub';
 
 export function toAccount(row: UserRow): Account {
-  return { id: row.id, email: row.email, role: row.role, verified: row.email_verified_at !== null, createdAt: row.created_at };
+  return {
+    id: row.id,
+    email: row.email,
+    role: row.role,
+    verified: row.email_verified_at !== null,
+    createdAt: row.created_at,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    avatarUrl: avatarUrl(row.avatar_key),
+    // '' for an account made with Google that has not set one (0010_profiles.sql).
+    hasPassword: row.password_hash !== '',
+    google: row.google_sub !== null,
+  };
 }
 
 // ── Users ─────────────────────────────────────────────────────────────────
@@ -28,6 +48,49 @@ export function findUserByEmail(db: D1Database, email: string): Promise<UserRow 
 
 export function findUserById(db: D1Database, id: number): Promise<UserRow | null> {
   return db.prepare(`SELECT ${USER_COLUMNS} FROM users WHERE id = ?1`).bind(id).first<UserRow>();
+}
+
+export function findUserByGoogleSub(db: D1Database, sub: string): Promise<UserRow | null> {
+  return db.prepare(`SELECT ${USER_COLUMNS} FROM users WHERE google_sub = ?1`).bind(sub).first<UserRow>();
+}
+
+/**
+ * A new account from Google sign-in: no password (''), the address confirmed by Google, and the
+ * names Google gave. The role is written here, as in insertUser.
+ */
+export function insertGoogleUser(
+  db: D1Database,
+  user: { email: string; sub: string; firstName: string | null; lastName: string | null },
+  now: string,
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `INSERT INTO users (email, password_hash, role, created_at, email_verified_at, first_name, last_name, google_sub)
+       VALUES (?1, '', 'user', ?2, ?2, ?3, ?4, ?5) RETURNING ${USER_COLUMNS}`,
+    )
+    .bind(user.email, now, user.firstName, user.lastName, user.sub);
+}
+
+/**
+ * Ties an existing account to its Google account, found by an address Google has confirmed: that
+ * also confirms it here. Names the account already has are kept; empty ones take Google's.
+ */
+export function linkGoogle(db: D1Database, id: number, google: { sub: string; firstName: string | null; lastName: string | null }, now: string): D1PreparedStatement {
+  return db
+    .prepare(
+      `UPDATE users SET google_sub = ?2, email_verified_at = COALESCE(email_verified_at, ?3),
+         first_name = COALESCE(first_name, ?4), last_name = COALESCE(last_name, ?5)
+       WHERE id = ?1`,
+    )
+    .bind(id, google.sub, now, google.firstName, google.lastName);
+}
+
+export function setProfile(db: D1Database, id: number, firstName: string | null, lastName: string | null): D1PreparedStatement {
+  return db.prepare('UPDATE users SET first_name = ?2, last_name = ?3 WHERE id = ?1').bind(id, firstName, lastName);
+}
+
+export function setAvatarKey(db: D1Database, id: number, key: string | null): D1PreparedStatement {
+  return db.prepare('UPDATE users SET avatar_key = ?2 WHERE id = ?1').bind(id, key);
 }
 
 /**

@@ -17,6 +17,7 @@ import {
 import { featuresProblem, readFeatures } from '../../shared/features.ts';
 import { countActiveSuperadmins, deleteUser, deleteUserSessions, findUserById, setSuspended } from '../auth/store.ts';
 import { selectAdminUser, selectOverview, selectUsers } from '../admin.ts';
+import { deleteFile } from '../files.ts';
 import { HttpError, json, noContent, readJsonObject } from '../lib/http.ts';
 import {
   defaultPlan,
@@ -229,6 +230,7 @@ export async function removeUser(context: RouteContext): Promise<Response> {
     logChange(context.env.DB, { at: nowIso, actorId: signedIn(context).id, subject: 'account', userId: user.id, action: 'deleted by a superadmin' }),
     deleteUser(context.env.DB, user.id),
   ]);
+  await deleteFile(context.env, user.avatar_key);
   return noContent();
 }
 

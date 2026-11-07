@@ -22,6 +22,7 @@ import { LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, MIN_VIDEO_SECONDS, SOUND_LABELS,
 import { api } from '../api.ts';
 import { loadAccount } from '../session.ts';
 import { formatPrice, planEmblem } from '../site/pricing.ts';
+import { avatar, displayName } from '../ui/avatar.ts';
 import { bindThemeToggle } from '../ui/theme.ts';
 
 // The admin area (/admin, superadmins only: the Worker serves these pages to nobody else, and
@@ -143,13 +144,6 @@ function tag(text: string, accent = false): HTMLElement {
  * The account's initial on one of the two balls' colours, by its id, so a list of accounts has
  * the video's two teams in it. Both deepened until white on them reads (4.9:1 and 5.1:1).
  */
-function avatar(id: number, email: string, large = false): HTMLElement {
-  const node = el('span', large ? 'avatar large' : 'avatar', email.slice(0, 1));
-  node.style.setProperty('--avatar', id % 2 ? '#6a46ff' : '#0277b6');
-  node.setAttribute('aria-hidden', 'true');
-  return node;
-}
-
 /** A page's head: its title, a line on what it is for, and its actions on the right. */
 function viewHead(title: Child | Child[], text: string | null, ...actions: Child[]): HTMLElement {
   return el(
@@ -203,7 +197,13 @@ function planOf(u: AdminUser): string {
 
 function person(u: { id: number; email: string | null }): HTMLElement {
   const email = u.email ?? `account ${u.id} (deleted)`;
-  return el('div', 'person', avatar(u.id, email), u.email ? link(`/admin/user?id=${u.id}`, u.email) : el('span', '', email));
+  return el('div', 'person', avatar({ id: u.id, email }), u.email ? link(`/admin/user?id=${u.id}`, u.email) : el('span', '', email));
+}
+
+/** A person's name with the address under it, or the address alone when the account has no name. */
+function nameAndEmail(u: AdminUser): Child[] {
+  const named = Boolean(u.firstName || u.lastName);
+  return [link(`/admin/user?id=${u.id}`, displayName(u)), named ? el('small', 'person-email', u.email) : null];
 }
 
 // ── Overview ──────────────────────────────────────────────────────────────
@@ -359,7 +359,7 @@ function usersTable(data: AdminUsersResponse, state: { sort: UserSort; dir: stri
   ];
   const rows = data.users.map((u: AdminUser) =>
     row(
-      el('td', '', el('div', 'person', avatar(u.id, u.email), link(`/admin/user?id=${u.id}`, u.email), u.role === 'superadmin' ? tag('superadmin', true) : null)),
+      el('td', '', el('div', 'person', avatar(u), el('div', 'person-names', ...nameAndEmail(u)), u.role === 'superadmin' ? tag('superadmin', true) : null)),
       planOf(u),
       statusPill(u.status),
       cell('quiet', day(u.endsAt)),
@@ -528,8 +528,13 @@ async function user(): Promise<void> {
       el(
         'div',
         'person',
-        avatar(u.id, u.email, true),
-        el('div', 'titles', el('h1', '', u.email, statusPill(u.status), u.role === 'superadmin' ? tag('superadmin', true) : null), el('p', '', `${u.role === 'superadmin' ? 'Every feature' : `On ${u.planName ?? 'no plan'}`}, joined ${date(u.createdAt)}`)),
+        avatar(u, 'large'),
+        el(
+          'div',
+          'titles',
+          el('h1', '', displayName(u), statusPill(u.status), u.role === 'superadmin' ? tag('superadmin', true) : null),
+          el('p', '', `${u.firstName || u.lastName ? `${u.email} · ` : ''}${u.role === 'superadmin' ? 'Every feature' : `On ${u.planName ?? 'no plan'}`}, joined ${date(u.createdAt)}`),
+        ),
       ),
     ),
     el('div', 'columns wide-first', u.role === 'superadmin' ? everything : subscription, account),
@@ -870,7 +875,7 @@ for (const a of document.querySelectorAll<HTMLAnchorElement>('.side-nav a')) if 
 const VIEWS: Record<string, () => Promise<void>> = { overview, users, user, plans: plansView, log: () => log() };
 void loadAccount()
   .then((account) => {
-    $('#me').textContent = account.account.email;
+    $('#me').replaceChildren(avatar(account.account), el('span', 'me-name', displayName(account.account)));
     return (VIEWS[view] ?? overview)();
   })
   .catch((err) => root.replaceChildren(el('p', 'empty', `This page could not be loaded: ${errorText(err)}.`)))

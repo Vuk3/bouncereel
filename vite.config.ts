@@ -1,7 +1,7 @@
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
-import { CONTACT_EMAIL, INDEXED, OPERATOR_NAME, OPERATOR_PLACE, SIGNUPS_OPEN, SITE_HOST, SITE_URL, SOCIAL } from './shared/site.ts';
+import { CONTACT_EMAIL, GOOGLE_LOGIN, INDEXED, OPERATOR_NAME, OPERATOR_PLACE, SIGNUPS_OPEN, SITE_HOST, SITE_URL, SOCIAL } from './shared/site.ts';
 
 // Cross-origin isolation lets the Kokoro voice model run ONNX on all CPU cores
 // (it needs SharedArrayBuffer); without it, it runs on one and a 20-second
@@ -66,21 +66,35 @@ const FOLLOW = `<ul class="follow-list" aria-label="BounceReel on social media">
 ).join('')}</ul>`;
 
 /**
- * Each place that offers a sign-up is written twice, an element marked data-signups="open" and
- * one marked "closed" (a side may be left out: nothing shows there then). The build keeps the
- * side SIGNUPS_OPEN names, without the attribute, and drops the other. A marked element must not
- * contain an element of its own tag: its end is the first closing tag of that name. A void one
- * (`<meta … />`) has no end to find and is matched on its own.
+ * The sides the switches in shared/site.ts keep. Each place that depends on one is written twice,
+ * an element marked with the switch's attribute and one side, and one with the other (a side may
+ * be left out: nothing shows there then): data-signups="open|closed" (SIGNUPS_OPEN), and
+ * data-google="on|off" (GOOGLE_LOGIN). The build keeps the side the switch names, without the
+ * attribute, and drops the other. A marked element must not contain an element of its own tag:
+ * its end is the first closing tag of that name. A void one (`<meta … />`) has no end to find and
+ * is matched on its own.
  */
-function signups(html: string): string {
-  const keep = SIGNUPS_OPEN ? 'open' : 'closed';
-  const pick = (side: string, element: string, newline: string) => (side === keep ? element + newline : '');
+const KEEP: Record<string, string> = { signups: SIGNUPS_OPEN ? 'open' : 'closed', google: GOOGLE_LOGIN ? 'on' : 'off' };
+
+function pairs(html: string): string {
+  // Again until nothing changes: a pair inside a kept one (Google's button inside the open sign-up
+  // form) is inside the text the outer match took, so one pass leaves it as it was.
+  for (let before = ''; before !== html; ) {
+    before = html;
+    html = pairsOnce(html);
+  }
+  return html;
+}
+
+function pairsOnce(html: string): string {
+  const pick = (flag: string, side: string, element: string, newline: string) => (KEEP[flag] === side ? element + newline : '');
   return html
-    .replace(/([ \t]*)<(meta|link)\b([^>]*?) data-signups="(open|closed)"([^>]*)>(\n?)/g, (_, indent, tag, before, side, after, newline) =>
-      pick(side, `${indent}<${tag}${before}${after}>`, newline),
+    .replace(/([ \t]*)<(meta|link)\b([^>]*?) data-(signups|google)="(open|closed|on|off)"([^>]*)>(\n?)/g, (_, indent, tag, before, flag, side, after, newline) =>
+      pick(flag, side, `${indent}<${tag}${before}${after}>`, newline),
     )
-    .replace(/([ \t]*)<(\w+)\b([^>]*?) data-signups="(open|closed)"([^>]*)>([\s\S]*?)<\/\2>(\n?)/g, (_, indent, tag, before, side, after, inner, newline) =>
-      pick(side, `${indent}<${tag}${before}${after}>${inner}</${tag}>`, newline),
+    .replace(
+      /([ \t]*)<(\w+)\b([^>]*?) data-(signups|google)="(open|closed|on|off)"([^>]*)>([\s\S]*?)<\/\2>(\n?)/g,
+      (_, indent, tag, before, flag, side, after, inner, newline) => pick(flag, side, `${indent}<${tag}${before}${after}>${inner}</${tag}>`, newline),
     );
 }
 
@@ -96,7 +110,8 @@ function signups(html: string): string {
  *   <!-- site:header -->, <!-- site:footer -->   the public site's header and footer
  *   <!-- app:head -->, <!-- app:theme -->, <!-- admin:nav -->   the same for the pages behind
  *                                 the sign-in (account, admin), which use the studio's styles
- *   data-signups="open" / "closed"   one of two versions of a sign-up offer (signups() above)
+ *   data-signups="open|closed", data-google="on|off"   one of two versions of a place that
+ *                                 depends on a switch (pairs() above)
  *   <!-- site:social -->, <!-- site:follow -->, %SAME_AS%   BounceReel's accounts (SOCIAL): the
  *                                 footer's marks, the home page's follow cards, and the list of
  *                                 their addresses in its structured data
@@ -112,7 +127,7 @@ function sitePartials(): Plugin {
       handler(page) {
         // The partials go in first, so the sign-up pairs inside them are picked too, and the
         // page's title and description are read from the side that was kept.
-        const html = signups(
+        const html = pairs(
           page
             .replace('<!-- site:header -->', partial('header'))
             .replace('<!-- site:footer -->', partial('footer'))

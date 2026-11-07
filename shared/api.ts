@@ -151,6 +151,26 @@ export interface Account {
   /** The address has been confirmed through the link in the sign-up mail. */
   verified: boolean;
   createdAt: string;
+  /** The profile's names, null until set (the account page, or Google at sign-in). */
+  firstName: string | null;
+  lastName: string | null;
+  /** The profile picture, served to a signed-in browser (GET /api/avatars/…), or null. */
+  avatarUrl: string | null;
+  /** False for an account made with Google that has not set a password. */
+  hasPassword: boolean;
+  /** The account has signed in with Google. */
+  google: boolean;
+}
+
+/** PUT /api/account/profile: empty or missing clears a name. */
+export interface ProfileBody {
+  firstName?: string | null;
+  lastName?: string | null;
+}
+
+/** PUT /api/account/avatar (the picture's bytes as the body), DELETE /api/account/avatar */
+export interface AvatarResponse {
+  avatarUrl: string | null;
 }
 
 /** POST /api/auth/signup, /api/auth/login */
@@ -306,6 +326,9 @@ export interface AdminUser {
   lastLoginAt: string | null;
   videos: number;
   verified: boolean;
+  firstName: string | null;
+  lastName: string | null;
+  avatarUrl: string | null;
 }
 
 /** GET /api/admin/users?q=&plan=&status=&sort=&dir=&page= */

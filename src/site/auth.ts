@@ -16,6 +16,21 @@ const params = new URLSearchParams(location.search);
 const next = safeNext(params.get('next'), location.origin);
 const action = form?.dataset.action ?? 'verify';
 
+/**
+ * Google sign-in comes back here with ?google=<what> when it did not sign anyone in
+ * (worker/routes/auth.ts googleProblem): said in words, and the word taken out of the address.
+ */
+const GOOGLE_PROBLEMS: Record<string, string> = {
+  cancelled: 'The Google sign-in was cancelled.',
+  expired: 'The Google sign-in took too long, or was started in another window. Try again.',
+  busy: 'Too many sign-ins from this network. Try again in 15 minutes.',
+  failed: 'Google sign-in did not work this time. Try again, or sign in with your email.',
+  unavailable: 'Google sign-in is not available right now. Sign in with your email.',
+  unverified: 'Google has not confirmed that address, so it cannot sign you in here.',
+  other: 'The account with that address signs in with a different Google account. Use that one, or your password.',
+  closed: 'There is no BounceReel account for that Google address yet, and sign-ups open soon.',
+};
+
 // Between sign-in and sign-up, keep where the visitor was going.
 if (next) {
   for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-keep-next]')) link.href += `?next=${encodeURIComponent(next)}`;
@@ -70,6 +85,15 @@ function check(): boolean {
     return false;
   }
   return true;
+}
+
+const googleProblem = params.get('google');
+if (googleProblem) {
+  if (googleProblem === 'suspended') fail(new ApiError(403, 'account_suspended', ''));
+  else show(errorBox, GOOGLE_PROBLEMS[googleProblem] ?? GOOGLE_PROBLEMS.failed);
+  params.delete('google');
+  const rest = params.toString();
+  history.replaceState(null, '', location.pathname + (rest ? `?${rest}` : ''));
 }
 
 let token = '';

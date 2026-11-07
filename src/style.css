@@ -161,6 +161,47 @@ h2 {
   width: 32px;
   height: 32px;
 }
+/* The account's picture in place of the studio's person icon (ui/plan.ts paintAccountLinks). */
+.icon-button .avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+}
+
+/*
+ * A person: their profile picture, else their initials on one of the two balls' colours, picked by
+ * their id (ui/avatar.ts). Here rather than in console.css: the studio's top bar shows one too.
+ */
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--avatar, var(--team-a));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar.large {
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+}
+.avatar.xl {
+  width: 104px;
+  height: 104px;
+  font-size: 38px;
+}
 .icon-button.small svg {
   width: 16px;
   height: 16px;
@@ -1845,6 +1886,42 @@ a.button {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/*
+ * The account page's crop (src/account.ts): the photo under a circle as wide as the square, dragged
+ * and zoomed in place. The canvas is drawn at twice its size for a sharp edge on a dense screen;
+ * touch-action none, or a finger dragging the photo would scroll the page.
+ */
+.crop {
+  width: min(380px, calc(100vw - 32px));
+}
+.crop-stage {
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 0 0 14px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--sunken);
+  cursor: grab;
+  touch-action: none;
+}
+.crop-stage.dragging {
+  cursor: grabbing;
+}
+.crop-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.crop-zoom {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 /* The sheet after a take (app.ts showFinished): the file, then what the library did with it. */

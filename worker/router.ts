@@ -2,7 +2,7 @@ import { assertSameOrigin, requireSuperadmin, requireUser, type AuthUser } from 
 import { HttpError, errorResponse } from './lib/http.ts';
 import { errorFields, log } from './lib/log.ts';
 import { siteOrigin } from './site.ts';
-import { changePassword, deleteAccount, getAccount, logoutEverywhere, resendVerification, takeVideo } from './routes/account.ts';
+import { changePassword, deleteAccount, getAccount, getAvatar, logoutEverywhere, putAvatar, putProfile, removeAvatar, resendVerification, takeVideo } from './routes/account.ts';
 import {
   archivePlan,
   createPlan,
@@ -21,7 +21,7 @@ import {
   suspendUser,
   unsuspendUser,
 } from './routes/admin.ts';
-import { forgot, login, logout, reset, resetInfo, signup, verify } from './routes/auth.ts';
+import { forgot, googleCallback, googleStart, login, logout, reset, resetInfo, signup, verify } from './routes/auth.ts';
 import { checkout, portal, webhook } from './routes/billing.ts';
 import type { RouteHandler } from './routes/context.ts';
 import { listPlans } from './routes/plans.ts';
@@ -36,7 +36,7 @@ interface Route {
 // Which routes need what is decided by the path, before any route is matched (handleApi), so a
 // caller who is not allowed cannot learn which routes exist:
 //
-//   public      PUBLIC below: signing up and in, the links in mails, the plans, the webhook
+//   public      PUBLIC below: signing up and in (Google too), the links in mails, the plans, the webhook
 //   signed in   everything else
 //   superadmin  /api/admin/*
 const ROUTES: Route[] = [
@@ -47,6 +47,8 @@ const ROUTES: Route[] = [
   { method: 'GET', pattern: /^\/api\/auth\/reset$/, handler: resetInfo },
   { method: 'POST', pattern: /^\/api\/auth\/reset$/, handler: reset },
   { method: 'POST', pattern: /^\/api\/auth\/verify$/, handler: verify },
+  { method: 'GET', pattern: /^\/api\/auth\/google$/, handler: googleStart },
+  { method: 'GET', pattern: /^\/api\/auth\/google\/callback$/, handler: googleCallback },
   { method: 'GET', pattern: /^\/api\/plans$/, handler: listPlans },
   { method: 'POST', pattern: /^\/api\/billing\/webhook$/, handler: webhook },
 
@@ -56,6 +58,10 @@ const ROUTES: Route[] = [
   { method: 'POST', pattern: /^\/api\/account\/password$/, handler: changePassword },
   { method: 'POST', pattern: /^\/api\/account\/verify$/, handler: resendVerification },
   { method: 'POST', pattern: /^\/api\/account\/logout-everywhere$/, handler: logoutEverywhere },
+  { method: 'PUT', pattern: /^\/api\/account\/profile$/, handler: putProfile },
+  { method: 'PUT', pattern: /^\/api\/account\/avatar$/, handler: putAvatar },
+  { method: 'DELETE', pattern: /^\/api\/account\/avatar$/, handler: removeAvatar },
+  { method: 'GET', pattern: /^\/api\/avatars\/(?<id>\d+)\/(?<name>[A-Za-z0-9_-]{8,64}\.(?:webp|jpg|png))$/, handler: getAvatar },
   { method: 'POST', pattern: /^\/api\/billing\/checkout$/, handler: checkout },
   { method: 'POST', pattern: /^\/api\/billing\/portal$/, handler: portal },
 
@@ -85,8 +91,12 @@ const ROUTES: Route[] = [
   { method: 'PUT', pattern: /^\/api\/admin\/videos\/(?<id>\d+)\/texts$/, handler: putTexts },
 ];
 
-/** The whole public API, as an explicit list: anything not on it needs a session. */
-const PUBLIC = [/^\/api\/auth\/[a-z-]+$/, /^\/api\/plans$/, /^\/api\/billing\/webhook$/];
+/**
+ * The whole public API, as an explicit list: anything not on it needs a session. Google's return
+ * (/api/auth/google/callback) is on it because it is how a session starts; its state cookie and
+ * PKCE are what it trusts (routes/auth.ts googleCallback).
+ */
+const PUBLIC = [/^\/api\/auth\/[a-z-]+$/, /^\/api\/auth\/google\/callback$/, /^\/api\/plans$/, /^\/api\/billing\/webhook$/];
 /** The payment provider's events come from its servers: no session, not this origin. Its signature is checked instead. */
 const WEBHOOK = '/api/billing/webhook';
 

@@ -143,14 +143,25 @@
   min-width: 0;
   padding: 6px 4px 0 12px;
 }
-.side-me span {
+.side-me > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
   color: var(--muted);
   font-size: 13px;
+}
+.side-me .me-name {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.side-me .avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
 }
 
 .console-main {
@@ -382,24 +393,17 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-/* The account's initial on one of the two balls' colours, picked by its id. */
-.avatar {
+/* A name over its address, in the users' list (the .avatar itself is in style.css). */
+.person-names {
   display: grid;
-  place-items: center;
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--avatar, var(--team-a));
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
+  min-width: 0;
+  line-height: 1.3;
 }
-.avatar.large {
-  width: 56px;
-  height: 56px;
-  font-size: 22px;
+.person-email {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
 }
 
 .pill {
@@ -1190,6 +1194,9 @@
   gap: 4px;
 }
 .top-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 8px 14px;
   border-radius: 999px;
   color: var(--muted);
@@ -1205,6 +1212,13 @@
   color: var(--ink);
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--line);
+}
+/* The account's picture before "Account" (ui/plan.ts paintAccountLinks): the link keeps its height. */
+.top-nav .avatar {
+  width: 22px;
+  height: 22px;
+  margin: -3px 0;
+  font-size: 10px;
 }
 .top-nav a:focus-visible {
   outline: 2px solid var(--focus);
@@ -1946,4 +1960,31 @@
   .drawer[open] {
     animation: none;
   }
+}
+
+/* ── The account page's profile ──────────────────────────────────────── */
+
+/* The picture with its two buttons, beside the names from 640 px and over them on a phone. */
+.profile {
+  display: grid;
+  gap: 22px;
+}
+@media (min-width: 640px) {
+  .profile {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
+  }
+}
+.profile-photo {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.profile-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
 }

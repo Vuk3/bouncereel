@@ -1,4 +1,5 @@
 import type { AdminOverview, AdminUser, Role, UserSort, UserStatus } from '../shared/api.ts';
+import { avatarUrl } from './files.ts';
 import { IN_FORCE } from './plans.ts';
 
 // The admin area's reads over every account. All counting and filtering happens in SQL: a
@@ -18,6 +19,9 @@ interface AdminUserRow {
   ends_at: string | null;
   status: UserStatus;
   videos: number;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_key: string | null;
 }
 
 export type AdminUserDetail = AdminUser & { suspendedAt: string | null };
@@ -35,6 +39,9 @@ function toAdminUser(row: AdminUserRow): AdminUserDetail {
     lastLoginAt: row.last_login_at,
     videos: row.videos,
     verified: row.email_verified_at !== null,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    avatarUrl: avatarUrl(row.avatar_key),
     suspendedAt: row.suspended_at,
   };
 }
@@ -46,6 +53,7 @@ function toAdminUser(row: AdminUserRow): AdminUserDetail {
  * listed as on the default plan, the owner would read as a Rookie and turn up under its filter.
  */
 const ACCOUNTS = `SELECT u.id, u.email, u.role, u.created_at, u.last_login_at, u.email_verified_at, u.suspended_at,
+    u.first_name, u.last_name, u.avatar_key,
     CASE WHEN u.role = 'superadmin' THEN NULL ELSE s.plan_id END AS plan_id,
     CASE WHEN u.role = 'superadmin' THEN NULL ELSE p.name END AS plan_name,
     CASE WHEN u.role = 'superadmin' THEN NULL ELSE s.ends_at END AS ends_at,
@@ -79,9 +87,10 @@ export interface UserQuery {
 
 /** One page of accounts matching the filters, and how many match in all. Two statements, one round trip. */
 export async function selectUsers(db: D1Database, query: UserQuery, now: string): Promise<{ users: AdminUser[]; total: number }> {
-  // The search is a substring of the address; %, _ and \ in it are taken literally.
+  // The search is a substring of the address or of the name; %, _ and \ in it are taken literally.
   const like = `%${query.q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-  const where = `WHERE (?2 = '' OR email LIKE ?3 ESCAPE '\\') AND (?4 IS NULL OR plan_id = ?4) AND (?5 IS NULL OR status = ?5)`;
+  const where = `WHERE (?2 = '' OR email LIKE ?3 ESCAPE '\\' OR (COALESCE(first_name, '') || ' ' || COALESCE(last_name, '')) LIKE ?3 ESCAPE '\\')
+    AND (?4 IS NULL OR plan_id = ?4) AND (?5 IS NULL OR status = ?5)`;
   const filters = [now, query.q, like, query.planId, query.status];
   const order = `${SORTS[query.sort]} ${query.dir === 'asc' ? 'ASC' : 'DESC'}, id DESC`;
   const [rows, count] = await db.batch<AdminUserRow | { n: number }>([

@@ -1,7 +1,8 @@
-import type { AccountResponse, DayResponse } from '../../shared/api.ts';
+import type { AccountResponse, AvatarResponse, DayResponse } from '../../shared/api.ts';
 import { hashPassword, verifyPassword } from '../auth/crypto.ts';
 import { clearSessionCookies, sessionTokenHash } from '../auth/session.ts';
-import { countActiveSuperadmins, deleteUser, deleteUserSessions, setPassword, throttleCount, throttleHit } from '../auth/store.ts';
+import { countActiveSuperadmins, deleteUser, deleteUserSessions, setAvatarKey, setPassword, setProfile, throttleCount, throttleHit } from '../auth/store.ts';
+import { AVATAR_MAX_BYTES, avatarUrl, deleteFile, serveFile, storeAvatar } from '../files.ts';
 import { BILLING } from './billing.ts';
 import { HttpError, json, noContent, readJsonObject } from '../lib/http.ts';
 import { claimDay, entitlements, logChange, selectDay } from '../plans.ts';
@@ -23,7 +24,18 @@ export async function getAccount(context: RouteContext): Promise<Response> {
   const [plan, count] = await Promise.all([entitlements(env.DB, user, now), countVideos(env.DB, user.id)]);
   const day = await selectDay(env.DB, user.id, plan.features.perDay, now);
   const body: AccountResponse = {
-    account: { id: user.id, email: user.email, role: user.role, verified: user.verified, createdAt: user.createdAt },
+    account: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      verified: user.verified,
+      createdAt: user.createdAt,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatarUrl: avatarUrl(user.avatarKey),
+      hasPassword: user.hasPassword,
+      google: user.google,
+    },
     plan: plan.plan,
     subscription: plan.subscription,
     features: plan.features,
@@ -96,14 +108,75 @@ export async function logoutEverywhere(context: RouteContext): Promise<Response>
   return json({ ok: true }, 200, clearSessionCookies(context.url));
 }
 
+/** A name for the profile: trimmed, its spaces single, 60 characters at most; empty is none. */
+function nameValue(value: unknown, field: string): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'string') throw new HttpError(400, `invalid_${field}`, `${field} must be text.`);
+  // No control characters: a name is shown in pages and the admin area, never anything else.
+  const name = value.replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
+  if (name.length > 60) throw new HttpError(400, `invalid_${field}`, 'A name can be 60 characters long at most.');
+  return name || null;
+}
+
+/** PUT /api/account/profile { firstName, lastName } */
+export async function putProfile(context: RouteContext): Promise<Response> {
+  const user = signedIn(context);
+  const body = await readJsonObject(context.request);
+  const firstName = nameValue(body.firstName, 'firstName');
+  const lastName = nameValue(body.lastName, 'lastName');
+  await setProfile(context.env.DB, user.id, firstName, lastName).run();
+  return json({ firstName, lastName });
+}
+
 /**
- * DELETE /api/account { password }: the account and everything it made (videos, links,
- * subscription, sessions) go at once. The last superadmin cannot leave.
+ * PUT /api/account/avatar, the picture's bytes as the body: the account page has already cut it
+ * to a 256 px square in the browser (src/account.ts), so the Worker only checks what it is and
+ * stores it. The old picture goes once the new one is in.
+ */
+export async function putAvatar(context: RouteContext): Promise<Response> {
+  const user = signedIn(context);
+  const { env, request } = context;
+  const declared = Number(request.headers.get('Content-Length') ?? 0);
+  if (declared > AVATAR_MAX_BYTES) throw new HttpError(413, 'avatar_too_large', 'The picture is too large: 200 KB at most.');
+  const key = await storeAvatar(env, user.id, new Uint8Array(await request.arrayBuffer()));
+  await setAvatarKey(env.DB, user.id, key).run();
+  await deleteFile(env, user.avatarKey);
+  const body: AvatarResponse = { avatarUrl: avatarUrl(key) };
+  return json(body);
+}
+
+/** DELETE /api/account/avatar: back to the initials. */
+export async function removeAvatar(context: RouteContext): Promise<Response> {
+  const user = signedIn(context);
+  await setAvatarKey(context.env.DB, user.id, null).run();
+  await deleteFile(context.env, user.avatarKey);
+  const body: AvatarResponse = { avatarUrl: null };
+  return json(body);
+}
+
+/**
+ * GET /api/avatars/:account/:name: a profile picture, to its own account and to a superadmin (the
+ * admin area). Anyone else gets the 404 of a picture that does not exist.
+ */
+export async function getAvatar(context: RouteContext): Promise<Response> {
+  const user = signedIn(context);
+  const { id, name } = context.params;
+  if (String(user.id) !== id && user.role !== 'superadmin') throw new HttpError(404, 'not_found', 'No such file.');
+  return serveFile(context.env, `avatars/${id}/${name}`);
+}
+
+/**
+ * DELETE /api/account { password } or, for an account made with Google that has no password,
+ * { confirm: its address }: the account and everything it made (videos, links, subscription,
+ * sessions, its picture) go at once. The last superadmin cannot leave.
  */
 export async function deleteAccount(context: RouteContext): Promise<Response> {
   const user = signedIn(context);
   const body = await readJsonObject(context.request);
-  await checkPassword(context, body.password);
+  if (user.hasPassword) await checkPassword(context, body.password);
+  else if (typeof body.confirm !== 'string' || body.confirm.trim().toLowerCase() !== user.email.toLowerCase()) {
+    throw new HttpError(403, 'wrong_confirm', 'Type your email address to confirm.');
+  }
   const { env, now } = context;
   if (user.role === 'superadmin' && (await countActiveSuperadmins(env.DB)) <= 1) {
     throw new HttpError(409, 'last_superadmin', 'The last superadmin cannot delete their account.');
@@ -112,6 +185,7 @@ export async function deleteAccount(context: RouteContext): Promise<Response> {
     logChange(env.DB, { at: now.toISOString(), actorId: user.id, subject: 'account', userId: user.id, action: 'deleted by its owner' }),
     deleteUser(env.DB, user.id),
   ]);
+  await deleteFile(env, user.avatarKey);
   const response = noContent();
   for (const [name, value] of clearSessionCookies(context.url)) response.headers.append(name, value);
   return response;

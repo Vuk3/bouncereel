@@ -80,6 +80,77 @@ visitor sees the plan cards as they work. Dev and preview follow the flag too.
 
 Closing them again is the same with `false`: the closed sides are still in the HTML.
 
+### Profile
+
+Every account has a **profile** on its account page: a first and a last name and a **picture**
+(`users.first_name`, `last_name`, `avatar_key`; [0010_profiles.sql](../migrations/0010_profiles.sql)).
+The picture is cut in the browser: the photo opens in a dialog over a circle, is dragged and
+zoomed into place, and the page draws that view at 256 px and sends it as WebP (JPEG where the
+browser cannot write WebP; [src/account.ts](../src/account.ts) `cropPhoto`). The Worker does no
+image work: it checks the first bytes are a WebP, JPEG or PNG and the size is 200 KB at most, and
+stores it in R2 (the `FILES` bucket, `bouncereel`, under `avatars/<account>/<random>.<ext>`;
+[worker/files.ts](../worker/files.ts)). A new picture is a new key, so its address is cached for
+good (`private, immutable`) and the old file is deleted; removing the picture, or deleting the
+account (by its owner or a superadmin), deletes the file too. A picture is served at
+`/api/avatars/<account>/<name>` to its own account and to a superadmin; to anyone else it is a 404.
+Without a picture the pages draw the initials on one of the balls' colours ([src/ui/avatar.ts](../src/ui/avatar.ts)):
+on the account page, in place of the studio's person icon and before "Account" in the top bar
+(`paintAccountLinks` in [src/ui/plan.ts](../src/ui/plan.ts)), and in the admin area, where the
+users' list shows the name over the address and its search takes names too.
+
+### Google sign-in
+
+**Google sign-in is built and switched off**: `GOOGLE_LOGIN` in [shared/site.ts](../shared/site.ts).
+Off, the build drops every `data-google="on"` element (the "Continue with Google" buttons on
+/login and on the open side of /signup, the privacy page's lines on Google) and keeps the
+"off" ones, and `/api/auth/google` answers 404 like any missing route.
+
+On, it is the authorization code flow with PKCE, with no library ([worker/auth/google.ts](../worker/auth/google.ts),
+`googleStart` and `googleCallback` in [worker/routes/auth.ts](../worker/routes/auth.ts)):
+
+1. "Continue with Google" is a link to `/api/auth/google?next=…`. The Worker sets a 10-minute
+   HttpOnly cookie (`__Host-br_google`, `br_google` on http; SameSite=Lax, since Google's return
+   is a top-level navigation from another site) holding a random state, the PKCE verifier and
+   where to go afterwards, and redirects to Google with the client id (`GOOGLE_CLIENT_ID` in
+   wrangler.jsonc), scopes `openid email profile`, the state, the S256 challenge and the
+   account chooser.
+2. Google sends the browser back to `/api/auth/google/callback?code&state` (on `PUBLIC`; a GET,
+   so outside the origin check). The state must match the cookie's, the callback is throttled
+   (20 an IP per 15 minutes), and the code is traded at Google's token endpoint with the secret
+   (`GOOGLE_CLIENT_SECRET`) and the verifier. The ID token comes straight from Google over TLS,
+   so its signature is not checked again; its issuer, audience and expiry are.
+3. The account is found by `google_sub`, else by the address, **only if Google says it is
+   confirmed** (`email_verified`), which ties the two (`linkGoogle`: the address counts as
+   confirmed here too, empty names take Google's). An address whose account is tied to another
+   Google account is refused. With no account: while `SIGNUPS_OPEN` is off nothing is made
+   (`?google=closed`); on, an account is made on the default plan with no password
+   (`password_hash` '', which no password matches), the address confirmed and Google's names.
+   A suspended account is refused. An account without a picture takes the Google account's, at
+   256 px, from Google's picture host only.
+4. The session starts as after a password sign-in, the flow's cookie is removed, and the browser
+   goes to `next` or the studio. Anything that goes wrong lands on /login as
+   `?google=cancelled|expired|busy|failed|unavailable|unverified|suspended|other|closed`, which
+   [src/site/auth.ts](../src/site/auth.ts) puts in words.
+
+An account made with Google has **no password** until it sets one: its account page offers the
+password mail instead of the form, and deleting it is confirmed by typing its address.
+
+**Turning it on**, when the owner says so:
+
+1. Google Cloud (project BounceReel, Google Auth Platform): the app published, its branding
+   verified, the scopes `openid`, `userinfo.email`, `userinfo.profile`, and the web client's
+   redirect URIs `https://bouncereel.com/api/auth/google/callback` (and the two localhost ones,
+   5173 and 4199). The client id is already in wrangler.jsonc.
+2. The secret in production, `npx wrangler secret put GOOGLE_CLIENT_SECRET` (the owner; locally it
+   is in `.env`).
+3. `GOOGLE_LOGIN = true` in shared/site.ts, `npm run check`, `npx vite build`: /login has the
+   button, the privacy page names Google and the third cookie, no `data-google` is left.
+4. Locally, with the preview on 4199: sign in with a Google account that has an account here,
+   and check it lands in the studio with its picture; then one that has none (with sign-ups
+   closed, the login page says so).
+5. This subsection's first two paragraphs say it is on, a dated line in the changelog, and the
+   owner releases.
+
 | Role | Can |
 | --- | --- |
 | `user` | the studio, its own library and account; what its plan includes |
@@ -125,6 +196,8 @@ Ported from Hoops ([worker/auth/session.ts](../worker/auth/session.ts)):
   head of every public page reads it before first paint and swaps "Sign in / Start free" for
   "Open studio". Nothing on the server trusts it. A hint left by an ended session is cleared
   the next time the Worker sees it on a page it guards.
+- **While signing in with Google**, a third: the flow's state, PKCE verifier and destination
+  for 10 minutes (§1, "Google sign-in").
 - **Signing out** deletes the session row and both cookies. **Sign out everywhere** (the
   account page) deletes every session of the account. A **password change** keeps the
   current session and deletes the others; a **password reset** deletes them all and starts a
@@ -205,8 +278,8 @@ exists:
    The **one exception is `POST /api/billing/webhook`**: a payment provider's server is not on
    this origin.
 3. **The session**: every path that is not on the explicit public list (`PUBLIC`:
-   `/api/auth/<word>`, `/api/plans`, `/api/billing/webhook`) needs one, else 401
-   `unauthenticated`.
+   `/api/auth/<word>`, `/api/auth/google/callback`, `/api/plans`, `/api/billing/webhook`) needs
+   one, else 401 `unauthenticated`.
 4. **The role**: every `/api/admin/*` path needs a superadmin, else 403 `forbidden`. So
    `GET /api/admin/anything` answers 401 or 403, never 404, to a caller who may not see it.
 
@@ -422,14 +495,20 @@ The video routes (signed in, each account its own) are in
 | GET | `/api/auth/reset?token=` | public | who a password link is for: `{ email, purpose, existing }` |
 | POST | `/api/auth/reset` | public | `{ token, password }` → the account, signed in |
 | POST | `/api/auth/verify` | public | `{ token }` → `{ email }` confirmed |
+| GET | `/api/auth/google` | public | `?next=`: to Google's sign-in, with the flow's cookie; 404 while `GOOGLE_LOGIN` is off |
+| GET | `/api/auth/google/callback` | public | Google's return: signs in and redirects to `next` or `/app`, or to `/login?google=<what>`; 404 while off |
 | GET | `/api/plans` | public | the visible plans that are not archived, and `billing` |
 | POST | `/api/billing/webhook` | public, any origin | 501 until a provider is connected |
 | GET | `/api/account` | signed in | the account, its plan in force, subscription, features, library count and limit, the day (`day`: used, limit, `endsAt`), `billing` |
 | POST | `/api/account/day` | signed in | takes one of today's videos as a recording starts → `{ day }`; 403 `day_used` |
-| DELETE | `/api/account` | signed in | `{ password }`: the account and everything it made; 409 `last_superadmin` |
+| DELETE | `/api/account` | signed in | `{ password }`, or `{ confirm: address }` for an account with no password: the account, everything it made and its picture; 409 `last_superadmin` |
 | POST | `/api/account/password` | signed in | `{ current, password }`; 403 `wrong_password` |
 | POST | `/api/account/verify` | signed in | the confirmation mail again |
 | POST | `/api/account/logout-everywhere` | signed in | ends every session of the account |
+| PUT | `/api/account/profile` | signed in | `{ firstName, lastName }`, 60 characters each, empty for none |
+| PUT | `/api/account/avatar` | signed in | the picture's bytes (WebP, JPEG or PNG, 200 KB at most) → `{ avatarUrl }`; 413 `avatar_too_large`, 415 `invalid_avatar` |
+| DELETE | `/api/account/avatar` | signed in | removes the picture → `{ avatarUrl: null }` |
+| GET | `/api/avatars/:account/:name` | signed in | a picture, to its account or a superadmin; else 404 |
 | POST | `/api/billing/checkout`, `/api/billing/portal` | signed in | 501 `billing_not_configured` |
 | GET | `/api/admin/overview` | superadmin | the overview's numbers |
 | GET | `/api/admin/users?q=&plan=&status=&sort=&dir=&page=` | superadmin | one page of accounts and the total |
@@ -520,3 +599,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-11-07 - mail from `hello@bouncereel.com`, replies to the same address (Cloudflare Email Routing forwards it).
 - 2026-11-07 - sign-ups closed while the site is being finished (`SIGNUPS_OPEN`): the API answers 403 `signups_closed`, every "Start free" reads "Coming soon", /signup says the site opens soon, the plan cards wait alike; how to open them again.
 - 2026-11-07 - a screen recording of the free preview carries the preview marks, which the file never has.
+- 2026-11-07 - profiles (names and a picture cut in the browser, kept in R2; 0010_profiles.sql) on the account page, in the top bars and the admin area; Google sign-in built and switched off (`GOOGLE_LOGIN`), with how to turn it on; an account with no password confirms its deletion with its address.

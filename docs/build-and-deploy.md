@@ -78,7 +78,10 @@ npm run admin -- you@example.com     # a local superadmin: open the printed link
 | --- | --- | --- |
 | `SITE_URL` | var, `https://bouncereel.com` (the same as in shared/site.ts) | in production every request the Worker answers is a 500 `not_configured`: **it fails closed** ([worker/site.ts](../worker/site.ts)) |
 | `RESEND_API_KEY` | secret | no mail is sent; the forgot form answers 503 in production; sign-up still works, the confirmation waits for the banner's button |
+| `GOOGLE_CLIENT_ID` | var, Google sign-in's public client id | Google sign-in cannot start (it is only used while `GOOGLE_LOGIN` is on) |
+| `GOOGLE_CLIENT_SECRET` | secret | Google sign-in answers that it is unavailable (only asked for while `GOOGLE_LOGIN` is on) |
 | `DB` | D1 binding | nothing works |
+| `FILES` | R2 binding, the bucket `bouncereel` (profile pictures under `avatars/`) | the deploy fails while the bucket does not exist; locally Wrangler keeps its own |
 | `ASSETS` | assets binding | the pages behind the sign-in cannot be served |
 
 **Cross-origin isolation on every page.** Kokoro runs ONNX on every CPU core only with
@@ -130,7 +133,10 @@ to the domain: a change of address keeps every account, password, video, plan an
 1. **The database**, if production has none yet: `npx wrangler login`, then
    `npx wrangler d1 create bouncereel`, and the printed `database_id` into
    [wrangler.jsonc](../wrangler.jsonc) (⚠️ the local database follows the id: section 2).
-2. **Mail, before the deploy**: `bouncereel.com` verified in Resend (Domains → Add domain, its
+2. **Files, before the deploy**: the R2 bucket `bouncereel` (Storage & databases → R2 →
+   Create bucket; location Automatic, hint Eastern Europe; public access off: the Worker serves
+   its files). Without it the deploy stops at the `FILES` binding.
+3. **Mail, before the deploy**: `bouncereel.com` verified in Resend (Domains → Add domain, its
    DNS records into the zone), and `npx wrangler secret put RESEND_API_KEY` with a key of that
    Resend account if it is not set yet. The sender is `MAIL_FROM`
    ([worker/mail/resend.ts](../worker/mail/resend.ts), `BounceReel <hello@bouncereel.com>`);
@@ -138,18 +144,18 @@ to the domain: a change of address keeps every account, password, video, plan an
    which **Cloudflare Email Routing** forwards to the owner's own mailbox (the zone → Email →
    Email Routing, a custom address `hello`). ⚠️ From an unverified domain Resend refuses every
    mail: no sign-up can confirm its address and no one can set a new password.
-3. **Deploy**: `npm run deploy`. It builds, applies the migrations to the production database,
+4. **Deploy**: `npm run deploy`. It builds, applies the migrations to the production database,
    uploads the Worker and the files, and attaches `bouncereel.com` as its custom domain (DNS
    record and certificate; a new certificate takes a few minutes). It is the only address: the
    Worker has no other domain, workers.dev or preview URL.
-4. **`www`**: in the bouncereel.com zone, a proxied `AAAA` record `www` → `100::` and a redirect
+5. **`www`**: in the bouncereel.com zone, a proxied `AAAA` record `www` → `100::` and a redirect
    rule from the template "Redirect from WWW to root" (301).
-5. **The superadmin**, on a new production database: `npm run admin -- <your address> --remote`,
+6. **The superadmin**, on a new production database: `npm run admin -- <your address> --remote`,
    then open the printed link and set the password. Making the first superadmin gives it the
    videos recorded before accounts.
-6. **Sign in** on `https://bouncereel.com/login`, open the studio and the Videos page, record
+7. **Sign in** on `https://bouncereel.com/login`, open the studio and the Videos page, record
    something short, and open `/admin`.
-7. **Check from a private window**: `https://bouncereel.com/` shows the home page, `/app` goes to
+8. **Check from a private window**: `https://bouncereel.com/` shows the home page, `/app` goes to
    the login page, `/api/videos` answers 401 JSON, `/admin` goes to the login page, `/robots.txt`
    keeps out `/app`, `/account`, `/admin` and `/api` and names the sitemap, and
    `https://www.bouncereel.com/` answers 301 to `https://bouncereel.com/`.
@@ -230,3 +236,4 @@ Workers Free plan:
 - 2026-10-24 - the site goes on `bouncereel.vukcvetkovic.com` for now, kept out of search, mail from `bouncereel@vukcvetkovic.com` (verified in Resend for Hoops); the cut-over without Access (nothing was deployed before); the later move to the site's own domain in its own steps; `.gitignore` keeps the gallery's videos and drops `.DS_Store`.
 - 2026-10-24 - Workers Builds runs `npm run deploy` (build command empty), so a release applies its migrations before the code goes live.
 - 2026-11-07 - the site on `bouncereel.com`: `SITE_URL` and its custom domain, `bouncereel.vukcvetkovic.com` taken off the Worker (it was never used), `www` to the apex, mail from `hello@bouncereel.com` (Resend before the deploy, Email Routing for replies), the public pages indexed, the steps for a later change of address.
+- 2026-11-07 - the R2 bucket `bouncereel` (`FILES`, profile pictures) made before the deploy; `GOOGLE_CLIENT_ID` and the secret `GOOGLE_CLIENT_SECRET` for Google sign-in, unused while it is off.

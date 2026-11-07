@@ -17,7 +17,7 @@
     <main id="main" class="shell">
       <article class="prose legal">
         <h1>Privacy policy</h1>
-        <p class="updated">Last updated 24 October 2026</p>
+        <p class="updated">Last updated 7 November 2026</p>
 
         <section class="legal-summary" aria-labelledby="short-title">
           <h2 id="short-title">The short version</h2>
@@ -73,6 +73,16 @@
                 <td>Performing our contract with you</td>
               </tr>
               <tr>
+                <td><strong>Your profile</strong>, if you fill it in: your first and last name, and a profile picture (the square you cut from a photo in your browser, kept at 256 pixels).</td>
+                <td>To show them on your account, and to us when we look after your account.</td>
+                <td>Performing our contract with you</td>
+              </tr>
+              <tr data-google="on">
+                <td><strong>If you sign in with Google</strong>: your Google account's id, and what Google shares when you agree: your email address, your name and your profile picture, which becomes your BounceReel picture if you have none.</td>
+                <td>To sign you in with your Google account, and to fill in your profile.</td>
+                <td>Performing our contract with you</td>
+              </tr>
+              <tr>
                 <td><strong>Your plan</strong>: which plan you are on, its status, its end date and how it was set. On a plan with a daily limit, when today's first video was saved and how many have been saved today.</td>
                 <td>To give you what your plan includes, and to apply its limits.</td>
                 <td>Performing our contract with you</td>
@@ -123,7 +133,8 @@
         </ul>
 
         <h2 id="cookies">4. Cookies</h2>
-        <p>BounceReel sets two cookies, both strictly necessary for the service you ask for, so they need no consent banner:</p>
+        <p data-google="off">BounceReel sets two cookies, both strictly necessary for the service you ask for, so they need no consent banner:</p>
+        <p data-google="on">BounceReel sets three cookies, all strictly necessary for the service you ask for, so they need no consent banner:</p>
         <div class="table-scroll">
           <table>
             <thead>
@@ -144,6 +155,11 @@
                 <td>Holds no personal data: it lets the public pages show “Open studio” instead of “Sign in” while you are signed in.</td>
                 <td>As long as the session</td>
               </tr>
+              <tr data-google="on">
+                <td><code>__Host-br_google</code></td>
+                <td>Only while you sign in with Google: a random value that makes sure the answer coming back from Google belongs to the sign-in you started here. Scripts cannot read it.</td>
+                <td>10 minutes at most, removed once you are back</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -163,13 +179,18 @@
             <tbody>
               <tr>
                 <td><strong>Cloudflare, Inc.</strong> (United States)</td>
-                <td>Hosts the site, runs our server and its database, and protects it from attacks.</td>
+                <td>Hosts the site, runs our server, its database and the storage for profile pictures, and protects it from attacks.</td>
                 <td>Everything we store (section 2), and the IP address and request data of every visit.</td>
               </tr>
               <tr>
                 <td><strong>Resend, Inc.</strong> (United States)</td>
                 <td>Sends our mails.</td>
                 <td>Your email address and the mail: a link to confirm your address or set a new password.</td>
+              </tr>
+              <tr data-google="on">
+                <td><strong>Google LLC</strong> (United States)</td>
+                <td>Signs you in with your Google account, only if you choose “Continue with Google”. It acts under its own privacy policy, not for us.</td>
+                <td>That you are signing in to BounceReel, and what you agree to share with us.</td>
               </tr>
               <tr>
                 <td><strong>Hugging Face, Inc.</strong> (United States)</td>
@@ -200,7 +221,7 @@
 
         <h2 id="retention">8. How long we keep it</h2>
         <ul>
-          <li><strong>Your account, plan and library</strong>: as long as you have an account. Deleting your account on your account page deletes your email address, password hash, sessions, plan, and every video and link at once.</li>
+          <li><strong>Your account, plan and library</strong>: as long as you have an account. Deleting your account on your account page deletes your email address, password hash, profile and picture, sessions, plan, and every video and link at once.</li>
           <li><strong>The record of changes</strong> stays after an account is deleted, as a history of what changed, with only the account's number: not its email address.</li>
           <li><strong>Sign-in sessions</strong>: until you sign out, and 30 days at most.</li>
           <li><strong>One-time links</strong>: confirming your address works for 7 days, setting a new password for 1 hour; each is deleted once it has expired.</li>

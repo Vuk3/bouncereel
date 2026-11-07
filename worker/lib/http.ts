@@ -34,6 +34,16 @@ export function json(data: unknown, status = 200, extraHeaders?: HeadersInit): R
   return new Response(JSON.stringify(data), { status, headers });
 }
 
+/**
+ * A stored file for a signed-in browser (worker/files.ts): its key changes whenever it does, so the
+ * browser may keep it for good, but no shared cache may (`private`).
+ */
+export function privateFile(body: ReadableStream, contentType: string, etag: string): Response {
+  const headers = apiHeaders({ 'Content-Type': contentType, ETag: etag });
+  headers.set('Cache-Control', 'private, max-age=31536000, immutable');
+  return new Response(body, { headers });
+}
+
 export function noContent(): Response {
   return new Response(null, { status: 204, headers: apiHeaders() });
 }

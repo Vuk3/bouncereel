@@ -25,6 +25,14 @@ export const INDEXED = true;
  */
 export const SIGNUPS_OPEN = false;
 
+/**
+ * Whether "Continue with Google" is offered. Off, the build drops every `data-google="on"` element
+ * (the buttons, the privacy page's lines on Google) and keeps the "off" ones (vite.config.ts), and
+ * the Worker answers 404 on /api/auth/google. While SIGNUPS_OPEN is off too, Google signs in only
+ * accounts that exist. Turning it on: docs/accounts-and-billing.md §1 ("Google sign-in").
+ */
+export const GOOGLE_LOGIN = false;
+
 /** The site's host, as text: the watermark, the legal pages. */
 export const SITE_HOST = new URL(SITE_URL).host;
 

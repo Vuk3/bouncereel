@@ -1,9 +1,11 @@
 import type { AccountResponse, Day } from '../../shared/api.ts';
 import { LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, soundAllowed, type Features } from '../../shared/features.ts';
 import { api } from '../api.ts';
+import { avatar } from './avatar.ts';
 
 // What the pages behind the sign-in share about the account: the header's links that depend on
-// it (the admin area for a superadmin), the banner asking to confirm the address, how something
+// it (the admin area for a superadmin, the account's picture on the way to its page), the banner
+// asking to confirm the address, how something
 // the plan does not include is marked, and what is left of the plan's day.
 
 const clock = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -82,6 +84,7 @@ export function paidTag(paid: boolean): HTMLSpanElement {
 export function bindAccountChrome(account: AccountResponse): void {
   const admin = document.querySelector<HTMLElement>('#admin-link');
   if (admin) admin.hidden = account.account.role !== 'superadmin';
+  paintAccountLinks(account);
   const banner = document.querySelector<HTMLElement>('#verify');
   if (!banner || account.account.verified) return;
   const send = Object.assign(document.createElement('button'), { type: 'button', className: 'link-button', textContent: 'Send it again' });
@@ -99,4 +102,16 @@ export function bindAccountChrome(account: AccountResponse): void {
       send.disabled = false;
     }
   });
+}
+
+/**
+ * The account's picture (or initials) on every way to the account page: in place of the studio's
+ * person icon, and before "Account" in the console's top bar. Again after the profile changes.
+ */
+export function paintAccountLinks(account: AccountResponse): void {
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('a[href="/account"]')) {
+    link.querySelector('.avatar')?.remove();
+    if (link.classList.contains('icon-button')) link.replaceChildren(avatar(account.account));
+    else link.prepend(avatar(account.account));
+  }
 }

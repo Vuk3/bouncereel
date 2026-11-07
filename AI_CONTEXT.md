@@ -282,6 +282,10 @@ takes effect when it passes, with nothing scheduled.
   day, the same for everyone. The server takes the video as Record starts
   (`POST /api/account/day`, `claimDay`), before the first frame; the save does not count
   again, and the studio's Record button only mirrors the count.
+- **Google sign-in is built and switched off** (`GOOGLE_LOGIN` in shared/site.ts): the buttons
+  and the privacy page's lines on Google are dropped at build, and its routes answer 404. Turning
+  it on: [accounts-and-billing](docs/accounts-and-billing.md#google-sign-in). Profiles (names and
+  a picture in R2) are on.
 - **Sign-ups are closed** while the site is being finished (`SIGNUPS_OPEN` in shared/site.ts):
   the Worker refuses them and every "Start free" reads "Coming soon". Opening them is one
   line and the checks in

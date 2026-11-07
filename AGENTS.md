@@ -91,7 +91,7 @@ Documentation is layered, so you only pay for what the task needs:
 
 - **Do not add a dependency or a new abstraction without asking.** The app runs on
   TypeScript, Vite and the DOM; the only runtime dependency is `kokoro-js` (the free
-  voice), loaded lazily. The Worker has none (WebCrypto, `fetch`, D1); `wrangler` and
+  voice), loaded lazily. The Worker has none (WebCrypto, `fetch`, D1, R2); `wrangler` and
   `@cloudflare/vite-plugin` are dev dependencies.
 - Keep it concrete and local. Two similar blocks are not duplication worth abstracting.
 - Match the shape of the surrounding code rather than importing a pattern from elsewhere.

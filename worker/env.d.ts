@@ -9,4 +9,10 @@ interface Env {
    * in production the forgot form answers that mail is unavailable.
    */
   RESEND_API_KEY?: string;
+  /**
+   * Google sign-in's client secret (worker/auth/google.ts), with GOOGLE_CLIENT_ID in wrangler.jsonc.
+   * Unset, the sign-in answers that it is not configured; it is only asked for while GOOGLE_LOGIN
+   * is on (shared/site.ts).
+   */
+  GOOGLE_CLIENT_SECRET?: string;
 }

@@ -1,6 +1,7 @@
 import type { MailResult, ResetInfo, SignedInResponse, VerifiedResponse } from '../../shared/api.ts';
-import { SIGNUPS_OPEN } from '../../shared/site.ts';
+import { GOOGLE_LOGIN, SIGNUPS_OPEN, safeNext } from '../../shared/site.ts';
 import { DUMMY_PASSWORD_HASH, hashPassword, randomToken, sha256Hex, verifyPassword } from '../auth/crypto.ts';
+import { authorizeUrl, exchangeCode, pkceChallenge, type GoogleProfile } from '../auth/google.ts';
 import { clearSessionCookies, sessionTokenHash, startSession, type AuthUser } from '../auth/session.ts';
 import {
   claimOrphans,
@@ -10,11 +11,15 @@ import {
   deleteUserSessions,
   findOpenToken,
   findUserByEmail,
+  findUserByGoogleSub,
   findUserById,
+  insertGoogleUser,
   insertToken,
   insertUser,
+  linkGoogle,
   markVerified,
   purgeThrottle,
+  setAvatarKey,
   setPassword,
   throttleCount,
   throttleHit,
@@ -23,7 +28,9 @@ import {
   type TokenPurpose,
   type UserRow,
 } from '../auth/store.ts';
+import { importGoogleAvatar } from '../files.ts';
 import { HttpError, json, readJsonObject } from '../lib/http.ts';
+import { errorFields, log } from '../lib/log.ts';
 import { deliver } from '../mail/resend.ts';
 import { resetMail, verifyMail } from '../mail/templates.ts';
 import { defaultPlan, insertSubscription, logChange } from '../plans.ts';
@@ -44,6 +51,11 @@ const LOGIN_PER_IP = 20;
 /** Sign-ups per IP an hour: enough for a family behind one router, too few for a script. */
 const SIGNUP_WINDOW = HOUR;
 const SIGNUP_PER_IP = 5;
+/** Google sign-ins coming back, per IP: each costs a call to Google; a person needs a few. */
+const GOOGLE_WINDOW = 15 * MINUTE;
+const GOOGLE_PER_IP = 20;
+/** Long enough to choose a Google account and say yes, short enough that a stale one is no use. */
+const GOOGLE_COOKIE_SECONDS = 600;
 /** Password mails: three an hour to one address, so the button cannot fill an inbox. */
 const FORGOT_WINDOW = HOUR;
 const FORGOT_PER_EMAIL = 3;
@@ -146,15 +158,134 @@ export async function signup(context: RouteContext): Promise<Response> {
     throw new HttpError(409, 'email_taken', 'There is already an account with this email. Sign in, or reset the password.');
   }
   const passwordHash = await hashPassword(password);
-  const plan = await defaultPlan(env.DB);
   const user = await insertUser(env.DB, email, passwordHash, nowIso).first<UserRow>();
   if (!user) throw new Error('INSERT … RETURNING returned no account');
-  await env.DB.batch([
-    insertSubscription(env.DB, user.id, plan.id, nowIso, user.id),
-    logChange(env.DB, { at: nowIso, actorId: user.id, subject: 'subscription', userId: user.id, planId: plan.id, action: 'created', after: { planId: plan.id, plan: plan.name, status: 'active' } }),
-  ]);
+  await startOnDefaultPlan(env.DB, user, nowIso);
   await sendVerification(context, user);
   return signedIn(user, await startSession(env.DB, user.id, url, now));
+}
+
+/** A new account's subscription, on the default plan, and its line in the change log. */
+async function startOnDefaultPlan(db: D1Database, user: UserRow, nowIso: string): Promise<void> {
+  const plan = await defaultPlan(db);
+  await db.batch([
+    insertSubscription(db, user.id, plan.id, nowIso, user.id),
+    logChange(db, { at: nowIso, actorId: user.id, subject: 'subscription', userId: user.id, planId: plan.id, action: 'created', after: { planId: plan.id, plan: plan.name, status: 'active' } }),
+  ]);
+}
+
+// ── Google sign-in ────────────────────────────────────────────────────────
+
+// Two addresses: /api/auth/google sends the browser to Google, and Google sends it back to
+// /api/auth/google/callback with a code. Both are page navigations, so both answer with a redirect,
+// and a problem lands on the login page as ?google=<what>, which src/site/auth.ts puts in words.
+// Between the two, a short cookie holds the state (which the callback must bring back, so nobody
+// can make a browser finish a sign-in it did not start), the PKCE verifier (so a stolen code is
+// no use alone) and where to go afterwards. SameSite=Lax, since Google's return is a top-level
+// navigation from another site, which Lax lets through and Strict would not.
+
+const GOOGLE_COOKIE = '__Host-br_google';
+/** Plain http (local dev and preview) cannot use the __Host- prefix. */
+const GOOGLE_DEV_COOKIE = 'br_google';
+
+interface GoogleFlow {
+  state: string;
+  verifier: string;
+  next: string | null;
+}
+
+function googleCookie(url: URL, value: string, maxAge: number): [string, string] {
+  const https = url.protocol === 'https:';
+  const parts = [`${https ? GOOGLE_COOKIE : GOOGLE_DEV_COOKIE}=${value}`, 'Path=/', 'SameSite=Lax', `Max-Age=${maxAge}`, 'HttpOnly'];
+  if (https) parts.push('Secure');
+  return ['Set-Cookie', parts.join('; ')];
+}
+
+function readGoogleFlow(request: Request): GoogleFlow | null {
+  for (const part of (request.headers.get('Cookie') ?? '').split(';')) {
+    const [name, ...rest] = part.trim().split('=');
+    if (name !== GOOGLE_COOKIE && name !== GOOGLE_DEV_COOKIE) continue;
+    try {
+      const flow = JSON.parse(atob(decodeURIComponent(rest.join('=')))) as GoogleFlow;
+      if (typeof flow.state === 'string' && typeof flow.verifier === 'string') return flow;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function redirect(to: string, cookies: [string, string][] = []): Response {
+  return new Response(null, { status: 302, headers: [['Location', to], ['Cache-Control', 'no-store'], ...cookies] });
+}
+
+/** Back to the login page with what went wrong, the flow's cookie gone. */
+function googleProblem(url: URL, what: string): Response {
+  return redirect(`${url.origin}/login?google=${what}`, [googleCookie(url, '', 0)]);
+}
+
+function googleOff(): HttpError {
+  return new HttpError(404, 'not_found', 'No API route for this path.');
+}
+
+/** GET /api/auth/google?next=/path: off, a 404 like any missing route (GOOGLE_LOGIN). */
+export async function googleStart({ env, url }: RouteContext): Promise<Response> {
+  if (!GOOGLE_LOGIN) throw googleOff();
+  if (!env.GOOGLE_CLIENT_SECRET?.trim()) return googleProblem(url, 'unavailable');
+  const flow: GoogleFlow = { state: randomToken(), verifier: randomToken(), next: safeNext(url.searchParams.get('next'), url.origin) };
+  const redirectUri = `${siteOrigin(env, url)}/api/auth/google/callback`;
+  const cookie = googleCookie(url, encodeURIComponent(btoa(JSON.stringify(flow))), GOOGLE_COOKIE_SECONDS);
+  return redirect(authorizeUrl(env, redirectUri, flow.state, await pkceChallenge(flow.verifier)), [cookie]);
+}
+
+/**
+ * GET /api/auth/google/callback?code=&state=: finds the account by its Google id, else by the
+ * address Google has confirmed (and ties the two), else makes one while sign-ups are open; then
+ * signs it in. A new account, or one without a picture, takes the Google account's picture.
+ */
+export async function googleCallback(context: RouteContext): Promise<Response> {
+  const { request, env, url, now } = context;
+  if (!GOOGLE_LOGIN) throw googleOff();
+  const flow = readGoogleFlow(request);
+  if (url.searchParams.get('error')) return googleProblem(url, 'cancelled');
+  if (!flow || url.searchParams.get('state') !== flow.state) return googleProblem(url, 'expired');
+  const code = url.searchParams.get('code');
+  if (!code) return googleProblem(url, 'expired');
+
+  const ipKey = `google:ip:${clientIp(request)}`;
+  const windowStart = new Date(now.getTime() - GOOGLE_WINDOW).toISOString();
+  if ((await throttleCount(env.DB, [ipKey], windowStart)) >= GOOGLE_PER_IP) return googleProblem(url, 'busy');
+  await env.DB.batch([throttleHit(env.DB, ipKey, now.toISOString(), windowStart), purgeThrottle(env.DB, dayAgo(now))]);
+
+  let google: GoogleProfile;
+  try {
+    google = await exchangeCode(env, code, flow.verifier, `${siteOrigin(env, url)}/api/auth/google/callback`, now);
+  } catch (err) {
+    log('warn', 'Google sign-in failed', errorFields(err));
+    return googleProblem(url, err instanceof HttpError && err.code === 'google_unavailable' ? 'unavailable' : 'failed');
+  }
+  // An address Google has not confirmed proves nothing about who owns it here.
+  if (!google.emailVerified) return googleProblem(url, 'unverified');
+
+  const nowIso = now.toISOString();
+  let user = (await findUserByGoogleSub(env.DB, google.sub)) ?? (await findUserByEmail(env.DB, google.email));
+  if (user) {
+    if (user.suspended_at) return googleProblem(url, 'suspended');
+    // The address's account is tied to another Google account already: this one may not take it over.
+    if (user.google_sub && user.google_sub !== google.sub) return googleProblem(url, 'other');
+    if (!user.google_sub) await linkGoogle(env.DB, user.id, google, nowIso).run();
+  } else {
+    if (!SIGNUPS_OPEN) return googleProblem(url, 'closed');
+    user = await insertGoogleUser(env.DB, google, nowIso).first<UserRow>();
+    if (!user) throw new Error('INSERT … RETURNING returned no account');
+    await startOnDefaultPlan(env.DB, user, nowIso);
+  }
+  if (!user.avatar_key && google.picture) {
+    const key = await importGoogleAvatar(env, user.id, google.picture);
+    if (key) await setAvatarKey(env.DB, user.id, key).run();
+  }
+  const cookies = await startSession(env.DB, user.id, url, now);
+  return redirect(`${url.origin}${flow.next ?? '/app'}`, [...cookies, googleCookie(url, '', 0)]);
 }
 
 /** POST /api/auth/login { email, password } */

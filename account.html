@@ -30,6 +30,29 @@
 
       <p id="verify" class="verify-banner" role="status" hidden></p>
 
+      <!-- The profile (src/account.ts): a picture cut to a square in the browser, and two names. -->
+      <section class="card" aria-labelledby="profile-title">
+        <div class="card-head"><h2 id="profile-title">Profile</h2></div>
+        <div class="profile">
+          <div class="profile-photo">
+            <span id="profile-avatar" class="avatar xl" aria-hidden="true"></span>
+            <div class="profile-photo-actions">
+              <button id="photo-choose" type="button" class="button ghost small">Change photo</button>
+              <button id="photo-remove" type="button" class="button ghost small" hidden>Remove</button>
+            </div>
+            <input id="photo-file" type="file" accept="image/*" hidden />
+          </div>
+          <form id="profile-form" class="form-grid" novalidate>
+            <div class="form-row">
+              <label class="field"><span>First name</span><input type="text" name="firstName" autocomplete="given-name" maxlength="60" /></label>
+              <label class="field"><span>Last name</span><input type="text" name="lastName" autocomplete="family-name" maxlength="60" /></label>
+            </div>
+            <p id="profile-google" class="card-text" hidden>You can also sign in with Google.</p>
+            <div><button type="submit" class="button">Save</button></div>
+          </form>
+        </div>
+      </section>
+
       <section class="card" aria-labelledby="plan-title">
         <div class="card-head"><h2 id="plan-title">Your plan</h2></div>
         <div id="plan" class="plan-summary" aria-busy="true"></div>
@@ -41,6 +64,11 @@
 
       <section class="card" aria-labelledby="password-title">
         <div class="card-head"><h2 id="password-title">Password</h2></div>
+        <!-- An account made with Google has no password until it sets one through the mail (src/account.ts). -->
+        <div id="password-none" hidden>
+          <p class="card-text">You sign in with Google. To sign in with your email and a password as well, set one: we mail you a link.</p>
+          <div class="row-actions"><button id="password-mail" type="button" class="button ghost">Mail me a link</button></div>
+        </div>
         <form id="password-form" class="form-grid" novalidate>
           <input type="email" name="username" autocomplete="username" id="username" hidden />
           <label class="field"><span>Current password</span><input type="password" name="current" autocomplete="current-password" required /></label>
@@ -67,6 +95,18 @@
         </form>
       </section>
     </main>
+
+    <!-- The photo, placed and zoomed into the circle before it is saved (src/account.ts openCrop). -->
+    <dialog id="crop" class="confirm crop" aria-labelledby="crop-title">
+      <h2 id="crop-title">Your photo</h2>
+      <p>Drag it into place and zoom until the circle shows what you want.</p>
+      <div class="crop-stage" id="crop-stage"><canvas id="crop-canvas" width="640" height="640" aria-label="The photo inside the circle"></canvas></div>
+      <label class="crop-zoom"><span>Zoom</span><input id="crop-zoom" type="range" min="1" max="4" step="0.01" value="1" /></label>
+      <div class="confirm-actions">
+        <button type="button" id="crop-cancel" class="button ghost">Cancel</button>
+        <button type="button" id="crop-save" class="button">Save photo</button>
+      </div>
+    </dialog>
 
     <p id="toast" class="toast" role="status" hidden></p>
     <script type="module" src="/src/account.ts"></script>

@@ -2,7 +2,7 @@
 
 The Cloudflare Worker: the JSON API under `/api` (accounts, plans, the video library, the
 admin area, the payment skeleton), and the check in front of the pages behind the sign-in.
-No runtime dependencies; `fetch`, WebCrypto and D1 are all it uses. It serves no page of its
+No runtime dependencies; `fetch`, WebCrypto, D1 and R2 are all it uses. It serves no page of its
 own: Workers Assets does, from the Vite build, and the Worker only decides whether a page
 behind the sign-in may be shown. Deep-dives:
 [accounts-and-billing](../docs/accounts-and-billing.md) (sessions, roles, plans, the admin
@@ -20,6 +20,8 @@ API, payments) · [video-library](../docs/video-library.md) (schema, routes, lin
 | a body or path check | [validate.ts](./validate.ts), throwing `HttpError(400, 'invalid_<field>')` |
 | cookies, sessions, the role and origin checks | [auth/session.ts](./auth/session.ts) |
 | password hashing, tokens | [auth/crypto.ts](./auth/crypto.ts) |
+| Google sign-in's exchange with Google | [auth/google.ts](./auth/google.ts); its two routes in [routes/auth.ts](./routes/auth.ts) |
+| a stored file (profile pictures, in R2) | [files.ts](./files.ts): the `FILES` bucket, private, served by a route behind the sign-in |
 | a mail | [mail/templates.ts](./mail/templates.ts) (words), [mail/resend.ts](./mail/resend.ts) (sending) |
 | an API shape | [shared/api.ts](../shared/api.ts), imported by the pages too |
 | what a plan can unlock | [shared/features.ts](../shared/features.ts) |

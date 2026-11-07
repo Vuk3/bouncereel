@@ -15,13 +15,15 @@ export class ApiError extends Error {
   }
 }
 
+/** A JSON body, or a Blob sent as it is with its own type (a profile picture). */
 export async function api<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
   let response: Response;
   try {
+    const blob = body instanceof Blob;
     response = await fetch(path, {
       method,
-      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: body === undefined ? undefined : { 'Content-Type': blob ? body.type : 'application/json' },
+      body: body === undefined ? undefined : blob ? body : JSON.stringify(body),
     });
   } catch {
     throw new ApiError(0, 'offline', 'The server cannot be reached');
