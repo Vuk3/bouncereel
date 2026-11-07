@@ -4,6 +4,32 @@
     <!-- site:head / -->
     <title>BounceReel: ball race videos for Shorts, TikTok and Reels</title>
     <meta name="description" content="Ball race videos for Shorts, TikTok and Reels: every race balanced to end close at the length you pick, ready to post as a 1080×1920 MP4. Free to start." />
+    <!-- Who BounceReel is, for search engines: the name the results show, the logo, and its own
+         accounts (sameAs, from SOCIAL in shared/site.ts). The home page only: it is about the site. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "%SITE_URL%/#organization",
+            "name": "BounceReel",
+            "alternateName": "Bounce Reel",
+            "url": "%SITE_URL%/",
+            "logo": "%SITE_URL%/favicon.png",
+            "email": "%CONTACT_EMAIL%",
+            "sameAs": %SAME_AS%
+          },
+          {
+            "@type": "WebSite",
+            "@id": "%SITE_URL%/#website",
+            "name": "BounceReel",
+            "url": "%SITE_URL%/",
+            "publisher": { "@id": "%SITE_URL%/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <!-- site:header -->
@@ -269,6 +295,10 @@
             </figure>
           </li>
         </ul>
+        <div class="follow">
+          <p><b>Watch more races.</b> BounceReel posts its own on TikTok, Instagram and YouTube: pick a side in the comments.</p>
+          <!-- site:follow -->
+        </div>
       </section>
 
       <section class="shell section" aria-labelledby="why-title">

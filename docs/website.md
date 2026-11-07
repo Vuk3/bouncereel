@@ -16,6 +16,7 @@ the legal pages. Accounts, plans and the admin area are in
 | the sign-in forms | [src/site/auth.ts](../src/site/auth.ts) |
 | the hero's still frame, the looks, the share image | [scripts/stills.ts](../scripts/stills.ts) (section 5) |
 | indexing: robots, noindex, the sitemap | `INDEXED` in [shared/site.ts](../shared/site.ts), [public/robots.txt](../public/robots.txt), [public/sitemap.xml](../public/sitemap.xml), [public/_headers](../public/_headers), `noindex` in a page's `site:head` line (§7) |
+| BounceReel's own accounts (TikTok, Instagram, YouTube) | `SOCIAL` in [shared/site.ts](../shared/site.ts): the footer's marks, the follow cards under the gallery and `sameAs` in the home page's structured data all come from it (§2, §4, §7) |
 | an old address that moved | [public/_redirects](../public/_redirects) |
 | the contact address, the canonical origin, who runs the site (the legal pages) | [shared/site.ts](../shared/site.ts) `CONTACT_EMAIL`, `SITE_URL`, `OPERATOR_NAME`, `OPERATOR_PLACE` |
 | the logo | [public/mark.svg](../public/mark.svg) (`.mark` in site.css, `.logo` in src/style.css), [public/favicon.svg](../public/favicon.svg) and the PNG icons drawn from it (§5); on a canvas `drawMark` in [src/render/renderer.ts](../src/render/renderer.ts) |
@@ -64,6 +65,7 @@ plugin in [vite.config.ts](../vite.config.ts), `sitePartials`, from
 | `<!-- site:header -->`, `<!-- site:footer -->` | the header (Pricing, Sign in, Start free / Open studio, the theme toggle) and the footer (the plans, the legal pages, the contact address) |
 | `<!-- app:head -->`, `<!-- app:theme -->`, `<!-- admin:nav -->` | the same for the account page and the admin area, which use the studio's stylesheet |
 | `data-signups="open"`, `data-signups="closed"` on an element | one of the two versions of a place that offers sign-up: the build keeps the side `SIGNUPS_OPEN` names (shared/site.ts), without the attribute, and drops the other. Used by the header, the footer, the hero and the close, /login and /signup (its title, description, section and script). A marked element must not contain an element of its own tag. What each side says: [accounts-and-billing](./accounts-and-billing.md#sign-ups-closed) |
+| `<!-- site:social -->`, `<!-- site:follow -->`, `%SAME_AS%` | BounceReel's accounts, from `SOCIAL` in [shared/site.ts](../shared/site.ts): the footer's row of round marks (each named "BounceReel on …" for a screen reader), the home page's three follow cards, and the JSON list of their addresses. Each opens in a new tab with `rel="me"`. The marks are the networks' logos from Simple Icons 16.36 (CC0), inline in the text's colour |
 | `%CONTACT_EMAIL%`, `%SITE_URL%`, `%SITE_HOST%`, `%OPERATOR_NAME%`, `%OPERATOR_PLACE%` | the constants in [shared/site.ts](../shared/site.ts) (`%SITE_HOST%` is the address without `https://`, as the legal pages name the site) |
 
 **The boot script** in the head runs before first paint: a saved dark theme
@@ -217,6 +219,13 @@ look under it. A video plays, muted and looping, only while it is half on screen
 it leaves; its button pauses it, and the screen then leaves it paused until the button plays it
 again. Under reduced motion nothing starts by itself: the button plays it. Without JS each keeps
 the browser's own controls and its poster.
+
+**Under it, where the races are posted** (`.follow`): "Watch more races." and a line, then a card
+for each of BounceReel's accounts (`<!-- site:follow -->`): the network's mark on an inset
+square, its name and handle, and a Follow pill; three across from 760 px, one under another on a
+phone. The marks are in the ink rather than the brand colours, and a card turns to the accent on
+hover (the border, the mark, the filled pill), as the page points with one colour. It rises in
+with the section heads.
 
 ⚠️ **The page fetches its media whole and plays it from a blob URL** (`wholeFile` in home.ts):
 the gallery's videos when one is first wanted, the narrator's opening on the first press.
@@ -429,6 +438,12 @@ behind the sign-in is:
 noindex either: such a page linked from elsewhere can still show up as a bare address with no
 text. That is why `/reset` and `/verify` are not in robots.txt: their noindex has to be read.
 
+**Structured data**, on the home page only: a JSON-LD `Organization` (BounceReel, also "Bounce
+Reel" as the accounts write it, the 512 px icon as its logo, the contact address, and `sameAs` with
+the three accounts from `SOCIAL`) and a `WebSite` it publishes. It is the name and logo Google can
+show for the site, and `sameAs` ties the accounts to it: ⚠️ a wrong address there says the site
+belongs to somebody else's account, so it only ever comes from `SOCIAL`.
+
 **To hide the whole site again**: `INDEXED` off (every page gets `noindex, nofollow`),
 `X-Robots-Tag: noindex, nofollow` back on the `/*` rule in _headers, robots.txt to `Disallow: /`,
 and the sitemap out.
@@ -495,3 +510,4 @@ used for.
 - 2026-11-07 - on `bouncereel.com` and listed: `INDEXED` on, robots.txt disallowing only `/app`, `/account`, `/admin` and `/api` and naming `public/sitemap.xml` (the eight public pages), `X-Robots-Tag` off the `/*` rule; the share image made again with the new address.
 - 2026-11-07 - the icons as on vukcvetkovic-web: `favicon-32.png`, `favicon.png` (512 px) and `apple-touch-icon.png` drawn from favicon.svg on the stills page and linked from every head instead of the SVG; the browser bar's colour (`theme-color`) follows the theme; a `rel="sitemap"` link on the public pages.
 - 2026-11-07 - `data-signups` pairs: the header, the footer, the hero, the close, /login and /signup in an open and a closed version, the build keeping one; a disabled button on the ink stage in the dark cards' look.
+- 2026-11-07 - BounceReel's accounts (TikTok, Instagram, YouTube, `SOCIAL` in shared/site.ts): round marks in the footer, three follow cards under the gallery, and an `Organization` with `sameAs` in the home page's structured data.

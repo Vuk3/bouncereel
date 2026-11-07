@@ -1297,6 +1297,118 @@ input:focus-visible {
   font-size: 0.875rem;
 }
 
+/* ── Follow: BounceReel's own accounts ───────────────────────────────── */
+
+/*
+ * Under the gallery, where the races it just showed are posted: three cards, side by side from
+ * 760 px like the phones above them, written by vite.config.ts from SOCIAL (shared/site.ts). The
+ * networks' marks are in the ink, not their brand colours, and turn to the accent on hover, as
+ * everything on the page points with the one colour.
+ */
+.follow {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  margin-top: clamp(28px, 4vw, 44px);
+  text-align: center;
+}
+.follow > p {
+  max-width: 36rem;
+  margin: 0;
+  color: var(--muted);
+}
+.follow > p b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.follow-list {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 760px) {
+  .follow-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.follow-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 14px 14px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  transition:
+    border-color 160ms var(--ease),
+    box-shadow 160ms var(--ease),
+    transform 160ms var(--ease);
+}
+.follow-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 16px 32px -20px rgb(106 70 255 / 0.5);
+  transform: translateY(-2px);
+}
+.follow-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-control);
+  background: var(--inset);
+  transition:
+    background-color 160ms var(--ease),
+    color 160ms var(--ease);
+}
+.follow-mark svg,
+.social-link svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+.follow-card:hover .follow-mark {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.follow-name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+.follow-name b {
+  font-weight: 600;
+}
+.follow-name span {
+  color: var(--muted);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+.follow-go {
+  flex: none;
+  padding: 6px 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition:
+    background-color 160ms var(--ease),
+    border-color 160ms var(--ease),
+    color 160ms var(--ease);
+}
+.follow-card:hover .follow-go {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
 /* ── Why: what the studio does, on the stage, in three groups ───────── */
 
 /*
@@ -2458,6 +2570,35 @@ input:focus-visible {
 .footer-links a:hover {
   color: var(--ink);
 }
+/* The footer's marks: BounceReel's accounts (SOCIAL), round, the accent on hover. */
+.social {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.social-link {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  transition:
+    border-color 160ms var(--ease),
+    color 160ms var(--ease);
+}
+.social-link svg {
+  width: 19px;
+  height: 19px;
+}
+.social-link:hover {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
 
 /* ── Forms: sign up, sign in, forgot, reset, verify ──────────────────── */
 
@@ -2711,8 +2852,15 @@ input:focus-visible {
   .btn,
   .nav-link,
   .phone canvas,
-  .field input {
+  .field input,
+  .follow-card,
+  .follow-mark,
+  .follow-go,
+  .social-link {
     transition: none;
+  }
+  .follow-card:hover {
+    transform: none;
   }
 }
 
@@ -2986,6 +3134,7 @@ input:focus-visible {
      */
     .section-head,
     .fgroup-head,
+    .follow,
     .close-stage {
       animation-name: rise;
       animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);

@@ -1,7 +1,7 @@
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
-import { CONTACT_EMAIL, INDEXED, OPERATOR_NAME, OPERATOR_PLACE, SIGNUPS_OPEN, SITE_HOST, SITE_URL } from './shared/site.ts';
+import { CONTACT_EMAIL, INDEXED, OPERATOR_NAME, OPERATOR_PLACE, SIGNUPS_OPEN, SITE_HOST, SITE_URL, SOCIAL } from './shared/site.ts';
 
 // Cross-origin isolation lets the Kokoro voice model run ONNX on all CPU cores
 // (it needs SharedArrayBuffer); without it, it runs on one and a 20-second
@@ -47,6 +47,24 @@ function partial(name: string): string {
 
 const escapeAttr = (text: string) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
+/** A network's mark, in the text's colour (SOCIAL in shared/site.ts). */
+const mark = (path: string) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${path}" /></svg>`;
+
+/** BounceReel's accounts, opening in a new tab: `rel="me"` says the account is this site's own. */
+const socialLink = (s: (typeof SOCIAL)[number], cls: string, inner: string, label = '') =>
+  `<a class="${cls}" href="${s.url}" rel="me noopener" target="_blank"${label}>${inner}</a>`;
+
+/** The footer's row of marks, each named for a screen reader. */
+const SOCIAL_ROW = `<ul class="social" aria-label="BounceReel on social media">${SOCIAL.map(
+  (s) => `<li>${socialLink(s, 'social-link', mark(s.mark), ` aria-label="BounceReel on ${s.name}" title="${s.name}"`)}</li>`,
+).join('')}</ul>`;
+
+/** The home page's follow cards: the mark, the network and the handle, and a Follow pill. */
+const FOLLOW = `<ul class="follow-list" aria-label="BounceReel on social media">${SOCIAL.map(
+  (s) =>
+    `<li>${socialLink(s, 'follow-card', `<span class="follow-mark">${mark(s.mark)}</span><span class="follow-name"><b>${s.name}</b><span>${s.handle}</span></span><span class="follow-go">Follow</span>`)}</li>`,
+).join('')}</ul>`;
+
 /**
  * Each place that offers a sign-up is written twice, an element marked data-signups="open" and
  * one marked "closed" (a side may be left out: nothing shows there then). The build keeps the
@@ -79,6 +97,9 @@ function signups(html: string): string {
  *   <!-- app:head -->, <!-- app:theme -->, <!-- admin:nav -->   the same for the pages behind
  *                                 the sign-in (account, admin), which use the studio's styles
  *   data-signups="open" / "closed"   one of two versions of a sign-up offer (signups() above)
+ *   <!-- site:social -->, <!-- site:follow -->, %SAME_AS%   BounceReel's accounts (SOCIAL): the
+ *                                 footer's marks, the home page's follow cards, and the list of
+ *                                 their addresses in its structured data
  *
  * `order: 'pre'` runs it before Vite reads the HTML, so the stylesheet and scripts the partials
  * name are bundled like any other.
@@ -97,7 +118,9 @@ function sitePartials(): Plugin {
             .replace('<!-- site:footer -->', partial('footer'))
             .replace('<!-- app:head -->', partial('app-head'))
             .replace('<!-- admin:nav -->', partial('admin-nav'))
-            .replace('<!-- app:theme -->', partial('theme-button')),
+            .replace('<!-- app:theme -->', partial('theme-button'))
+            .replace('<!-- site:social -->', SOCIAL_ROW)
+            .replace('<!-- site:follow -->', FOLLOW),
         );
         const title = /<title>([^<]*)<\/title>/.exec(html)?.[1] ?? 'BounceReel';
         const description = /<meta name="description" content="([^"]*)"/.exec(html)?.[1] ?? '';
@@ -109,6 +132,7 @@ function sitePartials(): Plugin {
               .replaceAll('%DESCRIPTION%', escapeAttr(description))
               .replace('%ROBOTS%', !INDEXED ? '<meta name="robots" content="noindex, nofollow" />' : noindex ? '<meta name="robots" content="noindex" />' : ''),
           )
+          .replaceAll('%SAME_AS%', JSON.stringify(SOCIAL.map((s) => s.url)))
           .replaceAll('%SITE_URL%', SITE_URL)
           .replaceAll('%SITE_HOST%', SITE_HOST)
           .replaceAll('%CONTACT_EMAIL%', CONTACT_EMAIL)
