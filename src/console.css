@@ -1446,15 +1446,19 @@
   width: 20px;
   height: 20px;
 }
-/* The game's icon (public/games/) over the thumbnail's bottom corner: which game a video is, at a glance. */
+/*
+ * The game's icon (public/games/) on the thumbnail's bottom corner, half over the row's ground in
+ * a ring of it: which game a video is, at a glance. Wholly on the dark thumbnail, at 18 px, the
+ * Arena Clash icon was a dark tile on a dark one.
+ */
 .thumb-game {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  box-shadow: 0 0 0 2px var(--surface);
+  right: -9px;
+  bottom: -9px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  box-shadow: 0 0 0 2.5px var(--surface);
 }
 
 .video-main {

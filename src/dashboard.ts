@@ -145,7 +145,7 @@ function paintThumb(thumb: HTMLElement, video: VideoSummary): void {
   thumb.style.setProperty('--b', color(video.colors?.b, 'var(--team-b)'));
   // The game's icon in a corner, so a list of both games reads at a glance (public/games/).
   let icon = thumb.querySelector<HTMLImageElement>('.thumb-game');
-  if (!icon) thumb.append((icon = Object.assign(document.createElement('img'), { className: 'thumb-game', alt: '', width: 18, height: 18 })));
+  if (!icon) thumb.append((icon = Object.assign(document.createElement('img'), { className: 'thumb-game', alt: '', width: 24, height: 24 })));
   icon.src = `/games/${GAMES.includes(video.game as Game) ? video.game : 'ball-race'}.svg`;
 }
 

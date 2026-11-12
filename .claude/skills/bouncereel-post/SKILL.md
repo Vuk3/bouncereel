@@ -60,8 +60,11 @@ changes:
 - **Equal billing**: name every country up to four; with more, how many and a few of them in the
   video's order, never only some favourites. No country is the underdog or the favourite.
 - **What it is**, in words people search: an arena clash, "countries battle", the countries by
-  name. The question is between the countries ("Serbia, Croatia or Slovenia?"), never colours:
-  the block gives none, and a flag is its own colours.
+  name, and the format's own words, "which flag survives?", "last flag standing", "pick one",
+  "string circle": the titles of the format's most watched videos are "SWEDEN VS NORWAY VS
+  DENMARK. PICK ONE" and "EAST ASIA: WHICH FLAG SURVIVES?" (YouTube, October 2026). The question
+  is between the countries ("Serbia, Croatia or Slovenia?"), never colours: the block gives none,
+  and a flag is its own colours.
 - **A flag emoji may stand for a country** (🇷🇸 🇭🇷) in a title or pinned comment; England,
   Scotland and Wales have theirs (🏴󠁧󠁢󠁥󠁮󠁧󠁿 🏴󠁧󠁢󠁳󠁣󠁴󠁿 🏴󠁧󠁢󠁷󠁬󠁳󠁿), Northern Ireland has none: write it.
 - **No politics**: the countries meet in a game; no history, borders, wars or rivalries, even as
