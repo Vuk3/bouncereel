@@ -13,7 +13,7 @@ import { download, describeType, pickType, Recorder } from './record/recorder.ts
 import { BattleRenderer, battleFollowAt, type BattleOverlay } from './render/battle.ts';
 import type { Overlay } from './render/draw.ts';
 import { Renderer, followAt, type RaceOverlay } from './render/renderer.ts';
-import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL, cardHold, narrated, openingShown, spokenSeconds, videoSeconds } from './pacing.ts';
+import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL, cardHold, lineLead, narrated, openingShown, spokenSeconds, videoSeconds } from './pacing.ts';
 import { BattleWorld, MAX_FLAGS, MIN_FLAGS, STRIDE, predictBattle, type BattleOutcome } from './sim/battle.ts';
 import { balanceBattle, randomBattle, searchBattle, slowExtra } from './sim/battle-balance.ts';
 import { KEEP_ALL, balance, balanceProblem, diceName, keptWhole, plainName, randomMatchup, relayer, sizeFor, type Keep } from './sim/balance.ts';
@@ -158,9 +158,11 @@ export class App {
   /** The next note of Hear the music (hearMusic). */
   private musicTimer = 0;
   private introPlayed = false;
+  /** The winner line has been called for this run: at the win in a battle, with the card in a race (pacing.ts lineLead). */
+  private outroCalled = false;
   /** The winner line is due but waits for the narrator to finish the line in progress. */
   private outroPending = false;
-  /** When the winner line ends, in seconds of the winner card. */
+  /** When the winner line ends, in seconds of the winner card (cardAge). */
   private outroEnds = 0;
   private last = 0;
 
@@ -397,10 +399,14 @@ export class App {
       this.winnerAge = 0;
       if (this.world instanceof BattleWorld) this.arena.celebrate(this.world, this.cfg);
       else this.renderer.celebrate(this.world);
+    }
+    // A battle's line at the win, over the slow motion; a race's, and a battle's that ran out of time (no slow motion), with the card.
+    if ((phase === 'slowmo' && lineLead(this.cfg) > 0) || (phase === 'winner' && !this.outroCalled)) {
+      this.outroCalled = true;
       this.outroPending = this.narrating();
       // A narrated video played without the narrator holds the card as long as the line would
       // take, so the preview ends where the video will.
-      this.outroEnds = this.outroPending ? 0 : this.lineSeconds();
+      this.outroEnds = this.outroPending ? 0 : this.cardAge() + this.lineSeconds();
     }
   }
 
@@ -416,6 +422,7 @@ export class App {
     this.acc = 0;
     this.elapsed = 0;
     this.endsAt = Infinity;
+    this.outroCalled = false;
     this.outroPending = false;
     this.outroEnds = 0;
     this.introPlayed = false;
@@ -441,7 +448,7 @@ export class App {
     const race = (o.timedOut ? o.time : Math.max(0, o.time - SLOWMO_LEAD)) + ('slow' in o ? slowExtra(o) : 0);
     const slow = o.timedOut ? 0 : SLOWMO_LEAD / SLOWMO + SLOWMO_TAIL;
     const card = t.startDelay + race + slow;
-    const shown = Math.max(1.5, cardHold(this.cfg), this.lineSeconds() + AFTER_OUTRO);
+    const shown = Math.max(1.5, cardHold(this.cfg), this.lineSeconds() + AFTER_OUTRO - (o.timedOut ? 0 : lineLead(this.cfg)));
     this.timelineEnd = card + shown + END_PAD;
     const phases: [string, string, number][] = [
       ['hold', 'Hold', t.startDelay],
@@ -978,7 +985,12 @@ export class App {
   private sayOutroWhenFree(): void {
     if (!this.outroPending || this.busy()) return;
     this.outroPending = false;
-    this.outroEnds = this.winnerAge + this.say(outroLine(this.cfg, this.outcome.winnerName, this.world.winTime));
+    this.outroEnds = this.cardAge() + this.say(outroLine(this.cfg, this.outcome.winnerName, this.world.winTime));
+  }
+
+  /** Seconds of the winner card: below 0 in the slow motion before it, where a battle's winner line starts. */
+  private cardAge(): number {
+    return this.phase === 'slowmo' ? this.phaseAge - SLOWMO_TAIL : this.winnerAge;
   }
 
   /**

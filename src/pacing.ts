@@ -75,6 +75,17 @@ export function spokenSeconds(line: string): number {
   return line.replace(/\d+\.\d/g, TIME_SAID).length / SPOKEN_CHARS_PER_SECOND + pauses * SENTENCE_PAUSE;
 }
 
+/**
+ * Seconds before the winner card that the narrator starts the winner line. An Arena Clash's is
+ * said at the win, over the slow motion of its last strings falling (SLOWMO_TAIL), as a
+ * commentator calls it, so its card holds only the end of the line: a card that waits out a whole
+ * line once the battle is over is where viewers scroll away, and its seconds are the battle's. A
+ * race's line comes with its card.
+ */
+export function lineLead(cfg: Config): number {
+  return cfg.game === 'arena-clash' ? SLOWMO_TAIL : 0;
+}
+
 /** The shortest the winner card stays: the hold, or FOLLOW_CARD with the follow button. */
 export function cardHold(cfg: Config): number {
   return asksToFollow(cfg) ? Math.max(cfg.timing.hold, FOLLOW_CARD) : cfg.timing.hold;
@@ -82,7 +93,7 @@ export function cardHold(cfg: Config): number {
 
 /**
  * How long the winner card is planned to stay up: the hold (cardHold), or long enough to say the
- * winner line, whichever is more. The line said for `winner` when it is known (balancing picks the
+ * winner line (what is left of it after lineLead), whichever is more. The line said for `winner` when it is known (balancing picks the
  * winner before it sets the speeds), else the longest of those that can win: a crowd wins as "the
  * crowd of 100 Millionaire Balls", and a card planned for that line when the other ball wins ends
  * the video a second or more short; a battle's names are its flags'. The page ends the card a beat
@@ -94,7 +105,7 @@ export function cardSeconds(cfg: Config, winner?: string): number {
   if (!narrated(cfg)) return hold;
   const names = winner !== undefined ? [winner] : cfg.game === 'arena-clash' ? cfg.battle.flags.map(flagName) : [cfg.a.name, cfg.b.name];
   const longest = Math.max(...names.map((name) => spokenSeconds(spokenOutro(cfg, { winner: name, time: '00.0' }))));
-  return Math.max(hold, longest + AFTER_OUTRO);
+  return Math.max(hold, longest + AFTER_OUTRO - lineLead(cfg));
 }
 
 /** Seconds of video that are not race: everything above except the race itself. */

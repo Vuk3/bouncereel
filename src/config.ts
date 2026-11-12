@@ -195,14 +195,16 @@ export function spokenOutro(cfg: Config, vars: { winner: string; time: string })
   return asksToFollow(cfg) && !/\bfollow/i.test(cfg.voice.outro) ? `${line} ${FOLLOW_LINE}`.trim() : line;
 }
 
-/** Arena Clash's winner lines: no race, no finish line, and "survives" says how it is won. */
+/**
+ * Arena Clash's winner lines: no race, no finish line, and "survives" says how it is won. None says
+ * how long it took: a battle is won by being the last one in, not by a time (the owner's call).
+ */
 export const BATTLE_WINNER_LINES = [
   '{winner} wins!',
   '{winner} survives!',
   '{winner} takes the arena!',
   'Victory for {winner}!',
   'The last flag standing: {winner}!',
-  '{winner} wins it in {time} seconds!',
   'And {winner} is the last one left!',
 ];
 
@@ -240,6 +242,8 @@ const BASE: Config = {
 
 /** The last line's earlier default, which savedConfig reads as today's. */
 const OLD_CTA = 'Follow for more!';
+/** A winner line the dice once dealt an Arena Clash, which savedConfig reads as the first of today's. */
+const TIMED_BATTLE_OUTRO = '{winner} wins it in {time} seconds!';
 
 export interface Preset {
   id: string;
@@ -368,6 +372,7 @@ export function savedConfig(saved: unknown): Config {
   for (const ball of [cfg.a, cfg.b]) fitBall(ball);
   // Arena Clash was called Flag Battle while it was being made: a config kept from then is one.
   if ((cfg.game as string) === 'flag-battle') cfg.game = 'arena-clash';
+  if (cfg.game === 'arena-clash' && cfg.voice.outro === TIMED_BATTLE_OUTRO) cfg.voice.outro = BATTLE_WINNER_LINES[0];
   // A game this version does not make (a config from a newer one): the race it can make.
   if (!GAMES.includes(cfg.game)) cfg.game = 'ball-race';
   return cfg;

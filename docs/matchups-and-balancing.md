@@ -111,7 +111,7 @@ surrounds the race:
 | hold before the start | `timing.startDelay` (0: the balls move from the first frame, under the opening title) |
 | slow motion into the win | the last 0.6 s of race play at 0.3×, so 1.4 s extra |
 | slow motion after the win | 1.2 |
-| winner card | `cardSeconds`: `timing.hold` (2: once the race is decided viewers leave, and a short end loops back sooner; 2.5 with the follow button), or, when the video is narrated, the time to say the line for the winner `solve` picks (`spokenSeconds`: about 17 characters a second, a time read as words, 0.85 s between sentences) + 0.3 s, whichever is more. Narrated (`narrated`) means a narrator is picked and the Sound is Narrator and music; music only and silent videos plan the hold alone |
+| winner card | `cardSeconds`: `timing.hold` (2: once the race is decided viewers leave, and a short end loops back sooner; 2.5 with the follow button), or, when the video is narrated, the time to say the line for the winner `solve` picks (`spokenSeconds`: about 17 characters a second, a time read as words, 0.85 s between sentences) + 0.3 s, whichever is more; an Arena Clash's line starts 1.2 s before its card, at the win (`lineLead`, [arena-clash](./arena-clash.md#5-sound-and-narrator)), so its card plans that much less of it. Narrated (`narrated`) means a narrator is picked and the Sound is Narrator and music; music only and silent videos plan the hold alone |
 | the end | `END_PAD` 0.5: the fade into the first frame (`look.loop`), or a held moment |
 
 `raceSeconds(cfg, winner)` = video − all of that (at least 8 s), for the winner `solve` has
@@ -310,3 +310,4 @@ the narrator, video length, finish gap and look.
 - 2026-11-03 - the winner card planned for the winner's own line (`raceSeconds(cfg, winner)`), from a guess measured on Kokoro's clips cut to the voice (17 characters a second, a time read as words, 0.85 s between sentences, + 0.3 s): a narrated race a few tenths to a second longer at the same length, every built-in matchup's winner as it was.
 - 2026-11-11 - Arena Clash is balanced its own way (seed, speed, sudden death: arena-clash.md); the video length's frame, pacing.ts, is shared, the winner card planned for the longest flag name.
 - 2026-11-12 - an Arena Clash is fitted exactly: its world steps by distance, so a seed is run once and its speed set for the length (arena-clash.md §2); no sudden death.
+- 2026-11-12 - an Arena Clash's winner card plans its line less the 1.2 s said before it, at the win (`lineLead`).

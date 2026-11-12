@@ -83,7 +83,7 @@ The race was balanced to `timing.video` minus the frame around it
 ([pacing](./matchups-and-balancing.md#2-the-video-length)), the winner card planned for its
 hold or for the winner line. The card stays up its hold (`timing.hold`; 2.5 s with the follow
 button; at least 1.5 s) and 0.3 s past the narrator's last word (`AFTER_OUTRO`), whichever is
-later, and then `END_PAD` (0.5 s) more, and the file downloads. It never waits for the video's
+later (an Arena Clash's line starts at the win, 1.2 s before its card: `lineLead`), and then `END_PAD` (0.5 s) more, and the file downloads. It never waits for the video's
 length: once the race is called, a card held silent is where viewers scroll away. With
 `look.loop` (the default) those last 0.5 s fade into the run's first frame and end on it,
 so the file's last frame is its first and a platform's replay has no seam
@@ -207,3 +207,4 @@ falls.
 - 2026-10-30 - the text to copy after a take says when the video asks viewers to follow.
 - 2026-11-03 - the winner card ends 0.3 s after the narrator's last word, or at its hold, and no longer waits for the video's length; a narrated recording lands within about half a second of it.
 - 2026-11-07 - the preview marks go as Record is pressed, a frame drawn without them before the recorder starts, so no take opens on one.
+- 2026-11-12 - an Arena Clash's winner line starts at the win, over the slow motion, so its card ends 1.2 s sooner after it (`lineLead`).

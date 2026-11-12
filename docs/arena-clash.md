@@ -260,7 +260,14 @@ strings):
   second of picture does not say. The fact is one of: the most people, the fewest, the biggest,
   the smallest, or "about 280 times the size of".
 - **The winner line** (`voice.outro`, from `BATTLE_WINNER_LINES` when the dice deals it), and
-  "Follow for more!" after it with `look.follow`.
+  "Follow for more!" after it with `look.follow`. None of the lines says how long the battle
+  took: a flag wins by being the last one in, and the owner asked for the time to go (a config
+  saved with "{winner} wins it in {time} seconds!" loads with "{winner} wins!", `savedConfig`).
+  It is said **at the win**, over the slow motion of the last strings falling (`lineLead` in
+  [pacing.ts](../src/pacing.ts), `SLOWMO_TAIL`, 1.2 s), as a commentator calls it, not when the
+  card comes up as a race's is: the card holds only the end of the line, its hold at the least
+  (2.5 s with the follow button), and the seconds that saves are the battle's. A battle that runs
+  out of time has no slow motion, and its line comes with the card.
 
 The question (`BATTLE_QUESTIONS`) is the title too, so each is short, and none tells viewers to
 comment: Instagram says it may not recommend a video that asks for a comment in so many words.
@@ -308,3 +315,4 @@ the thumbnail; Open in studio replays it exactly. The superadmin's text for post
 - 2026-11-12 - no most: every bounce adds ten whatever a ball holds, and strings go only by being cut; the fuse, `HOLD`, `FLOOR` and `DUEL` are gone, and balancing chooses the seed and the starting speed alone.
 - 2026-11-12 - named Arena Clash (`arena-clash`), from Flag Battle: a name of its own, not its flags'; an icon for each game (public/games/), on the studio's switch, the site's game cards and the Videos page's thumbnails.
 - 2026-11-12 - the picture 80 px lower (`DROP`, the drawing alone): the names were under TikTok's search bar and cut in Instagram's profile grid, and a third of the frame was black under the ring; positions measured on the three apps.
+- 2026-11-12 - no winner line says the time ("wins it in 21.6 seconds" is gone); the winner line is said at the win, over the last slow motion, so the winner card holds only its end (2.5 s with the follow button, from 3–5 s) and the battle has those seconds.
