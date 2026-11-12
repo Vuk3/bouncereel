@@ -65,12 +65,13 @@ export const VS_Y = cardBottom(TOP) + BETWEEN / 2;
 
 // ── Arena Clash ─────────────────────────────────────────────────────────────
 //
-// One round arena filling the frame's width but 55 px a side, the flags bouncing inside it. What
-// the platforms leave free is y 209 to 1521 (their top bar, their caption zone): the battle's
-// title (src/render/battle.ts) takes 225 to 416 of it, the ring 430 to 1400, and under the ring,
-// in the middle, a line for the follow button or the slow motion tag (1452) and the free plan's
-// watermark (1501). The side buttons' column (x 940 on, from y 902) crosses the ring's right
-// edge: a circle this big cannot keep out of it, and the balls are rarely there.
+// One round arena filling the frame's width but 55 px a side, the flags bouncing inside it. This
+// is the simulation's arena, where every battle is worked out and replayed: the picture is drawn
+// 80 px lower (DROP in src/render/battle.ts), the ring from y 510 to 1480 on the frame, with the
+// battle's title over it and, under it in the middle, a line for the follow button or the slow
+// motion tag and the free plan's watermark. The side buttons' column (x 940 on, from y 902)
+// crosses the ring's right edge: a circle this big cannot keep out of it, and the balls are
+// rarely there.
 
-/** The arena: centre and radius of the ring's inner edge, where balls bounce and strings are tied. */
+/** The arena in the simulation: centre and radius of the ring's inner edge, where balls bounce and strings are tied. Moving it changes every battle. */
 export const ARENA = { x: W / 2, y: 915, r: 485 };

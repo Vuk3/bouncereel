@@ -36,10 +36,19 @@ const STAGE_LIT = '#0d1120';
 const PANEL = '#12162a';
 /** The words that are not the headline: how many are left, the result under the winner. */
 const MUTED = '#9aa3b5';
-/** The title block, by the middle of each line: under the platforms' top bar (to y 209), over the ring (from 430). */
-const KICKER_Y = 244;
-const HEADLINE_Y = 308;
-const STATUS_Y = 388;
+/**
+ * px the whole picture sits below the simulation's arena (layout.ts ARENA): the ring is drawn
+ * centred at y 995, not 915. Moved in the drawing alone, since a battle's every px is worked out
+ * from where the arena is, and a battle recorded before must open again in the studio exactly as
+ * it played. Measured on the three apps on a 6.1" phone, where the video fills the screen's
+ * height: TikTok's search bar reaches y 247 and Instagram's profile grid shows only y 240–1680
+ * (3:4), so the names at 244 were cut and the black under the ring was a third of the frame.
+ */
+const DROP = 80;
+/** The title block, by the middle of each line: under TikTok's search bar (to y 247) and the profile grid's top (240), over the ring (from 510). */
+const KICKER_Y = 244 + DROP;
+const HEADLINE_Y = 308 + DROP;
+const STATUS_Y = 388 + DROP;
 /** The widest a line of the title may be: 60 px a side. */
 const TITLE_W = 960;
 /** The smallest the names over the title are set: under 28 px a name is not read on a phone, and the line says how many flags instead. */
@@ -58,17 +67,19 @@ const GHOST = 0.22;
 const TRAIL = 10;
 /**
  * The line under the ring, in the middle of the frame: the follow button and the slow motion
- * tag, never both at once (battleFollowAt). Between the ring (to y 1400, its glow a little
+ * tag, never both at once (battleFollowAt). Between the ring (to y 1480, its glow a little
  * further) and the free plan's mark; the black below that is the platforms' caption, account
- * and music, where a button would be read by nobody.
+ * and music (from about y 1620 on TikTok, 1690 on Shorts, 1740 on Reels, measured), where a
+ * button would be read by nobody.
  */
-const FOOTER_Y = 1452;
-/** Where the free plan's mark sits: under that line, the last thing above the platforms' caption zone (from y 1521). */
-const WATERMARK_Y = 1501;
+const FOOTER_Y = 1452 + DROP;
+/** Where the free plan's mark sits: under that line, above the platforms' captions. */
+const WATERMARK_Y = 1501 + DROP;
 /** The follow button on the stage: framed in white, and white with dark type once followed. */
 const FOLLOW_STYLE: FollowStyle = { ink: WHITE, card: WHITE, text: STAGE, shadow: false };
-/** The winner card's button, under the card as the race's is. */
-const FOLLOW_Y = 1330;
+/** The winner card's middle, over the ring's, and its button under it, as the race's is. */
+const CARD_Y = 1000 + DROP;
+const FOLLOW_Y = 1330 + DROP;
 
 /** What the page tells this renderer about a frame of a battle. */
 export interface BattleOverlay extends Overlay {
@@ -191,6 +202,9 @@ export class BattleRenderer {
     ctx.save();
     ctx.translate(sx, sy);
     this.drawTitle(world, cfg, colors);
+    // The arena and all that happens in it, in the simulation's own px, DROP lower on the frame.
+    ctx.save();
+    ctx.translate(0, DROP);
     this.drawRing();
     this.drawGhosts();
     this.drawStrings(world, colors);
@@ -201,6 +215,7 @@ export class BattleRenderer {
     if (world.winner === null) for (const f of world.flags) if (f.alive) this.drawCount(f);
     this.drawSparks();
     this.effects.drawPieces(ctx, false);
+    ctx.restore();
     if (this.slow > 0 && world.winner === null) this.drawSlowTag();
     ctx.restore();
 
@@ -595,7 +610,7 @@ export class BattleRenderer {
     ctx.fillStyle = rgba(STAGE, 0.8);
     ctx.fillRect(0, 0, W, H);
     const pop = easeOutBack(Math.min(1, overlay.age / 0.45));
-    ctx.translate(W / 2, 1000);
+    ctx.translate(W / 2, CARD_Y);
     ctx.scale(pop, pop);
     const cw = 860;
     const ch = cta ? 500 : 420;
@@ -703,7 +718,7 @@ function paintStage(): HTMLCanvasElement {
   const ctx = canvas.getContext('2d')!;
   ctx.fillStyle = STAGE;
   ctx.fillRect(0, 0, W, H);
-  const light = ctx.createRadialGradient(ARENA.x, ARENA.y, 0, ARENA.x, ARENA.y, ARENA.r * 1.5);
+  const light = ctx.createRadialGradient(ARENA.x, ARENA.y + DROP, 0, ARENA.x, ARENA.y + DROP, ARENA.r * 1.5);
   light.addColorStop(0, STAGE_LIT);
   light.addColorStop(1, rgba(STAGE_LIT, 0));
   ctx.fillStyle = light;

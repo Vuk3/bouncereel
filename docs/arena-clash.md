@@ -25,7 +25,7 @@ cards and the Videos page's thumbnails ([website](./website.md#4-the-home-page))
 | the dice: flags from a region, its words | `randomBattle` in [battle-balance.ts](../src/sim/battle-balance.ts); the regions in [src/battle/countries.ts](../src/battle/countries.ts) `DICE_REGIONS` |
 | which countries are offered, their names, figures | [src/battle/countries.ts](../src/battle/countries.ts), the SVGs in [public/flags/](../public/flags/) |
 | a flag's picture, its strings' colour | [src/battle/flags.ts](../src/battle/flags.ts) |
-| the arena's geometry | `ARENA` in [src/layout.ts](../src/layout.ts) (physics: run `npm run tune`) |
+| the arena's geometry | `ARENA` in [src/layout.ts](../src/layout.ts) (physics: run `npm run tune`, and a battle recorded before no longer replays as it played); where the picture sits on the frame, `DROP` and the title's heights in [src/render/battle.ts](../src/render/battle.ts) |
 | how it looks: the stage, the title, N LEFT and OUT, the strings, the balls and their counts, effects, the slow motion tag, the follow button, the winner card, the watermark | [src/render/battle.ts](../src/render/battle.ts) `BattleRenderer` |
 | what both games draw with (type, colour sums, the mark), the follow button itself | [src/render/draw.ts](../src/render/draw.ts), [src/render/follow.ts](../src/render/follow.ts) |
 | what it sounds like | `Sonifier.battle` in [src/audio/sonify.ts](../src/audio/sonify.ts) |
@@ -197,13 +197,13 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
 
 - **The title**, under the platforms' top bar and over the ring, from the first frame to the
   last, so the first frame is the thumbnail:
-  - who is in it, at y 244: up to four flags' names, each in its strings' colour, with VS
+  - who is in it, at y 324: up to four flags' names, each in its strings' colour, with VS
     between ("SERBIA VS CROATIA VS SLOVENIA"), 38 px or as small as 28 to fit, those out dimmed
     and struck through; from five flags, or when four long names would not fit, "8 FLAGS · ONE
     SURVIVES";
-  - the question in big white type at y 308 (up to 84 px, fitted to 960 px): the video's
+  - the question in big white type at y 388 (up to 84 px, fitted to 960 px): the video's
     `look.question`, which the narrator's opening ends on, in capitals without its full stop;
-  - how many are left at y 388 ("2 LEFT"), centred and alone. For 1.7 s after a flag goes it is
+  - how many are left at y 468 ("2 LEFT"), centred and alone. For 1.7 s after a flag goes it is
     that flag and "CROATIA OUT" in its colour instead, popping in. Who went is said in the names
     above: a flag out stays where it was, dimmed and struck through. Small flags of those gone
     beside "2 LEFT" read as the two that are left, so there are none.
@@ -216,21 +216,28 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
 - **Effects**: cut strings linger 0.22 s as ghosts, white then their colour, with sparks off the
   rival; every bounce ripples on the ring where it ties, two balls meeting ripple white; a flag
   out bursts into pieces with a shake.
-- **Under the ring, in the middle of the frame** (`FOOTER_Y`, 1452): a red dot and SLOW MOTION
+- **Under the ring, in the middle of the frame** (`FOOTER_Y`, 1532): a red dot and SLOW MOTION
   while an out plays slowed, and once in the battle the **follow button** (`look.follow`), the
   race's own (follow.ts): it pops in red, a hand comes up and taps it, it turns to FOLLOWING and
   fades, 2.4 s in all. `battleFollowAt` picks the moment: near 45 % of the battle, clear of every
-  out's slow motion and OUT, so the two never share the line. The frame is laid out for it: the
-  platforms leave y 209 to 1521 free, the title takes 225 to 416, the ring 430 to 1400, then
-  this line and the watermark. ⚠️ The black below 1521 looks free in the studio and is not: it
+  out's slow motion and OUT, so the two never share the line.
+- **Where it all sits** was measured on the three apps on a 6.1" phone, where the video fills the
+  screen's height: TikTok's search bar reaches y 247, Instagram's and YouTube's top buttons 210;
+  the captions start at about y 1620 on TikTok (its pinned comment, while it shows, at 1460),
+  1690 on Shorts and 1740 on Reels; and Instagram's profile grid shows only y 240–1680 of a reel
+  (3:4). So the title takes y 305 to 495, the ring 510 to 1480, the line under it 1532 and the
+  watermark 1581, all inside the grid's crop, and the black under the ring is the captions'. The
+  picture is drawn `DROP` (80 px) lower than the simulation's arena (`ARENA`, centre y 915),
+  which stays where every battle so far was worked out, so one recorded before still opens in
+  the studio as it played. ⚠️ The black below the line looks free in the studio and is not: it
   is where the platforms put the caption, the account and the music (More → Video → *Show where
   TikTok, Reels and Shorts put their buttons* shows it). A button there is read by nobody.
 - **The winner card**: a dark card framed in the winner's colour, its flag big over it, WINNER,
   its name, "Last flag standing · 26.0 s", and the last line; confetti; with `look.follow` the
   follow button under it in the winner's colour, tapped 1.5 s in and left as FOLLOWING, and the
   card held 2.5 s at least (pacing.ts), as the race's.
-- **The watermark** (a plan with `watermark`) sits under the arena, centred at y 1501, above the
-  platforms' caption zone (from y 1520). The ring's right edge crosses the platforms' side
+- **The watermark** (a plan with `watermark`) sits under the arena, centred at y 1581, above the
+  platforms' captions. The ring's right edge crosses the platforms' side
   buttons' column (x 940 on, from y 902): a circle this big cannot keep out of it. The preview
   marks across the frame are in the preview alone.
 
@@ -300,3 +307,4 @@ the thumbnail; Open in studio replays it exactly. The superadmin's text for post
 - 2026-11-12 - every bounce off the ring ties a bundle: a full ball lets go of its oldest strings as it does (they fade), so its count never falls at a bounce; the balls speed up as a battle goes on (to twice their starting speed, `pace`), which ends long duels; two balls meeting swerve a little (`CLASH`), which ends the head-on ping-pong.
 - 2026-11-12 - no most: every bounce adds ten whatever a ball holds, and strings go only by being cut; the fuse, `HOLD`, `FLOOR` and `DUEL` are gone, and balancing chooses the seed and the starting speed alone.
 - 2026-11-12 - named Arena Clash (`arena-clash`), from Flag Battle: a name of its own, not its flags'; an icon for each game (public/games/), on the studio's switch, the site's game cards and the Videos page's thumbnails.
+- 2026-11-12 - the picture 80 px lower (`DROP`, the drawing alone): the names were under TikTok's search bar and cut in Instagram's profile grid, and a third of the frame was black under the ring; positions measured on the three apps.
