@@ -43,6 +43,18 @@ function scaled(source: CanvasImageSource, sx: number, sy: number, sw: number, s
   return canvas;
 }
 
+/**
+ * `source` scaled to half its size `times` times over, each half its own drawing: every pixel the
+ * average of four. One step from 1080 to 270, or a browser's own scaling of a bigger image down
+ * to a card, samples rather than averages, and an Arena Clash's hundreds of fine strings beat
+ * against the pixels in waves (moiré); halved step by step they blend into the wedge they make.
+ */
+function halved(source: HTMLCanvasElement, times: number): HTMLCanvasElement {
+  let canvas = source;
+  for (let i = 0; i < times; i++) canvas = scaled(canvas, 0, 0, canvas.width, canvas.height, canvas.width / 2, canvas.height / 2);
+  return canvas;
+}
+
 /** The race `at` (0..1) of the way to the predicted win, drawn as playback would: trails and all. */
 function midRace(cfg: Config, at: number): HTMLCanvasElement {
   const renderer = new Renderer(document.createElement('canvas'));
@@ -105,7 +117,10 @@ async function main(): Promise<void> {
   // 2b. A frame of each game, whole, for the Games cards (the home page and /games): the race in the
   // night look as the looks have it, and the showcase Arena Clash an eighth of the way, its fans
   // still wide and the first bundles tied round the ring.
-  offer(scaled(frames.night!, 0, 0, W, H, 540, 960), 'games/ball-race.webp', 'image/webp', 0.86);
+  // Each at 540×960 and 270×480, halved step by step (halved): the card picks the one nearest the
+  // size it shows it at (its srcset), so the browser scales it little or not at all.
+  offer(halved(frames.night!, 1), 'games/ball-race.webp', 'image/webp', 0.86);
+  offer(halved(frames.night!, 2), 'games/ball-race-270.webp', 'image/webp', 0.86);
   const clash = balanceBattle(
     mergeConfig(switchGame(mergeConfig(PRESETS[0].config, { timing: { video: 30 } }), 'arena-clash'), {
       seed: SHOWCASE.seed,
@@ -113,7 +128,11 @@ async function main(): Promise<void> {
       look: { question: SHOWCASE.question },
     }),
   );
-  if (clash) offer(scaled(await midBattle(clash, 0.12), 0, 0, W, H, 540, 960), 'games/arena-clash.webp', 'image/webp', 0.86);
+  if (clash) {
+    const frame = await midBattle(clash, 0.12);
+    offer(halved(frame, 1), 'games/arena-clash.webp', 'image/webp', 0.86);
+    offer(halved(frame, 2), 'games/arena-clash-270.webp', 'image/webp', 0.86);
+  }
 
   // 3. Open Graph, 1200×630, as the site's hero: the ink stage, the mark, the name and the headline
   // on the left with the address along the bottom (as vukcvetkovic.com's card has it), two phones
