@@ -20,7 +20,7 @@ and chips on a pastel page.
 | what a ball wears (F, n!, ×2…) | `mark` in [src/sim/sequences.ts](../src/sim/sequences.ts) |
 | the ⚡ tag beside a powered ball's name | [src/render/renderer.ts](../src/render/renderer.ts) `POWER_TAGS`, `drawTag`, called from `drawName` (paper) and `drawNameRow` (cards, night) |
 | the free plan's watermark | [src/render/renderer.ts](../src/render/renderer.ts) `drawWatermark`, `WATERMARK`; `Overlay.watermark` from the plan's `watermark` in [src/app.ts](../src/app.ts) |
-| the BounceReel mark drawn on a canvas (watermark, Open Graph image) | [src/render/renderer.ts](../src/render/renderer.ts) `drawMark`, the same drawing as [public/mark.svg](../public/mark.svg) |
+| the BounceReel mark drawn on a canvas (watermark, Open Graph image) | [src/render/draw.ts](../src/render/draw.ts) `drawMark`, the same drawing as [public/mark.svg](../public/mark.svg) |
 | the loop at the end | `loop` in [src/app.ts](../src/app.ts) `frame`, `END_PAD` in [src/pacing.ts](../src/pacing.ts) |
 | the opening title over the first frame (§11) | [src/render/renderer.ts](../src/render/renderer.ts) `drawOpening`, `OPENINGS`; how long it shows, `openingShown` in [src/pacing.ts](../src/pacing.ts); its question, [src/audio/opening.ts](../src/audio/opening.ts) |
 | the meters and LEAD CHANGE (§12) | [src/render/renderer.ts](../src/render/renderer.ts) `drawMeters`, `METER`, `drawLeadChange`, `LEAD_SHOW`, `LEAD_RIGHT`; which changes, `Outcome.leads` from `predict` in [src/sim/world.ts](../src/sim/world.ts) |
@@ -31,6 +31,8 @@ and chips on a pastel page.
 | floating numbers, debris, confetti, shake | [src/render/effects.ts](../src/render/effects.ts) |
 | the font | [public/fonts/](../public/fonts/), `@font-face` in [src/style.css](../src/style.css), `FONT` in renderer.ts |
 | the platform UI overlay (not recorded) | `#safe-zones` in [app.html](../app.html) and [src/style.css](../src/style.css) |
+| Arena Clash's stage, title, strings, counts and winner card | [arena-clash](./arena-clash.md#4-the-look), [src/render/battle.ts](../src/render/battle.ts) |
+| what both games' renderers draw with, the follow button itself | [src/render/draw.ts](../src/render/draw.ts), [src/render/follow.ts](../src/render/follow.ts) |
 
 ## 1. The frame
 
@@ -419,7 +421,10 @@ follow twice, with a button like the platforms' own: a plus and FOLLOW on a pill
 turns into a tick and FOLLOWING on the look's card (white on paper and cards, dark on night).
 It is drawn in the look's pill, the cards' with their hard shadow, and the plus and the tick
 are lines, since Rubik has neither. It is as wide as FOLLOWING in both states, so the tap does
-not move it.
+not move it. The button and its hand are [follow.ts](../src/render/follow.ts), which both games
+draw with: an Arena Clash shows it under its ring, in the middle, and under its own winner card, on
+its black stage ([arena-clash](./arena-clash.md#4-the-look)); the places and timings below are
+the race's.
 
 **The tap** is a hand, both times: Microsoft's 3D 👆 from Fluent Emoji (MIT,
 [public/hand/](../public/hand/), `HAND_SRC`), the same on every computer, where a font's emoji is
@@ -476,3 +481,6 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-11-07 - the watermark says `bouncereel.com`, at the full 32 px.
 - 2026-11-07 - the site's PNG icons are drawn from favicon.svg, so a change to the mark makes them again.
 - 2026-11-07 - the preview marks: on a plan with the watermark, the site's host tilted 30° across the preview at 14 %, never in the file, with a note over the preview.
+- 2026-11-11 - Arena Clash drawn in the same three looks from the same palettes (src/render/battle.ts; arena-clash.md); renderer.ts exports its palettes and helpers for it.
+- 2026-11-11 - the follow button a ball race's alone (`asksToFollow`); the preview marks in an Arena Clash too, `paintPreviewMarks` exported for it.
+- 2026-11-12 - the two games' renderers are independent: what both draw with moved from renderer.ts to draw.ts (the type, colour sums, text helpers, the mark, the preview marks, the base `Overlay`; the race's own is `RaceOverlay`) and follow.ts (the follow button and its hand); an Arena Clash has one look of its own and the follow button (arena-clash.md).

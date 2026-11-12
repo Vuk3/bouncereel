@@ -32,7 +32,7 @@ npm run dev        # http://localhost:5173 (the owner runs this)
 | `npm run check` | `tsc` for the pages, then `tsc -p worker` for the Worker: **the gate** |
 | `npm run build` | `check`, then `vite build` into `dist/client/` (pages) and `dist/bouncereel/` (Worker) |
 | `npm run preview` | build, then serve it with the same headers, the Worker and the local database |
-| `npm run tune` | balance every built-in matchup and 100 random ones at 30, 40 and 60 s, in Node |
+| `npm run tune` | balance every built-in matchup and 100 random ones at 30, 40 and 60 s, then 20 Arena Clashes of 2, 3, 4, 6 and 12 flags, in Node |
 | `npm run admin -- <email>` | a local superadmin: prints a link to set its password |
 
 The deploy, migration, type and release scripts are in
@@ -62,15 +62,32 @@ locks and the finish gaps):
   100 random, no powers: 20.9 ms each (worst 233 ms), 0 with a power, 21 with a crowd, 65 photo finishes, 78 won from behind, 0 more than 1 s off length
 ```
 
+Then, per length, a line per Arena Clash size, on its own and with a chosen winner:
+
+```
+── 30 s Arena Clashes
+   3 flags                   36 ms each (worst 108 ms), 0 not balanced, 0 more than 0.1 s off length, first flag out at 10.8 s at the earliest, longest quiet stretch 56 % on average (worst 70 %), speeds 261–446 px/s
+   3 flags, winner chosen    111 ms each (worst 376 ms), 0 not balanced, 0 more than 0.1 s off length, 0 won by another flag, first flag out at 10.1 s at the earliest, …
+```
+
 Run it after any change to [src/sim/](../src/sim/), [layout.ts](../src/layout.ts) or the
-presets. "cannot fit" for a preset, or anything but 0 off-length random matchups, is a
-regression; so is a fall in the rolls won from behind (about 78 of 100, by design no more
-than 80: [matchups and balancing](./matchups-and-balancing.md) §1).
+presets. "cannot fit" for a preset, anything but 0 off-length random matchups, or a battle not
+balanced, off its length or won by another flag than the chosen one, is a regression; so is a
+fall in the rolls won from behind (about 78 of 100, by design no more than 80:
+[matchups and balancing](./matchups-and-balancing.md) §1). A battle is fitted to its length
+exactly, so more than a tenth of a second off is a fault. Three and four flags are what the
+game is made for: the first of three should go out a little past the middle of the battle (in
+a 30 s video, not before the 9th second; in 40 s, not before the 14th), which is why its quiet
+stretch (the longest time no flag goes out, as a share of the battle) is around 57 %; four
+flags' is around 42 %; from six up it is around 40 % at 30 and 40 s, more at 60 s, where many
+flags end on a long duel ([arena-clash](./arena-clash.md#2-balancing)).
 
 ## 3. The control panel
 
-One column, in the order the work goes: what the matchup is, a new one, the video's
-settings, then everything else in tabs. Fields in the tabs are generated from
+One column, in the order the work goes: the game (Ball race or Arena Clash), what the matchup
+is, a new one, the video's settings, then everything else in tabs. A tab, section or field with
+`show` is there only in its game (the race's Balls tab, physics and big numbers); in a Flag
+Battle the battle card stands where the matchup card does ([arena-clash](./arena-clash.md#6-in-the-studio)). Fields in the tabs are generated from
 [fields.ts](../src/ui/fields.ts) (`TABS`): each names a path into `Config`. Fields marked
 `live` (looks, sound, words) apply to the running video; any other change restarts the run,
 and a run that was playing holds its first frame until the narrator's lines for it are
@@ -332,3 +349,5 @@ browser's Cache Storage. The videos themselves live in D1, locally in `.wrangler
 - 2026-11-02 - a lock beside each ball in the matchup card and under its Balls and Hit strength, and the dice button saying what a roll will do (New opponent, New layers, Roll the rest); the Balls and Hit strength fields for Always the same; a ball changed by hand renamed and balanced again by itself.
 - 2026-11-02 - the panel in cards: the Video block in three parts, each tab section a card, a ball's tinted with its colour and in parts (How it hits, Power); the power field says On every hit; the swatches on one row.
 - 2026-11-03 - the timeline's winner card is the run's own: its hold, or a beat past the winner line (its clip once generated), so the track can end a few tenths either side of the length.
+- 2026-11-11 - the game switch at the top of the panel; tabs, sections and fields with `show` by game; `npm run tune` checks Arena Clashes of 2 to 12 flags.
+- 2026-11-12 - `npm run tune` holds an Arena Clash to 0.1 s of its length and prints when its first flag goes out.

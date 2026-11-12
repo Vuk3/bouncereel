@@ -315,7 +315,7 @@ again on every request, which is what protects the data.
 | `library` | videos kept; null is no limit | the server on save (inside the INSERT) |
 | `watermark` | a small BounceReel watermark (the mark and the site's host) between the two cards of every video ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)) | the studio: it draws the video, in the preview as in the file, and the preview alone has the preview marks across it. The server cannot see the pixels; the [terms](../terms.html#licence) ask that it stays on |
 | `follow` | the follow button: the studio's Ask viewers to follow switch (`look.follow`), a follow button once in the race and under the winner card, and "Follow for more!" after the winner line ([look and layout](./look-and-layout.md#14-the-follow-button)). On every plan but Rookie (0009_follow_button.sql) | the studio (the switch is locked; a config made with it, from the library or a file, loads with it off); the server on save (`look.follow`) |
-| `allGames` | every game BounceReel makes, each new one as it comes out | nothing yet: ball races are the one game, and every plan makes it. A second game checks it before it opens |
+| `allGames` | every game BounceReel makes, each new one as it comes out: Arena Clash today. Ball races are in every plan (`gameAllowed`) | the studio's game switch (off, with a paid tag, without it; a saved battle opens as a race); Record; the server on save (`game`) |
 
 **The studio says what the plan makes, and shows what it lacks instead of hiding it.** At the
 top of the panel, a plan that holds anything back gets a card: "Your plan: Rookie" and a few
@@ -395,7 +395,7 @@ Names, words, badges and prices are placeholders (`TODO(owner)`):
 | **Champion** | dark, "Every game" | none ("Coming soon") | no limit | all three | yes | 90 s | all three | yes | no limit | no | yes |
 
 The plans climb in three steps: Rookie makes one video a day, Pro five, Champion as many as
-you like, and only Champion has every game, which matters once there is a second game.
+you like, and only Champion has every game: Arena Clash.
 
 ## 7. Subscriptions
 
@@ -600,3 +600,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-11-07 - sign-ups closed while the site is being finished (`SIGNUPS_OPEN`): the API answers 403 `signups_closed`, every "Start free" reads "Coming soon", /signup says the site opens soon, the plan cards wait alike; how to open them again.
 - 2026-11-07 - a screen recording of the free preview carries the preview marks, which the file never has.
 - 2026-11-07 - profiles (names and a picture cut in the browser, kept in R2; 0010_profiles.sql) on the account page, in the top bars and the admin area; Google sign-in built and switched off (`GOOGLE_LOGIN`), with how to turn it on; an account with no password confirms its deletion with its address.
+- 2026-11-11 - `allGames` gates Arena Clash: the studio's game switch, Record and the server on save (`gameAllowed`); the plans' lists say "Every game: ball races, Arena Clash and each new one" or "Ball races; no Arena Clash", the studio's plan card "Arena Clash" or "No Arena Clash".

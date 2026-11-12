@@ -1,4 +1,5 @@
-import { spokenOutro, type Config } from './config.ts';
+import { flagName } from './battle/countries.ts';
+import { asksToFollow, spokenOutro, type Config } from './config.ts';
 
 // How a video is paced around the race, in one place: the page plays it this
 // way, and the balancer subtracts it from the requested video length to know
@@ -76,21 +77,22 @@ export function spokenSeconds(line: string): number {
 
 /** The shortest the winner card stays: the hold, or FOLLOW_CARD with the follow button. */
 export function cardHold(cfg: Config): number {
-  return cfg.look.follow ? Math.max(cfg.timing.hold, FOLLOW_CARD) : cfg.timing.hold;
+  return asksToFollow(cfg) ? Math.max(cfg.timing.hold, FOLLOW_CARD) : cfg.timing.hold;
 }
 
 /**
  * How long the winner card is planned to stay up: the hold (cardHold), or long enough to say the
  * winner line, whichever is more. The line said for `winner` when it is known (balancing picks the
- * winner before it sets the speeds), else the longer of the two: a crowd wins as "the crowd of 100
- * Millionaire Balls", and a card planned for that line when the other ball wins ends the video a
- * second or more short. The page ends the card a beat after the line it says, so a guess off by a
- * few tenths moves the video's end, never holds a silent card.
+ * winner before it sets the speeds), else the longest of those that can win: a crowd wins as "the
+ * crowd of 100 Millionaire Balls", and a card planned for that line when the other ball wins ends
+ * the video a second or more short; a battle's names are its flags'. The page ends the card a beat
+ * after the line it says, so a guess off by a few tenths moves the video's end, never holds a
+ * silent card.
  */
 export function cardSeconds(cfg: Config, winner?: string): number {
   const hold = cardHold(cfg);
   if (!narrated(cfg)) return hold;
-  const names = winner === undefined ? [cfg.a.name, cfg.b.name] : [winner];
+  const names = winner !== undefined ? [winner] : cfg.game === 'arena-clash' ? cfg.battle.flags.map(flagName) : [cfg.a.name, cfg.b.name];
   const longest = Math.max(...names.map((name) => spokenSeconds(spokenOutro(cfg, { winner: name, time: '00.0' }))));
   return Math.max(hold, longest + AFTER_OUTRO);
 }

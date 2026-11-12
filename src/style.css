@@ -516,6 +516,75 @@ fieldset:disabled {
   line-height: 1.45;
 }
 
+/* One game's controls at a time: app.ts sets data-game on the body (syncTopBlock). */
+body:not([data-game='arena-clash']) .battle-only,
+body[data-game='arena-clash'] .race-only {
+  display: none !important;
+}
+
+/*
+ * Arena Clash's card: the flags in a list, each its flag in a ring of its strings' colour
+ * (--line, from app.ts), its country to pick and a die for a random one; then how many, the
+ * dice's region and the winner; the verdict along the bottom.
+ */
+.battle {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.flag-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 10px;
+  margin: 0;
+  padding: 14px 16px 4px;
+  list-style: none;
+}
+.flag-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+.flag-list img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--line, var(--line-strong));
+}
+.flag-list select {
+  height: 34px;
+  padding-left: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.battle-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  padding: 12px 16px 14px;
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+}
+.stepper output {
+  min-width: 2.4ch;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* What the dice does, a new race of the same matchup, and whether Play has the narrator. */
 .deal {
   display: grid;
@@ -625,7 +694,8 @@ fieldset:disabled {
 }
 
 /* What Record puts in the sound: three segments, one picked. The radio stays for the keyboard. */
-.track {
+.track,
+.games {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2px;
@@ -634,18 +704,40 @@ fieldset:disabled {
   background: var(--sunken);
   border: 1px solid var(--line);
 }
-.track label {
+/* The game switch: the sound's segments, two of them, under a name of its own (app.ts reads `.track` as the sound). */
+.games {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+/* Each game's icon before its name, the paid tag under both. */
+.games label > span {
+  grid-template-columns: auto auto;
+  justify-content: center;
+  column-gap: 7px;
+  min-height: 40px;
+}
+.games .game-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+.games b {
+  font-weight: inherit;
+}
+.track label,
+.games label {
   position: relative;
   cursor: pointer;
 }
-.track input {
+.track input,
+.games input {
   position: absolute;
   opacity: 0;
   width: 1px;
   height: 1px;
   pointer-events: none;
 }
-.track label > span {
+.track label > span,
+.games label > span {
   display: grid;
   place-items: center;
   min-height: 34px;
@@ -657,17 +749,20 @@ fieldset:disabled {
   line-height: 1.2;
   text-align: center;
 }
-.track label:hover > span {
+.track label:hover > span,
+.games label:hover > span {
   color: var(--ink);
 }
-.track input:checked + span {
+.track input:checked + span,
+.games input:checked + span {
   background: var(--raised);
   color: var(--ink);
   box-shadow:
     0 0 0 1px var(--line),
     0 1px 3px light-dark(rgb(20 26 46 / 0.08), rgb(0 0 0 / 0.4));
 }
-.track input:focus-visible + span {
+.track input:focus-visible + span,
+.games input:focus-visible + span {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
@@ -679,6 +774,7 @@ fieldset:disabled {
  * altogether (inert), are the one thing dimmed, under the line that says why.
  */
 .track label.locked,
+.games label.locked,
 .look.locked,
 .switch.locked {
   cursor: not-allowed;
@@ -703,10 +799,14 @@ fieldset:disabled {
   box-shadow: 0 0 0 1px var(--line);
 }
 /* Under a sound's name, inside its segment. */
-.track .paid-tag {
+.track .paid-tag,
+.games .paid-tag {
   display: block;
   width: max-content;
   margin: 3px auto 0;
+}
+.games .paid-tag {
+  grid-column: 1 / -1;
 }
 #tabpanel-voice .field.locked {
   opacity: 0.5;

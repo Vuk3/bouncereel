@@ -1,13 +1,16 @@
+import { country, flagName, type Country } from '../battle/countries.ts';
 import type { Config, Contestant } from '../config.ts';
 import { fillTemplate, spokenName, spokenOutro } from '../config.ts';
+import type { BattleOutcome } from '../sim/battle.ts';
 import { SEQUENCES, strengthSaid } from '../sim/sequences.ts';
 import type { Outcome } from '../sim/world.ts';
 import { configQuestion, openingDraws } from './opening.ts';
 
 // What the narrator says, and turning it into audio. Two lines: a short opening that says how
-// the matchup works, and the winner at the end; nothing while the race runs, which the picture
-// tells better. The simulation is deterministic, so both are known before a run starts
-// (predict()): a recording first generates them, then plays each as its moment comes.
+// the matchup works, and the winner at the end; nothing while the race or the battle runs, which
+// the picture tells better (the format's channels have no narrator at all). The simulation is
+// deterministic, so every line is known before a run starts (predict()): a recording first
+// generates them, then plays each as its moment comes.
 //
 // The voice is Kokoro, an open model (Apache 2.0) that runs in the browser: free, and the words
 // never leave the computer.
@@ -83,7 +86,69 @@ export function autoScript(cfg: Config): string {
 }
 
 export function introLine(cfg: Config): string {
-  return cfg.voice.script.trim() || autoScript(cfg);
+  return cfg.voice.script.trim() || (cfg.game === 'arena-clash' ? battleScript(cfg) : autoScript(cfg));
+}
+
+// ── Arena Clash ────────────────────────────────────────────────────────────
+
+const NUMBERS = ['', '', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
+/**
+ * The battle's rule in one sentence. A race's opening never explains the floor or the layers; a
+ * battle's does once, since that a flag with no strings is out is the one thing the picture does
+ * not say in its first second.
+ */
+const BATTLE_RULES = ["Cut every rival's strings to win.", 'Lose all your strings and you are out.', 'Cut their strings and keep your own.'];
+
+/** "about 6.5 million", "about 760": a figure as the narrator rounds it. */
+function people(n: number): string {
+  if (n >= 1e9) return `about ${(n / 1e9).toFixed(1)} billion`;
+  if (n >= 1e7) return `about ${Math.round(n / 1e6)} million`;
+  if (n >= 1e6) return `about ${(n / 1e6).toFixed(1)} million`;
+  if (n >= 1e4) return `about ${Math.round(n / 1e3)} thousand`;
+  return `about ${Math.round(n / 10) * 10}`;
+}
+
+/**
+ * One fact about the flags in this arena, from the countries' figures: who has the most or the
+ * fewest people, the biggest or the smallest, or how many times the biggest is the smallest. Only
+ * ranks and rounded figures, so a year-old estimate never makes it false.
+ */
+function battleFact(flags: Country[], draw: number): string {
+  const by = (key: 'people' | 'area', most: boolean) => [...flags].sort((a, b) => (most ? b[key] - a[key] : a[key] - b[key]))[0];
+  const big = by('area', true);
+  const small = by('area', false);
+  const ratio = big.area / small.area;
+  const times = ratio >= 10 ? Math.round(ratio / 10 ** Math.floor(Math.log10(ratio) - 1)) * 10 ** Math.floor(Math.log10(ratio) - 1) : Math.round(ratio);
+  const facts = [
+    `${by('people', true).name} has the most people here, ${people(by('people', true).people)}.`,
+    `${by('people', false).name} has the fewest, ${people(by('people', false).people)} people.`,
+    `${big.name} is the biggest country in the arena.`,
+    `${small.name} is the smallest country in the arena.`,
+    ...(ratio >= 3 ? [`${big.name} is about ${times.toLocaleString('en-US')} times the size of ${small.name}.`] : []),
+  ];
+  return facts[Math.floor(draw * facts.length)];
+}
+
+/**
+ * The battle's opening: the flags (all of them up to four, else how many and the first three), the
+ * rule in one sentence, one fact and the question, about 10 seconds read aloud. How it starts, the
+ * rule's words and the fact are picked by the seed.
+ */
+export function battleScript(cfg: Config): string {
+  const draws = openingDraws(cfg.seed);
+  const names = cfg.battle.flags.map(flagName);
+  const n = names.length;
+  const starts =
+    n === 2
+      ? [`${names[0]} versus ${names[1]}!`, `${names[0]} takes on ${names[1]}!`, `It's ${names[0]} against ${names[1]}!`]
+      : n === 3
+        ? [`${names[0]}, ${names[1]} and ${names[2]}, in one arena!`, `Three flags, one arena: ${names[0]}, ${names[1]} and ${names[2]}!`]
+        : n === 4
+          ? [`Four flags, one arena: ${names[0]}, ${names[1]}, ${names[2]} and ${names[3]}!`]
+          : [`${NUMBERS[n]} flags, one arena: ${names[0]}, ${names[1]}, ${names[2]} and ${n - 3} more!`];
+  const flags = cfg.battle.flags.map(country).filter((c): c is Country => !!c);
+  const fact = flags.length >= 2 ? battleFact(flags, draws.fact) : '';
+  return [starts[Math.floor(draws.start * starts.length)], BATTLE_RULES[Math.floor(draws.ball * BATTLE_RULES.length)], fact, configQuestion(cfg)].filter(Boolean).join(' ');
 }
 
 /**
@@ -96,13 +161,17 @@ export function outroLine(cfg: Config, winner: string, time: number): string {
 }
 
 /** Every line a run will say, in order: the opening, then the winner. */
-export function plannedLines(cfg: Config, outcome: Outcome): string[] {
+export function plannedLines(cfg: Config, outcome: Outcome | BattleOutcome): string[] {
   const outro = outcome.winner === null ? '' : outroLine(cfg, outcome.winnerName, outcome.time);
   return [introLine(cfg), ...(outro ? [outro] : [])];
 }
 
 /** What a voice says when it is tried in the Voice tab: this matchup's names, as an opening starts. */
 export function previewLine(cfg: Config): string {
+  if (cfg.game === 'arena-clash') {
+    const names = cfg.battle.flags.slice(0, 3).map(flagName);
+    return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}! Who survives?`;
+  }
   return `${spokenName(cfg.a.name)} versus ${spokenName(cfg.b.name)}! Who do you think wins?`;
 }
 

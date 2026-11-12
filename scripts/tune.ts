@@ -1,13 +1,16 @@
 // Checks, in plain Node, that matchups balance: every preset and a hundred
 // random matchups, at a few video lengths, as photo finishes and with the
-// finish gaps the panel offers, and rolls that keep one ball or both. Run after
+// finish gaps the panel offers, and rolls that keep one ball or both; then Flag
+// Battles of 2 to 12 flags, on their own and with a chosen winner. Run after
 // changing the physics, the presets or the generator.
 //
 //   npm run tune
 //   npm run tune -- 45      one video length
 
-import { DEFAULT_CONFIG, PRESETS, mergeConfig, type Contestant } from '../src/config.ts';
+import { DEFAULT_CONFIG, PRESETS, mergeConfig, switchGame, type Contestant } from '../src/config.ts';
 import { videoSeconds } from '../src/pacing.ts';
+import { predictBattle } from '../src/sim/battle.ts';
+import { balanceBattle, randomBattle, slowExtra, spread } from '../src/sim/battle-balance.ts';
 import { balance, isComeback, randomMatchup } from '../src/sim/balance.ts';
 import { finishTimes, predict } from '../src/sim/world.ts';
 
@@ -100,5 +103,49 @@ for (const video of lengths) {
       if (!(Math.abs(Math.abs(a - b) - gap) <= 1)) offGap++;
     }
     console.log(`  100 random, ${String(gap).padStart(2)} s gap: ${((performance.now() - gapStarted) / 100).toFixed(1)} ms each, ${offLength} more than 1 s off length, ${offGap} more than 1 s off the gap`);
+  }
+}
+
+/** Battles per flag count and length: enough to see the failures, quick enough to run after every change. */
+const BATTLES = 20;
+for (const video of lengths) {
+  console.log(`\n── ${video} s Arena Clashes`);
+  const base = mergeConfig(switchGame(DEFAULT_CONFIG, 'arena-clash'), { timing: { video } });
+  // Three and four flags are what the game is made for; six and twelve are there to be possible.
+  for (const count of [2, 3, 4, 6, 12]) {
+    for (const chosen of [false, true]) {
+      const started = performance.now();
+      let worst = 0;
+      let failed = 0;
+      let off = 0;
+      let lost = 0;
+      const firsts: number[] = [];
+      const spreads: number[] = [];
+      const speeds: number[] = [];
+      for (let i = 1; i <= BATTLES; i++) {
+        const dealt = randomBattle(String(i * 7919), base, count, 'world');
+        // The chosen winner: the last flag dealt, so it is never the one placed first.
+        if (chosen) dealt.battle.winner = dealt.battle.flags[count - 1];
+        const t = performance.now();
+        const cfg = balanceBattle(dealt);
+        worst = Math.max(worst, performance.now() - t);
+        if (!cfg) {
+          failed++;
+          continue;
+        }
+        const o = predictBattle(cfg);
+        // A battle's speed is fitted exactly: more than a tenth of a second off is a fault, not chaos.
+        if (Math.abs(videoSeconds(cfg, o.time + slowExtra(o), o.winnerName) - video) > 0.1) off++;
+        if (chosen && cfg.battle.flags[o.winner ?? -1] !== cfg.battle.winner) lost++;
+        firsts.push(o.outs[0].time);
+        spreads.push(spread(o, count));
+        speeds.push(cfg.battle.speed);
+      }
+      const mean = spreads.reduce((a, b) => a + b, 0) / Math.max(1, spreads.length);
+      const label = `${String(count).padStart(2)} flags${chosen ? ', winner chosen' : ''}`;
+      console.log(
+        `  ${label.padEnd(26)} ${((performance.now() - started) / BATTLES).toFixed(0)} ms each (worst ${worst.toFixed(0)} ms), ${failed} not balanced, ${off} more than 0.1 s off length${chosen ? `, ${lost} won by another flag` : ''}, first flag out at ${Math.min(...firsts).toFixed(1)} s at the earliest, longest quiet stretch ${Math.round(mean * 100)} % on average (worst ${Math.round(Math.max(0, ...spreads) * 100)} %), speeds ${Math.round(Math.min(...speeds))}–${Math.round(Math.max(...speeds))} px/s`,
+      );
+    }
   }
 }

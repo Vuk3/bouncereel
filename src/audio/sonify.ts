@@ -1,8 +1,10 @@
 import type { Config } from '../config.ts';
+import { W } from '../layout.ts';
+import { STRINGS, type BattleEvent } from '../sim/battle.ts';
 import type { SimEvent } from '../sim/types.ts';
 import type { Outcome, World } from '../sim/world.ts';
 import type { AudioEngine } from './engine.ts';
-import { Music } from './music.ts';
+import { Music, pentatonic } from './music.ts';
 
 /**
  * A crowd's notes (Contestant.count): a hundred balls hit about a hundred times a second, and three
@@ -12,6 +14,10 @@ import { Music } from './music.ts';
  */
 const CROWD_NOTE_GAP = 0.12;
 const CROWD_VELOCITY = 0.4;
+/** Frames between two plucks of strings being cut (Sonifier.battle): twenty a second, a run of notes and not a buzz. */
+const CUT_FRAMES = 3;
+/** Steps of the pentatonic scale a flag's strings span, from C4 with a hundred or more to C7 with none: three octaves. */
+const CUT_STEPS = 15;
 
 /**
  * Turns simulation events into sound, once per rendered frame with that
@@ -26,6 +32,8 @@ export class Sonifier {
   private lead = 0;
   /** Per team, the race time a crowd's last note played (CROWD_NOTE_GAP). */
   private crowdNote = [-Infinity, -Infinity];
+  /** Frames until strings being cut may be plucked again (CUT_FRAMES). */
+  private cutWait = 0;
 
   constructor(audio: AudioEngine, cfg: Config, leads: Outcome['leads']) {
     this.audio = audio;
@@ -38,6 +46,7 @@ export class Sonifier {
     this.leads = leads;
     this.lead = 0;
     this.crowdNote = [-Infinity, -Infinity];
+    this.cutWait = 0;
   }
 
   /** A frame's events from `world`, and the sting when the race reaches a lead change the picture marks. */
@@ -74,6 +83,46 @@ export class Sonifier {
     while (this.lead < this.leads.length && this.leads[this.lead].at <= world.time) {
       this.lead++;
       this.audio.sting();
+    }
+  }
+
+  /**
+   * An Arena Clash frame's events: a bounce off the ring plays the melody (it always ties strings,
+   * which are what a bounce wins), two balls meeting tick, a flag out shatters, the win is the
+   * fanfare; each panned to where it happens. Strings being cut are plucked: one note at
+   * most every CUT_FRAMES frames however many go, quiet under the tune, climbing the scale as the
+   * flag's strings run out, so a fan being swept is a run up a harp and its last strings the top
+   * of it. As with the race, at most three notes and two ticks a frame.
+   */
+  battle(events: BattleEvent[], cfg: Config): void {
+    let notes = 0;
+    let ticks = 0;
+    let cut: Extract<BattleEvent, { type: 'cut' }> | null = null;
+    const pan = (x: number) => ((x - W / 2) / (W / 2)) * 0.5;
+    for (const e of events) {
+      switch (e.type) {
+        case 'tie':
+          if (notes++ < 3) this.audio.note(this.music.next(), 0.8, cfg.sound.timbre, pan(e.x));
+          break;
+        case 'clash':
+          if (ticks++ < 2) this.audio.tick(0.45, pan(e.x));
+          break;
+        case 'cut':
+          // The flag nearest its end is the one to hear.
+          if (!cut || e.left < cut.left) cut = e;
+          break;
+        case 'out':
+          this.audio.crack(1, true, pan(e.x));
+          break;
+        case 'win':
+          this.audio.fanfare();
+          break;
+      }
+    }
+    if (this.cutWait > 0) this.cutWait--;
+    if (cut && this.cutWait === 0) {
+      this.cutWait = CUT_FRAMES;
+      this.audio.note(pentatonic(CUT_STEPS - Math.ceil((Math.min(STRINGS, cut.left) / STRINGS) * CUT_STEPS), 60), 0.3, 'pluck', pan(cut.x));
     }
   }
 }

@@ -1,4 +1,4 @@
-import { PLATFORMS, type NewVideo, type Platform, type RaceSide, type RaceSummary } from '../shared/api.ts';
+import { FLAG_CODE, PLATFORMS, type BattleSummary, type NewVideo, type Platform, type RaceSide, type RaceSummary } from '../shared/api.ts';
 import { HttpError } from './lib/http.ts';
 
 // Request bodies and path parameters, checked before anything touches D1. Each failure is a
@@ -54,16 +54,33 @@ function race(value: unknown): RaceSummary {
   };
 }
 
+/** A list of flag codes, each once; `within` limits them to those flags. */
+function flags(value: unknown, field: string, min: number, max: number, within?: string[]): string[] {
+  if (!Array.isArray(value) || value.length < min || value.length > max) throw invalid(field, `must list ${min} to ${max} flags`);
+  for (const code of value) {
+    if (typeof code !== 'string' || !FLAG_CODE.test(code) || (within && !within.includes(code))) throw invalid(field, 'must hold flag codes of this battle');
+  }
+  if (new Set(value).size !== value.length) throw invalid(field, 'must name each flag once');
+  return value as string[];
+}
+
+/** 2 to 12 flags (src/sim/battle.ts MIN_FLAGS, MAX_FLAGS); the winner and those out among them. */
+function battle(value: unknown): BattleSummary {
+  const o = object(value, 'battle');
+  const list = flags(o.flags, 'battle.flags', 2, 12);
+  if (o.winner !== null && !(typeof o.winner === 'string' && list.includes(o.winner))) throw invalid('battle.winner', 'must be one of the flags, or null');
+  return { flags: list, winner: o.winner, out: flags(o.out, 'battle.out', 0, list.length - 1, list) };
+}
+
 /** POST /api/videos */
 export function parseNewVideo(body: Record<string, unknown>): NewVideo {
-  if (body.game !== 'ball-race') throw invalid('game', "must be 'ball-race'");
+  if (body.game !== 'ball-race' && body.game !== 'arena-clash') throw invalid('game', "must be 'ball-race' or 'arena-clash'");
   const recordedAt = text(body.recordedAt, 'recordedAt', 40);
   if (Number.isNaN(Date.parse(recordedAt))) throw invalid('recordedAt', 'must be an ISO 8601 time');
   if (typeof body.stoppedEarly !== 'boolean') throw invalid('stoppedEarly', 'must be true or false');
   const config = object(body.config, 'config');
   if (JSON.stringify(config).length > MAX_CONFIG_BYTES) throw invalid('config', `must be under ${MAX_CONFIG_BYTES / 1024} KB`);
-  return {
-    game: 'ball-race',
+  const common = {
     recordedAt: new Date(recordedAt).toISOString(),
     title: text(body.title, 'title', 200),
     fileName: text(body.fileName, 'fileName', 300),
@@ -74,8 +91,8 @@ export function parseNewVideo(body: Record<string, unknown>): NewVideo {
     seed: text(body.seed, 'seed', 200),
     appVersion: text(body.appVersion, 'appVersion', 40),
     config,
-    race: race(body.race),
   };
+  return body.game === 'arena-clash' ? { ...common, game: 'arena-clash', battle: battle(body.battle) } : { ...common, game: 'ball-race', race: race(body.race) };
 }
 
 /** The `:id` of a route; the pattern already allows only digits. */

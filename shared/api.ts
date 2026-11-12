@@ -48,6 +48,19 @@ export interface RaceSummary {
   leadChanges: number;
 }
 
+/** What an Arena Clash came to, as the prediction knew it before the recording started. */
+export interface BattleSummary {
+  /** The flags' codes (src/battle/countries.ts), in the order the battle was given them. */
+  flags: string[];
+  /** The last flag standing; null only if none was (it never is: time running out names one). */
+  winner: string | null;
+  /** The flags as they went out, first out first. */
+  out: string[];
+}
+
+/** A flag's code as the library takes one: "rs", "gb-eng". */
+export const FLAG_CODE = /^[a-z]{2}(-[a-z]{3})?$/;
+
 /** A video as the list shows it: everything but its config. */
 export interface VideoSummary {
   id: number;
@@ -66,6 +79,8 @@ export interface VideoSummary {
   appVersion: string;
   /** null for a game that is not a ball race. */
   race: RaceSummary | null;
+  /** null for a game that is not an Arena Clash. */
+  battle: BattleSummary | null;
   /** The two balls' colours from its config, top then bottom, for the Videos page's thumbnail; null when the config has none. */
   colors: { a: string; b: string } | null;
   posts: Post[];
@@ -107,9 +122,10 @@ export interface VideoResponse {
   video: VideoDetail;
 }
 
-/** POST /api/videos: what Record sends once a file is saved. */
-export interface NewVideo {
-  game: 'ball-race';
+/** POST /api/videos: what Record sends once a file is saved, with what its game came to. */
+export type NewVideo = NewVideoBase & ({ game: 'ball-race'; race: RaceSummary } | { game: 'arena-clash'; battle: BattleSummary });
+
+interface NewVideoBase {
   recordedAt: string;
   title: string;
   fileName: string;
@@ -120,7 +136,6 @@ export interface NewVideo {
   seed: string;
   appVersion: string;
   config: Record<string, unknown>;
-  race: RaceSummary;
 }
 
 /** POST /api/videos answers 201 with the new video's id. */

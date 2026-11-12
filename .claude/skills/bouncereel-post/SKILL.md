@@ -1,11 +1,12 @@
 ---
 name: bouncereel-post
-description: Writes the posts for one BounceReel video on YouTube Shorts, TikTok and Instagram Reels (title, description, tags, captions, pinned comments) as one JSON block to paste on the Videos page, and saves the video's thumbnail (its first frame) next to the clip, from the "BounceReel ball race:" text the studio gives a superadmin after a recording (Copy on the sheet after a take, or "Copy what it is about" in the video's drawer on the Videos page). Use when the user pastes that text, asks for titles, captions, tags or a thumbnail for a BounceReel video, or asks to redo or change them.
+description: Writes the posts for one BounceReel video on YouTube Shorts, TikTok and Instagram Reels (title, description, tags, captions, pinned comments) as one JSON block to paste on the Videos page, and saves the video's thumbnail (its first frame) next to the clip, from the "BounceReel ball race:" or "BounceReel arena clash:" text the studio gives a superadmin after a recording (Copy on the sheet after a take, or "Copy what it is about" in the video's drawer on the Videos page). Use when the user pastes that text, asks for titles, captions, tags or a thumbnail for a BounceReel video, or asks to redo or change them.
 ---
 
 # Posts for a BounceReel video
 
-The user pastes a block that starts with `BounceReel ball race:`. Write the three posts from it,
+The user pastes a block that starts with `BounceReel ball race:` (or `BounceReel arena clash:`,
+read as *An Arena Clash* below says). Write the three posts from it,
 save the video's thumbnail next to the clip (*The thumbnail* below), and answer with **one JSON
 block in a ```json fence, then the thumbnail's path on a line of its own, and nothing else**: no
 greeting, no notes, no alternatives. The user copies the answer whole and pastes it on the Videos
@@ -39,6 +40,32 @@ A block can lack lines. A video saved before configs were kept has no colours, l
 or last line; a recording not in the library yet has no `Library id`. Do without them: no
 colours means names only (never guess a colour), no first frame means you word the choice
 yourself, no library id means the `video` key is left out.
+
+### An Arena Clash
+
+A block that starts `BounceReel arena clash:` is the second game, the "string circle": 2 to 12
+flags in a round arena on a black stage, each tied to the ring by a fan of strings; a ball
+touching a rival's strings cuts them, a bounce off the ring ties new ones, a flag with no
+strings is out, the last flag standing wins. Everything below applies, with these lines and
+changes:
+
+| Line | What it is for |
+| --- | --- |
+| `BounceReel arena clash: A vs B vs C` | the countries, as written |
+| `Flags: A, B, C (3)` | the countries in the video's order, and how many |
+| `Winner: …` and `Out, first to last: …` | **for you only**: the winner and the order the others went out. Neither is told, nor who goes first or lasts long |
+| `On screen all through: …` | what the video shows from its first frame: who is in it, its title (the question), how many flags are left, each flag's strings counted under it. The title is the video's own question: the posts pose the same choice |
+| `Video`, `Last line…`, `Asks viewers to follow…`, `Seed`, `File`, `Library id` | as for a race |
+
+- **Equal billing**: name every country up to four; with more, how many and a few of them in the
+  video's order, never only some favourites. No country is the underdog or the favourite.
+- **What it is**, in words people search: an arena clash, "countries battle", the countries by
+  name. The question is between the countries ("Serbia, Croatia or Slovenia?"), never colours:
+  the block gives none, and a flag is its own colours.
+- **A flag emoji may stand for a country** (🇷🇸 🇭🇷) in a title or pinned comment; England,
+  Scotland and Wales have theirs (🏴󠁧󠁢󠁥󠁮󠁧󠁿 🏴󠁧󠁢󠁳󠁣󠁴󠁿 🏴󠁧󠁢󠁷󠁬󠁳󠁿), Northern Ireland has none: write it.
+- **No politics**: the countries meet in a game; no history, borders, wars or rivalries, even as
+  a joke.
 
 ## Rules
 

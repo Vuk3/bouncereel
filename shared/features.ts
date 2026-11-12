@@ -16,6 +16,32 @@ export type Sound = (typeof SOUNDS)[number];
 export const LOOKS = ['paper', 'night', 'cards'] as const;
 export type Look = (typeof LOOKS)[number];
 
+/**
+ * The games the studio makes, `game` in the config and in the library. Ball races are in every
+ * plan; any other game needs the plan's `allGames`.
+ */
+export const GAMES = ['ball-race', 'arena-clash'] as const;
+export type Game = (typeof GAMES)[number];
+
+/** Each game's name, as the studio, the site and the library write it; its icon is public/games/<id>.svg. */
+export const GAME_LABELS: Record<Game, string> = { 'ball-race': 'Ball Race', 'arena-clash': 'Arena Clash' };
+
+/**
+ * Which plans make `game`, in words, from the plans the site lists: "Every plan", or the names of
+ * those that do ("Champion", "Pro and Champion"), or null when none of them does.
+ */
+export function gamePlans(game: Game, plans: { name: string; features: Features }[]): string | null {
+  const having = plans.filter((p) => gameAllowed(p.features, game)).map((p) => p.name);
+  if (!having.length) return null;
+  if (having.length === plans.length) return 'Every plan';
+  return having.length === 1 ? having[0] : `${having.slice(0, -1).join(', ')} and ${having[having.length - 1]}`;
+}
+
+/** Whether the plan makes `game`: ball races always, the others with `allGames`. */
+export function gameAllowed(features: Features, game: Game): boolean {
+  return game === 'ball-race' || features.allGames;
+}
+
 /** The studio's Length slider runs 20–90 s in steps of 5 (app.html). */
 export const MIN_VIDEO_SECONDS = 20;
 export const MAX_VIDEO_SECONDS = 90;
@@ -50,8 +76,8 @@ export interface Features {
    */
   follow: boolean;
   /**
-   * Every game BounceReel makes, each new one included as it comes out. Ball races are the one
-   * game today, which every plan makes; nothing checks this until there is a second.
+   * Every game BounceReel makes, each new one included as it comes out: Arena Clash today. Ball
+   * races are in every plan whatever this says (gameAllowed).
    */
   allGames: boolean;
 }
@@ -163,8 +189,7 @@ export function describeFeatures(f: Features): { text: string; included: boolean
   const sounds = f.sounds.filter((s) => soundAllowed(f, s));
   const narrator = f.narrator && sounds.includes('narrator');
   return [
-    // Only the plan that has every game says so: the ball races are the whole of the others.
-    ...(f.allGames ? [{ text: 'Every game, and each new one as it comes out', included: true }] : []),
+    { text: f.allGames ? 'Every game: ball races, Arena Clash and each new one' : 'Ball races; no Arena Clash', included: f.allGames },
     { text: f.perDay === null ? 'Unlimited videos' : `${f.perDay} video${f.perDay === 1 ? '' : 's'} a day`, included: f.perDay !== 0 },
     { text: `Videos up to ${f.maxSeconds} seconds`, included: true },
     { text: looks.length === LOOKS.length ? 'All three looks' : `The ${joinWords(looks.map((l) => l.toLowerCase()))} look${looks.length === 1 ? '' : 's'}`, included: true },

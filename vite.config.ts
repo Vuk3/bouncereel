@@ -21,6 +21,7 @@ const PAGES = {
   // The public site (src/site/).
   home: 'index.html',
   pricing: 'pricing.html',
+  games: 'games.html',
   login: 'login.html',
   signup: 'signup.html',
   forgot: 'forgot.html',
@@ -44,6 +45,16 @@ const PAGES = {
 function partial(name: string): string {
   return readFileSync(new URL(`./src/site/partials/${name}.html`, import.meta.url), 'utf8');
 }
+
+/**
+ * A game's icon (public/games/<id>.svg), written into the page where it says
+ * `<!-- game:icon ball-race -->`: drawn with the page, at any size CSS gives `.game-icon`, with no
+ * request of its own. The same file is the icon an <img> shows where a page builds its own markup.
+ */
+const gameIcon = (id: string) =>
+  readFileSync(new URL(`./public/games/${id}.svg`, import.meta.url), 'utf8')
+    .trim()
+    .replace('<svg ', '<svg class="game-icon" aria-hidden="true" focusable="false" ');
 
 const escapeAttr = (text: string) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
@@ -115,6 +126,7 @@ function pairsOnce(html: string): string {
  *   <!-- site:social -->, <!-- site:follow -->, %SAME_AS%   BounceReel's accounts (SOCIAL): the
  *                                 footer's marks, the home page's follow cards, and the list of
  *                                 their addresses in its structured data
+ *   <!-- game:icon ball-race -->  a game's icon (gameIcon), as many times as a page wants it
  *
  * `order: 'pre'` runs it before Vite reads the HTML, so the stylesheet and scripts the partials
  * name are bundled like any other.
@@ -135,7 +147,8 @@ function sitePartials(): Plugin {
             .replace('<!-- admin:nav -->', partial('admin-nav'))
             .replace('<!-- app:theme -->', partial('theme-button'))
             .replace('<!-- site:social -->', SOCIAL_ROW)
-            .replace('<!-- site:follow -->', FOLLOW),
+            .replace('<!-- site:follow -->', FOLLOW)
+            .replace(/<!-- game:icon ([a-z-]+) -->/g, (_, id: string) => gameIcon(id)),
         );
         const title = /<title>([^<]*)<\/title>/.exec(html)?.[1] ?? 'BounceReel';
         const description = /<meta name="description" content="([^"]*)"/.exec(html)?.[1] ?? '';

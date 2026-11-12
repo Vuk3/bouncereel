@@ -676,7 +676,7 @@ function planForm(plan: AdminPlan | null): { form: HTMLFormElement; read: () => 
         toggle('powers', 'Powers', 'Balls that speed up, slow down, grow or split.', f.powers),
         toggle('watermark', 'Watermark', 'A small BounceReel watermark between the two cards of every video.', f.watermark),
         toggle('follow', 'Follow button', 'The studio’s Ask viewers to follow switch: a follow button in the race and under the winner card, and “Follow for more!” from the narrator.', f.follow),
-        toggle('allGames', 'Every game', 'Each game BounceReel adds, as it comes out. Ball races are the one game today.', f.allGames),
+        toggle('allGames', 'Every game', 'Arena Clash, and each game BounceReel adds as it comes out. Ball races are in every plan.', f.allGames),
       ),
     ),
   );

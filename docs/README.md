@@ -52,6 +52,11 @@ anything else.
   and their features (the daily allowance, the watermark), subscriptions without a cron, the
   change log, the admin area, and where a payment provider plugs in.
 
+- **[Arena Clash](./arena-clash.md)** - the second game, a game of its own: its rules (strings,
+  cuts, bundles, the speed-up), how a battle is fitted to the video length exactly, the 199 flags and
+  their figures, the strings' colours, its black stage and title, its sound, its card in the
+  studio, and what the library keeps.
+
 - **[Website](./website.md)** - the public site: its pages and addresses, the parts they
   share, its look, the home page and its live hero, the images drawn by the renderer, speed
   and Lighthouse, search engines, the words, the legal pages.

@@ -22,6 +22,7 @@ generator, and the sequences, specials and built-in matchups it draws on.
 | a built-in matchup | [src/config.ts](../src/config.ts) `PRESETS` |
 | what the buttons do (dice, new race, make it close, video length, finish gap) | [src/app.ts](../src/app.ts) `randomize`, `reroll`, `loadMatchup` |
 | the check that it all still balances | [scripts/tune.ts](../scripts/tune.ts), `npm run tune` |
+| balancing an Arena Clash, its dice | [arena-clash](./arena-clash.md#2-balancing), [src/sim/battle-balance.ts](../src/sim/battle-balance.ts) |
 
 ## 1. Balancing
 
@@ -307,3 +308,5 @@ the narrator, video length, finish gap and look.
 - 2026-11-03 - a small first layer (`starterLayer`), broken within both balls' first four hits, in front of three or fewer rolled layers and on every built-in matchup but Multiplying Ball (Fibonacci vs Slow Factorial tops at 10^14, Golden Ratio vs Tripling at 5 × 10^14); no hold before the start by default; a `rule` per sequence for the first frame.
 - 2026-11-03 - comebacks: four seeds in five ask for the winner to trail most of the race and go ahead only in its last 30 % (`isComeback`, `COMEBACK`), the other winner solved when the seed's does not give it and the dice passing over matchups that cannot (`COMEBACK_TRIES`): 78 of 100 rolls win from behind, from 37; the winner card's default hold 2 s, from 3.5.
 - 2026-11-03 - the winner card planned for the winner's own line (`raceSeconds(cfg, winner)`), from a guess measured on Kokoro's clips cut to the voice (17 characters a second, a time read as words, 0.85 s between sentences, + 0.3 s): a narrated race a few tenths to a second longer at the same length, every built-in matchup's winner as it was.
+- 2026-11-11 - Arena Clash is balanced its own way (seed, speed, sudden death: arena-clash.md); the video length's frame, pacing.ts, is shared, the winner card planned for the longest flag name.
+- 2026-11-12 - an Arena Clash is fitted exactly: its world steps by distance, so a seed is run once and its speed set for the length (arena-clash.md §2); no sudden death.

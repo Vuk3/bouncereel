@@ -8,6 +8,26 @@ import { SEQUENCES, formatBig, strengthMark } from '../sim/sequences.ts';
 import type { Body, SimEvent } from '../sim/types.ts';
 import type { World } from '../sim/world.ts';
 import { Effects } from './effects.ts';
+import {
+  BLACK,
+  FONT,
+  INK,
+  PREVIEW_MARK_FONT,
+  WHITE,
+  drawMark,
+  easeOutBack,
+  fitFont,
+  legible,
+  mix,
+  outlined,
+  paintPreviewMarks,
+  readableOn,
+  rgba,
+  roundRect,
+  wrapLines,
+  type Overlay,
+} from './draw.ts';
+import { END_HAND, FOLLOW_IN, FOLLOW_PAD, FOLLOW_RACE_TAP, FOLLOW_RED, FOLLOW_SHOW, FOLLOW_TAP, FollowButton, RACE_HAND, type FollowStyle } from './follow.ts';
 
 // Draws one frame at the full 1080×1920, in one of three looks (`look.skin`):
 //
@@ -21,13 +41,9 @@ import { Effects } from './effects.ts';
 // physics, so a look may change colour and decoration, never where a ball bounces.
 // The page scales the canvas down for preview; the recorder captures it at full size.
 
-export const FONT = 'Rubik, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif';
-const INK = '#1b1b2f';
-const WHITE = '#ffffff';
-const BLACK = '#000000';
 const RADIUS = 26;
 /** The hard shadow under every card and pill: the cards look's signature. */
-const SHADOW = { x: 12, y: 14 };
+export const SHADOW = { x: 12, y: 14 };
 /** Space under each layer bar in the cards and night looks; the bar's top edge is the floor balls bounce on. */
 const LAYER_GAP = 10;
 /** Chips are this tall; with INSET above and beside them they sit the same in both cards. */
@@ -126,51 +142,13 @@ const METER = { x: 80, w: 14 };
 const LEAD_SHOW = 0.9;
 /** Where LEAD CHANGE ends: 20 px before the side buttons' column, which starts at x 940 from y 902 (§9). */
 const LEAD_RIGHT = 920;
-/**
- * The follow button in the race (drawRaceFollow): seconds it shows, and when in that it is tapped,
- * turning from FOLLOW to FOLLOWING. Long enough to read both words, short enough to leave the race
- * to itself again; it shows where LEAD CHANGE does, so followAt keeps the two apart.
- */
-const FOLLOW_SHOW = 2.4;
-const FOLLOW_RACE_TAP = 0.9;
-/**
- * The follow button under the winner card (drawEndFollow): seconds after the card comes up that it
- * pops in (the card has finished its own pop by then) and that a finger taps it. pacing.ts
- * (FOLLOW_CARD) keeps the card up long enough to see FOLLOWING after the tap.
- */
-const FOLLOW_IN = 0.6;
-const FOLLOW_TAP = 1.5;
-/** The plus (or tick) before the button's word, and the space after it, in parts of the type's size. */
-const FOLLOW_ICON = 0.62;
-const FOLLOW_GAP = 0.36;
 /** The button's centre under the winner card: clear of the tallest card's shadow (y 1239), and the hand under it clear of the platforms' bottom bar (y 1520). */
 const FOLLOW_Y = 1330;
-/** The button in the race, in the red of Follow and Subscribe on TikTok and YouTube: it belongs to neither team, and reads as a follow button before its word does. */
-const FOLLOW_RED = '#fe2c55';
-/** Seconds after the tap that the button turns to FOLLOWING: as the finger lifts, since a platform's button changes when the touch ends. */
-const FOLLOW_SWITCH = 0.08;
-/** The finger's pad lands on the plus, this much of the type's size below the button's middle: the plus's top shows above it, the word beside it. */
-const FOLLOW_PAD = 0.2;
-/**
- * The hand that taps the follow button: Microsoft's 3D 👆 (Fluent Emoji, MIT, public/hand/README.md),
- * not the font's emoji, which every system draws its own way (and a recording shows whichever its
- * computer has). The image is 256 px square; the index's tip is at (99.5, 16) in it, and the hand
- * 223 px tall from there.
- */
-const HAND_SRC = '/hand/pointing-up.png';
-const HAND_TIP = { x: 99.5, y: 16 };
-/** The finger's pad, where it touches the screen, this far below its tip in the image's px. */
-const HAND_PAD = 14;
-/** The hand's size: about an emoji's beside the word, 74 px tall in the race (34 px type) and 100 px at the end (46 px). */
-const RACE_HAND = 74 / 223;
-const END_HAND = 100 / 223;
-/** The hand leans a little left, as a right hand does reaching up to a button from below. */
-const HAND_TILT = -0.1;
 /** The last layer's pulse (finalGlow), a beat a little faster than a resting heart's double time. */
 const PULSE_HZ = 2.4;
 
 /** The paper look's colours. */
-interface Flat {
+export interface Flat {
   /** The page behind the boxes, top to bottom. */
   page: [string, string];
   box: string;
@@ -189,7 +167,7 @@ interface Flat {
   float: string;
 }
 
-const PAPER: Flat = {
+export const PAPER: Flat = {
   page: ['#ece0c7', '#e2d3b3'],
   box: '#fbf8f0',
   frame: INK,
@@ -204,7 +182,7 @@ const PAPER: Flat = {
 };
 
 /** The cards look by day (`cards`) and after dark (`night`): one drawing, two palettes. */
-interface Deck {
+export interface Deck {
   /** The page behind the cards, top, middle and bottom, and its dot grid. */
   page: [string, string, string];
   dots: string;
@@ -234,13 +212,13 @@ interface Deck {
  * The wash only quiets the race around the panels: heavier, and the frame people decide on reads
  * as a faded page rather than the game.
  */
-const OPENINGS: Record<Skin, { wash: string; ground: string | null; nameOutline: string; text: string; textOutline: string }> = {
+export const OPENINGS: Record<Skin, { wash: string; ground: string | null; nameOutline: string; text: string; textOutline: string }> = {
   paper: { wash: 'rgba(236, 224, 199, 0.45)', ground: null, nameOutline: INK, text: INK, textOutline: '#fffdf8' },
   cards: { wash: 'rgba(255, 255, 255, 0.4)', ground: null, nameOutline: INK, text: INK, textOutline: WHITE },
   night: { wash: 'rgba(9, 11, 30, 0.4)', ground: '#0b0d1c', nameOutline: '#0b0d1c', text: WHITE, textOutline: '#0b0d1c' },
 };
 
-const DECKS: Record<Exclude<Skin, 'paper'>, Deck> = {
+export const DECKS: Record<Exclude<Skin, 'paper'>, Deck> = {
   cards: {
     page: ['#fff3e0', '#fbeff6', '#e3ebff'],
     dots: 'rgba(27, 27, 47, 0.07)',
@@ -269,34 +247,19 @@ const DECKS: Record<Exclude<Skin, 'paper'>, Deck> = {
   },
 };
 
-export interface Overlay {
-  /** 0..1 fade of the winner card. */
-  winner: number;
-  /** Seconds since the winner card started, drives its entrance. */
-  age: number;
-  /** 0..1 of the first frame drawn over everything: the end of a looping video. */
-  loop?: number;
-  /** That first frame (see `loop`). */
-  start?: CanvasImageSource;
-  /** The free plan's mark (drawWatermark): the studio passes its plan's `watermark`. */
-  watermark?: boolean;
-  /**
-   * The free plan's preview marks (drawPreviewMarks): the site's host across the whole frame while
-   * the studio plays a preview, never in a take, so a screen recording of the preview is no video
-   * to post and the file carries the watermark alone.
-   */
-  preview?: boolean;
+/** The follow button in a look's own pill, as LEAD CHANGE's: the cards' with their hard shadow. */
+function followStyle(skin: Skin): FollowStyle {
+  return skin === 'paper' ? { ink: PAPER.ink, card: PAPER.card, text: PAPER.text, shadow: false } : { ink: DECKS[skin].ink, card: DECKS[skin].box, text: DECKS[skin].text, shadow: true };
+}
+
+/** What the page tells this renderer about a frame of a race. */
+export interface RaceOverlay extends Overlay {
   /** 0..1 of the opening title over the cards (drawOpening; pacing.ts `openingShown`). */
   opening?: number;
   /** The lead changes to mark, from the prediction (Outcome.leads): each shows LEAD CHANGE as the race reaches it. */
   leads?: { at: number; team: number }[];
   /** Seconds between the winner and the loser touching the line: "Won by 0.3 s" on the winner card. */
   margin?: number;
-  /**
-   * The follow button (`look.follow`), under the winner card and, `at` seconds into the race
-   * (followAt), right of the VS; null `at` for no room in the race.
-   */
-  follow?: { at: number | null };
 }
 
 export class Renderer {
@@ -306,8 +269,8 @@ export class Renderer {
   private pages = new Map<Skin, HTMLCanvasElement>();
   /** The preview marks, painted once per colour (paintPreviewMarks): a frame only lays them on. */
   private previewMarks = new Map<string, HTMLCanvasElement>();
-  /** The hand that taps the follow button (HAND_SRC), asked for once a video with the button is set up. */
-  private hand: HTMLImageElement | null = null;
+  /** The follow button and the hand that taps it (follow.ts). */
+  private readonly follow: FollowButton;
   /** Per team: how bright the top layer flashes after a hit. */
   private flash = [0, 0];
   private lastText = [-1, -1];
@@ -344,6 +307,7 @@ export class Renderer {
     if (!ctx) throw new Error('Canvas 2D is not available');
     this.canvas = canvas;
     this.ctx = ctx;
+    this.follow = new FollowButton(ctx);
   }
 
   reset(cfg: Config): void {
@@ -361,11 +325,7 @@ export class Renderer {
     this.leader = -1;
     this.leadAge = Infinity;
     this.lastAge = [Infinity, Infinity];
-    // The follow button's hand is drawn seconds into the video: asked for now, it is there by then.
-    if (cfg.look.follow && !this.hand) {
-      this.hand = new Image();
-      this.hand.src = HAND_SRC;
-    }
+    if (cfg.look.follow) this.follow.load();
   }
 
   handle(events: SimEvent[], world: World, cfg: Config): void {
@@ -431,7 +391,7 @@ export class Renderer {
     this.effects.confetti([c, WHITE, c, '#ffd23f', INK], 240, W);
   }
 
-  draw(world: World, cfg: Config, dt: number, overlay: Overlay): void {
+  draw(world: World, cfg: Config, dt: number, overlay: RaceOverlay): void {
     const ctx = this.ctx;
     const skin = cfg.look.skin;
     this.clock += dt;
@@ -773,7 +733,7 @@ export class Renderer {
     if (age < 0 || age > FOLLOW_SHOW) return;
     const ctx = this.ctx;
     const size = 34;
-    const x = LEAD_RIGHT - this.followWidth(size) / 2;
+    const x = LEAD_RIGHT - this.follow.width(size) / 2;
     // The pop overshoots by a tenth, as LEAD CHANGE's does: the widest stays left of the buttons.
     const pop = easeOutBack(Math.min(1, age / 0.25));
     ctx.save();
@@ -781,9 +741,9 @@ export class Renderer {
     ctx.save();
     ctx.translate(x + sx, VS_Y + sy);
     ctx.scale(pop, pop);
-    this.drawFollow(size, FOLLOW_RED, age - FOLLOW_RACE_TAP, skin);
+    this.follow.draw(size, FOLLOW_RED, age - FOLLOW_RACE_TAP, followStyle(skin));
     ctx.restore();
-    this.drawTapHand(x + this.followPlusX(size), VS_Y + size * FOLLOW_PAD, age - FOLLOW_RACE_TAP, RACE_HAND);
+    this.follow.drawHand(x + this.follow.plusX(size), VS_Y + size * FOLLOW_PAD, age - FOLLOW_RACE_TAP, RACE_HAND);
     ctx.restore();
   }
 
@@ -792,7 +752,7 @@ export class Renderer {
    * hand comes up from the bottom edge and taps it, and it turns to FOLLOWING and stays, as a
    * platform's own does.
    */
-  private drawEndFollow(world: World, overlay: Overlay, skin: Skin): void {
+  private drawEndFollow(world: World, overlay: RaceOverlay, skin: Skin): void {
     const winner = world.teams.find((t) => t.id === world.winner);
     const age = overlay.age - FOLLOW_IN;
     if (!winner || age < 0) return;
@@ -804,177 +764,9 @@ export class Renderer {
     ctx.translate(W / 2, FOLLOW_Y);
     const pop = easeOutBack(Math.min(1, age / 0.3));
     ctx.scale(pop, pop);
-    this.drawFollow(size, winner.color, overlay.age - FOLLOW_TAP, skin);
+    this.follow.draw(size, winner.color, overlay.age - FOLLOW_TAP, followStyle(skin));
     ctx.restore();
-    this.drawTapHand(W / 2 + this.followPlusX(size), FOLLOW_Y + size * FOLLOW_PAD, overlay.age - FOLLOW_TAP, END_HAND);
-    ctx.restore();
-  }
-
-  /** Where the plus sits on the button, from its middle: where the finger taps it. Leaves the button's font set. */
-  private followPlusX(size: number): number {
-    this.followWidth(size);
-    return -(size * (FOLLOW_ICON + FOLLOW_GAP) + this.ctx.measureText('FOLLOW').width) / 2 + (size * FOLLOW_ICON) / 2;
-  }
-
-  /** The button's width at `size` px: as wide as FOLLOWING, so the tap does not move it. Leaves its font set. */
-  private followWidth(size: number): number {
-    const ctx = this.ctx;
-    ctx.font = `900 ${size}px ${FONT}`;
-    ctx.letterSpacing = '1px';
-    return ctx.measureText('FOLLOWING').width + size * 2;
-  }
-
-  /**
-   * The button centred on the origin and what a tap does to it, `since` seconds from the tap
-   * (negative before): it gives under the finger (pressDepth), and as the finger lifts
-   * (FOLLOW_SWITCH) it turns to FOLLOWING with a small bounce and a burst of its colour round it.
-   */
-  private drawFollow(size: number, color: string, since: number, skin: Skin): void {
-    const ctx = this.ctx;
-    const after = since - FOLLOW_SWITCH;
-    const bounce = after > 0 && after < 0.34 ? 0.06 * Math.sin((Math.PI * after) / 0.34) : 0;
-    const scale = 1 - 0.07 * pressDepth(since) + bounce;
-    ctx.save();
-    ctx.scale(scale, scale);
-    this.drawFollowButton(size, color, smoothstep(after / 0.22), since, skin);
-    ctx.restore();
-    if (after > 0 && after < 0.45) this.drawBurst(this.followWidth(size), size * 1.7, after / 0.45, color);
-  }
-
-  /**
-   * The follow button centred on the origin, `size` px type: a plus and FOLLOW on `color`, turning
-   * (`done` 0..1) into a tick and FOLLOWING on the look's own card, as the platforms' buttons turn
-   * once followed: the fill fades from one to the other while the words roll up, the old out at the
-   * top and the new in from below. From the tap (`since`) a ripple spreads from under the finger.
-   * In the look's pill, as LEAD CHANGE: the cards' with their hard shadow.
-   */
-  private drawFollowButton(size: number, color: string, done: number, since: number, skin: Skin): void {
-    const ctx = this.ctx;
-    const ink = skin === 'paper' ? PAPER.ink : DECKS[skin].ink;
-    const card = skin === 'paper' ? PAPER.card : DECKS[skin].box;
-    const w = this.followWidth(size);
-    const h = size * 1.7;
-    if (skin !== 'paper') {
-      ctx.fillStyle = ink;
-      roundRect(ctx, -w / 2 + h * 0.09, -h / 2 + h * 0.1, w, h, h / 2);
-      ctx.fill();
-    }
-    ctx.fillStyle = done <= 0 ? color : done >= 1 ? card : mix(color, card, done);
-    roundRect(ctx, -w / 2, -h / 2, w, h, h / 2);
-    ctx.fill();
-    ctx.save();
-    ctx.clip();
-    if (since >= 0 && since < 0.45) {
-      ctx.save();
-      ctx.globalAlpha *= 0.3 * (1 - since / 0.45);
-      ctx.fillStyle = readableOn(color);
-      ctx.beginPath();
-      ctx.arc(this.followPlusX(size), size * FOLLOW_PAD, size * 0.4 + w * easeOutCubic(since / 0.45), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-    // FOLLOW rolls up and out, and FOLLOWING up and in from below as it goes: they share only the
-    // middle of the change, each mostly out of the pill by then, so the words never sit on each other
-    // and the button is never empty.
-    const out = Math.min(1, done / 0.6);
-    const into = Math.max(0, (done - 0.35) / 0.65);
-    if (out < 1) this.drawFollowLabel(size, false, readableOn(color), -h * 0.5 * out, 1 - out);
-    if (into > 0) this.drawFollowLabel(size, true, skin === 'paper' ? PAPER.text : DECKS[skin].text, h * 0.5 * (1 - into), into);
-    ctx.restore();
-    // The frame last, over the clip's edge, so a rolling word never draws across it.
-    roundRect(ctx, -w / 2, -h / 2, w, h, h / 2);
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = ink;
-    ctx.stroke();
-  }
-
-  /**
-   * The plus and FOLLOW, or the tick and FOLLOWING, centred on the origin and `dy` below it, at
-   * `alpha`. The plus and the tick are lines, not type: Rubik has neither, and a fallback font's
-   * would not match the word. Needs the button's font set (followWidth).
-   */
-  private drawFollowLabel(size: number, following: boolean, color: string, dy: number, alpha: number): void {
-    const ctx = this.ctx;
-    const word = following ? 'FOLLOWING' : 'FOLLOW';
-    const icon = size * FOLLOW_ICON;
-    const gap = size * FOLLOW_GAP;
-    const left = -(icon + gap + ctx.measureText(word).width) / 2;
-    ctx.save();
-    ctx.globalAlpha *= alpha;
-    ctx.translate(0, dy);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = size * 0.15;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    if (following) {
-      ctx.moveTo(left + icon * 0.04, size * 0.04);
-      ctx.lineTo(left + icon * 0.38, size * 0.3);
-      ctx.lineTo(left + icon, -size * 0.28);
-    } else {
-      ctx.moveTo(left, 0);
-      ctx.lineTo(left + icon, 0);
-      ctx.moveTo(left + icon / 2, -icon / 2);
-      ctx.lineTo(left + icon / 2, icon / 2);
-    }
-    ctx.stroke();
-    ctx.fillStyle = color;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(word, left + icon + gap, size * 0.06);
-    ctx.restore();
-  }
-
-  /**
-   * Short strokes of the button's colour bursting out round a `w` × `h` pill, `k` 0..1 of their
-   * way: the tap landing, as a like's does on the platforms. Round an ellipse a little wider than
-   * the pill, so they leave its edge at about the same distance all round.
-   */
-  private drawBurst(w: number, h: number, k: number, color: string): void {
-    const ctx = this.ctx;
-    const e = easeOutCubic(k);
-    ctx.save();
-    ctx.globalAlpha *= 1 - k * k;
-    ctx.strokeStyle = color;
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 2 + h * 0.07 * (1 - e);
-    ctx.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const a = ((i + 0.5) / 10) * Math.PI * 2;
-      const from = 6 + h * 0.28 * e;
-      const to = from + 3 + h * 0.18 * (1 - e);
-      ctx.moveTo(Math.cos(a) * (w / 2 + from), Math.sin(a) * (h / 2 + from));
-      ctx.lineTo(Math.cos(a) * (w / 2 + to), Math.sin(a) * (h / 2 + to));
-    }
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  /**
-   * The hand that taps the follow button, the pad of its finger on (x, y), `since` seconds from the
-   * tap (handPose), at `scale`. Lifted it is a little bigger, nearer the camera, its shadow further
-   * off and softer; pressing, it goes into the screen, a little smaller and its finger giving (the
-   * hand squashed along it), its shadow tight under it. The shadow falls down and to the right, lit
-   * from the top left as the cards' are. Until the image has loaded there is no hand, only the tap.
-   */
-  private drawTapHand(x: number, y: number, since: number, scale: number): void {
-    const pose = handPose(since);
-    const hand = this.hand;
-    if (!pose || !hand?.complete || !hand.naturalWidth) return;
-    const ctx = this.ctx;
-    // The shadow's blur and offset are not scaled with the drawing: in px of the frame, smaller in the race.
-    const k = scale / END_HAND;
-    ctx.save();
-    ctx.globalAlpha *= pose.alpha;
-    ctx.translate(x + pose.dx * scale, y + pose.dy * scale);
-    ctx.rotate(HAND_TILT + pose.turn);
-    const s = scale * (1 + 0.05 * pose.lift - 0.07 * pose.press);
-    ctx.scale(s * (1 + 0.03 * pose.press), s * (1 - 0.06 * pose.press));
-    ctx.shadowColor = `rgba(0, 0, 0, ${0.34 - 0.12 * pose.lift})`;
-    ctx.shadowBlur = (4 + 12 * pose.lift) * k;
-    ctx.shadowOffsetX = (2 + 8 * pose.lift) * k;
-    ctx.shadowOffsetY = (3 + 14 * pose.lift) * k;
-    ctx.drawImage(hand, -HAND_TIP.x, -HAND_TIP.y - HAND_PAD);
+    this.follow.drawHand(W / 2 + this.follow.plusX(size), FOLLOW_Y + size * FOLLOW_PAD, overlay.age - FOLLOW_TAP, END_HAND);
     ctx.restore();
   }
 
@@ -1417,7 +1209,7 @@ export class Renderer {
   }
 
   /** A plain card over the washed-out race: the winner, its total damage, its hits, and the last line. */
-  private drawSheetWinner(world: World, cfg: Config, overlay: Overlay, look: Flat): void {
+  private drawSheetWinner(world: World, cfg: Config, overlay: RaceOverlay, look: Flat): void {
     const ctx = this.ctx;
     const winner = world.teams.find((t) => t.id === world.winner);
     if (!winner) return;
@@ -1742,7 +1534,7 @@ export class Renderer {
     ctx.fillText('VS', W / 2, VS_Y + 1);
   }
 
-  private drawWinner(world: World, cfg: Config, overlay: Overlay, deck: Deck): void {
+  private drawWinner(world: World, cfg: Config, overlay: RaceOverlay, deck: Deck): void {
     const ctx = this.ctx;
     const winner = world.teams.find((t) => t.id === world.winner);
     if (!winner) return;
@@ -1847,51 +1639,6 @@ export function followAt(race: number, leads: { at: number }[]): number | null {
   return null;
 }
 
-/** 0..1, how far the follow button is pressed in, `since` seconds from the tap: in as the finger lands, held while it rests, out as it lets go (handPose's timings). */
-function pressDepth(since: number): number {
-  if (since < -0.05 || since > 0.16) return 0;
-  if (since < 0) return 1 + since / 0.05;
-  return since < 0.08 ? 1 : 1 - (since - 0.08) / 0.08;
-}
-
-/**
- * Where the tapping hand is `t` seconds from its tap (negative before), or null while it is not
- * there: (dx, dy) from the tap in the image's px, `turn` radians on top of its lean, `lift` 1 in
- * the air to 0 touching, `press` how far the finger pushes in, and its `alpha`. It comes up from
- * below right, fading in and slowing, the wrist turning as it does (0.3 s); strikes, speeding up
- * into the button as a finger does into a tap, and pushes (0.12 s); holds (0.08 s); lets go and
- * lifts (0.16 s); waits a moment, and goes back down, fading.
- */
-function handPose(t: number): { dx: number; dy: number; turn: number; lift: number; press: number; alpha: number } | null {
-  if (t < -0.42 || t > 0.8) return null;
-  if (t < -0.12) {
-    const k = (t + 0.42) / 0.3;
-    const e = easeOutCubic(k);
-    return { dx: 22 + 90 * (1 - e), dy: 28 + 150 * (1 - e), turn: 0.3 * (1 - e), lift: 1, press: 0, alpha: Math.min(1, k * 2.5) };
-  }
-  if (t < 0) {
-    const e = ((t + 0.12) / 0.12) ** 2;
-    return { dx: 22 * (1 - e), dy: 28 * (1 - e), turn: 0, lift: 1 - e, press: Math.max(0, 2 * e - 1), alpha: 1 };
-  }
-  if (t < 0.08) return { dx: 0, dy: 0, turn: 0, lift: 0, press: 1, alpha: 1 };
-  if (t < 0.45) {
-    const e = easeOutCubic((t - 0.08) / 0.16);
-    return { dx: 14 * e, dy: 18 * e, turn: 0, lift: e, press: 1 - e, alpha: 1 };
-  }
-  const e = ((t - 0.45) / 0.35) ** 2;
-  return { dx: 14 + 70 * e, dy: 18 + 120 * e, turn: 0.2 * e, lift: 1, press: 0, alpha: 1 - e };
-}
-
-function easeOutCubic(t: number): number {
-  return 1 - (1 - Math.max(0, Math.min(1, t))) ** 3;
-}
-
-/** 0..1, eased in and out, from `t` clamped to 0..1. */
-function smoothstep(t: number): number {
-  const k = Math.max(0, Math.min(1, t));
-  return k * k * (3 - 2 * k);
-}
-
 /**
  * What a ball does, as the opening title writes it under its name: its sequence's rule, Always the
  * same's by its strength ("EVERY HIT = 1.000"), and a crowd's count in front ("100 BALLS · …").
@@ -1899,20 +1646,6 @@ function smoothstep(t: number): number {
 function ruleOf(c: Contestant, separator: '.' | ','): string {
   const rule = c.sequence === 'ones' ? `EVERY HIT = ${formatBig(BigInt(Math.max(1, Math.round(c.strength || 1))), separator)}` : SEQUENCES[c.sequence].rule;
   return c.count > 1 ? `${c.count} BALLS · ${rule}` : rule;
-}
-
-/** `text` in lines no wider than `width` at the context's font, broken at spaces. */
-function wrapLines(ctx: CanvasRenderingContext2D, text: string, width: number): string[] {
-  const lines: string[] = [];
-  let line = '';
-  for (const word of text.split(' ')) {
-    const next = line ? `${line} ${word}` : word;
-    if (line && ctx.measureText(next).width > width) {
-      lines.push(line);
-      line = word;
-    } else line = next;
-  }
-  return line ? [...lines, line] : lines;
 }
 
 /** Everything a team dealt, leftover damage included: the sum of its sequence over its hits. */
@@ -1923,165 +1656,14 @@ function totalDamage(t: Team): bigint {
   return sum;
 }
 
-/**
- * The BounceReel mark (public/mark.svg, drawn on a 32-unit grid) at `x`, `y`, `size` across: the
- * ball with its trail, falling onto the layers it breaks. The canvas draws it rather than loading
- * the file, so a frame never waits for an image.
- */
-export function drawMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
-  const k = size / 32;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(k, k);
-  const trail = ctx.createLinearGradient(4, 2.6, 18.4, 12.4);
-  trail.addColorStop(0, 'rgba(124, 77, 255, 0)');
-  trail.addColorStop(1, 'rgba(124, 77, 255, 0.55)');
-  ctx.fillStyle = trail;
-  ctx.beginPath();
-  ctx.moveTo(4, 2.6);
-  ctx.lineTo(15.09, 17.27);
-  ctx.lineTo(21.71, 7.53);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#7c4dff';
-  ctx.beginPath();
-  ctx.arc(18.4, 12.4, 6.4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.beginPath();
-  ctx.ellipse(16.2, 10.3, 2.1, 1.35, (-38 * Math.PI) / 180, 0, Math.PI * 2);
-  ctx.fill();
-  for (const [bx, by, bw, alpha] of [
-    [3, 21.2, 14.6, 1],
-    [20.6, 21.2, 8.4, 0.4],
-    [3, 27.2, 26, 0.72],
-  ]) {
-    ctx.fillStyle = `rgba(14, 165, 233, ${alpha})`;
-    roundRect(ctx, bx, by, bw, 4.2, 2.1);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, Math.max(0, Math.min(r, w / 2, h / 2)));
-}
-
-/** Text with an outline under the fill, so it reads on any colour. */
-function outlined(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, fill: string, stroke: string, width: number): void {
-  if (width > 0) {
-    ctx.lineWidth = width;
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = stroke;
-    ctx.strokeText(text, x, y);
-  }
-  ctx.fillStyle = fill;
-  ctx.fillText(text, x, y);
-}
-
 /** `outlined` across the frame's middle with its letters' own ink centred on `y`, at any size, on the alphabetic baseline. */
 function centredLine(ctx: CanvasRenderingContext2D, text: string, y: number, fill: string, stroke: string, width: number): void {
   const m = ctx.measureText(text);
   outlined(ctx, text, W / 2, y + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2, fill, stroke, width);
 }
 
-/** Sets the largest font up to `max` px at which `text` fits in `width`. */
-function fitFont(ctx: CanvasRenderingContext2D, text: string, width: number, max: number, weight: number): void {
-  ctx.font = `${weight} ${max}px ${FONT}`;
-  const measured = ctx.measureText(text).width;
-  if (measured > width) ctx.font = `${weight} ${Math.max(10, Math.floor((max * width) / measured))}px ${FONT}`;
-}
-
-function rgb(hex: string): [number, number, number] {
-  return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
-}
-
-/** `hex` moved toward `other` by `amount`: 0 is `hex` itself, 1 is `other`. */
-function mix(hex: string, other: string, amount: number): string {
-  const a = rgb(hex);
-  const b = rgb(other);
-  const c = a.map((v, i) => Math.round(v + (b[i] - v) * amount));
-  return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
-}
-
-function rgba(hex: string, alpha: number): string {
-  const [r, g, b] = rgb(hex);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function luminance(c: [number, number, number]): number {
-  const [r, g, b] = c.map((v) => {
-    const s = v / 255;
-    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-const legibleCache = new Map<string, string>();
-
-/**
- * The team colour as text on `background`: darkened on a light page, lightened on a
- * dark one, just until it has the 3:1 contrast large bold text needs. Amber on paper
- * and navy on black both come out readable and still clearly the team's colour.
- */
-function legible(color: string, background: string): string {
-  const key = `${color}|${background}`;
-  const cached = legibleCache.get(key);
-  if (cached) return cached;
-  const bg = luminance(rgb(background));
-  const from = rgb(color);
-  const toward = rgb(bg > 0.4 ? BLACK : WHITE);
-  let out = color;
-  for (let step = 0; step <= 14; step++) {
-    const amount = step * 0.05;
-    const c = from.map((v, i) => Math.round(v + (toward[i] - v) * amount)) as [number, number, number];
-    const l = luminance(c);
-    const ratio = (Math.max(l, bg) + 0.05) / (Math.min(l, bg) + 0.05);
-    out = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
-    if (ratio >= 3) break;
-  }
-  legibleCache.set(key, out);
-  return out;
-}
-
-/** White text on dark colours, ink on light ones (lime, amber). */
-function readableOn(hex: string): string {
-  const [r, g, b] = rgb(hex).map((v) => v / 255);
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.62 ? INK : WHITE;
-}
-
-function easeOutBack(t: number): number {
-  const c = 1.7;
-  return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2;
-}
-
-const PREVIEW_MARK_FONT = `700 56px ${FONT}`;
-
-/**
- * The preview marks at full strength (drawPreviewMarks fades them): rows 182 px apart, each a half
- * step along from the last, tilted about the centre and wide enough to reach the corners (the
- * frame's half diagonal is 1,101 px).
- */
-function paintPreviewMarks(color: string): HTMLCanvasElement {
-  const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
-  const g = canvas.getContext('2d')!;
-  g.fillStyle = color;
-  g.font = PREVIEW_MARK_FONT;
-  g.textBaseline = 'middle';
-  g.translate(W / 2, H / 2);
-  g.rotate(-Math.PI / 6);
-  const step = g.measureText(WATERMARK).width + 90;
-  for (let y = -H, row = 0; y <= H; y += 182, row++) {
-    for (let x = -1.6 * W + (row % 2) * (step / 2); x <= 1.6 * W; x += step) g.fillText(WATERMARK, x, y);
-  }
-  return canvas;
-}
-
 /** The cards and night page, painted once: a three-colour gradient with a faint dot grid. */
-function paintCardsPage(deck: Deck): HTMLCanvasElement {
+export function paintCardsPage(deck: Deck): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
@@ -2103,7 +1685,7 @@ function paintCardsPage(deck: Deck): HTMLCanvasElement {
 }
 
 /** The paper page: a plain sheet, a shade darker toward the bottom. */
-function paintFlatPage(look: Flat): HTMLCanvasElement {
+export function paintFlatPage(look: Flat): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;

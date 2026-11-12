@@ -7,7 +7,7 @@ the legal pages. Accounts, plans and the admin area are in
 
 | I need to change... | Touch |
 | --- | --- |
-| a page's words | its HTML file at the root: [index.html](../index.html), [pricing.html](../pricing.html), [signup.html](../signup.html), [login.html](../login.html), [forgot.html](../forgot.html), [reset.html](../reset.html), [verify.html](../verify.html), [terms.html](../terms.html), [privacy.html](../privacy.html), [refunds.html](../refunds.html), [404.html](../404.html) |
+| a page's words | its HTML file at the root: [index.html](../index.html), [pricing.html](../pricing.html), [games.html](../games.html), [signup.html](../signup.html), [login.html](../login.html), [forgot.html](../forgot.html), [reset.html](../reset.html), [verify.html](../verify.html), [terms.html](../terms.html), [privacy.html](../privacy.html), [refunds.html](../refunds.html), [404.html](../404.html) |
 | the header, the footer, the shared head | [src/site/partials/](../src/site/partials/) (`header.html`, `footer.html`, `head.html`) |
 | a new page | its HTML file, its line in `PAGES` in [vite.config.ts](../vite.config.ts), and its address in [public/sitemap.xml](../public/sitemap.xml) if search engines should list it (§7) |
 | the look: colours, type, components | [src/site/site.css](../src/site/site.css) (tokens at the top) |
@@ -19,7 +19,8 @@ the legal pages. Accounts, plans and the admin area are in
 | BounceReel's own accounts (TikTok, Instagram, YouTube) | `SOCIAL` in [shared/site.ts](../shared/site.ts): the footer's marks, the follow cards under the gallery and `sameAs` in the home page's structured data all come from it (§2, §4, §7) |
 | an old address that moved | [public/_redirects](../public/_redirects) |
 | the contact address, the canonical origin, who runs the site (the legal pages) | [shared/site.ts](../shared/site.ts) `CONTACT_EMAIL`, `SITE_URL`, `OPERATOR_NAME`, `OPERATOR_PLACE` |
-| the logo | [public/mark.svg](../public/mark.svg) (`.mark` in site.css, `.logo` in src/style.css), [public/favicon.svg](../public/favicon.svg) and the PNG icons drawn from it (§5); on a canvas `drawMark` in [src/render/renderer.ts](../src/render/renderer.ts) |
+| a game's icon, its card on the home page and on /games | [public/games/](../public/games/) `<id>.svg` (written into a page by `<!-- game:icon <id> -->`), `.game-card` in [site.css](../src/site/site.css), which plans make it `fillGamePlans` in [src/site/pricing.ts](../src/site/pricing.ts) (§4) |
+| the logo | [public/mark.svg](../public/mark.svg) (`.mark` in site.css, `.logo` in src/style.css), [public/favicon.svg](../public/favicon.svg) and the PNG icons drawn from it (§5); on a canvas `drawMark` in [src/render/draw.ts](../src/render/draw.ts) |
 
 ## 1. Pages and addresses
 
@@ -32,6 +33,7 @@ Vite, and its address is the file's path without `.html` (Workers Assets'
 | --- | --- | --- |
 | `/` | everyone | [index.html](../index.html) |
 | `/pricing` | everyone | [pricing.html](../pricing.html) |
+| `/games` | everyone | [games.html](../games.html): the games, a card each |
 | `/signup`, `/login` | signed out (the Worker sends a signed-in visitor on) | [signup.html](../signup.html), [login.html](../login.html) |
 | `/forgot`, `/reset?token=`, `/verify?token=` | everyone | [forgot.html](../forgot.html), [reset.html](../reset.html), [verify.html](../verify.html) |
 | `/terms`, `/privacy`, `/refunds` | everyone | the three legal pages |
@@ -174,7 +176,9 @@ In order: the hero on its stage (the headline **"Ball race videos, ready to post
 is in two sentences: two balls racing through ever bigger numbers, balanced to end close at the
 length you pick, recorded as a vertical MP4 with nothing to edit; Start free, a line saying it
 records in Chrome or Edge on a computer, three specs, the live race); **the browser note** right
-under the stage; **how it works**, a small working studio (below): three steps (roll a matchup →
+under the stage; **the games** (`#games`), a card for each game BounceReel makes: its frame in a
+small phone, its icon and name, which plans make it, a line on what it is and a link to its part
+of /games; **how it works**, a small working studio (below): three steps (roll a matchup →
 choose length, look, sound and narrator → post it as it is), each a card with its words beside
 the piece of the studio it is about, and the phone that plays what they set; **the gallery**,
 three recordings from the studio (below); what the studio does, **on the stage, in three groups
@@ -187,6 +191,18 @@ post** (the library; clear of the buttons; 1080×1920 at 60 fps); the plans (fro
 phone); the last call to action on the stage; the footer. What only a paid plan makes is said
 where it comes up: the narrator's and the powers' cards say "the paid plans", never a plan's
 name, and step 2's line says what the free plan makes.
+
+**A game card** (`.game-card` in [site.css](../src/site/site.css)) is the same on the home page
+and on [/games](../games.html), where they stand one under the other and each says more (its
+frame larger, four lines on how it plays). Its icon is [public/games/](../public/games/)`<id>.svg`
+written into the page at build time (`<!-- game:icon <id> -->`, `gameIcon` in
+[vite.config.ts](../vite.config.ts)), so it needs no request and scales with its box; the Videos
+page and anything else that builds its markup in a script shows the same file in an `<img>`.
+Which plans make a game is written in the card ("Every plan", "Paid plans") and filled in from
+`GET /api/plans` once it answers (`fillGamePlans` in [pricing.ts](../src/site/pricing.ts),
+`gamePlans` in [shared/features.ts](../shared/features.ts)): "With Champion", so it follows what
+the admin area sets. A new game is a card in both places, its icon, its frame (§5) and its line
+in `GAMES`.
 
 **A feature card** (`.fcard` in [site.css](../src/site/site.css)) sits on the stage in the balls'
 light, lit along its top edge: its title and a line or two first, then its drawing filling the
@@ -344,6 +360,8 @@ All drawn by the studio's renderer, so they are what a video looks like, by
 | --- | --- | --- |
 | [public/hero/first-frame-4.webp](../public/hero/first-frame-4.webp) | the hero's first frame, its opening title and all: Fibonacci vs Slow Factorial balanced to 30 s, night; also the first paint of the steps' phone and of step 3, whose defaults are that race. The `-4` is a new name for a frame that changed in a way that shows (the title, its lighter wash, then its panels): a browser keeps `/hero` a week, and the old name would show the old still under the new first frame | 540×960, ~34 KB |
 | [public/looks/](../public/looks/) `paper.webp`, `cards.webp`, `night.webp` | the same race 55 % of the way, the top box as the studio's look picker crops it | 480×416, 15–17 KB each |
+| [public/games/](../public/games/) `ball-race.webp`, `arena-clash.webp` | each game's frame for its card (§4): the race in the night look 55 % of the way, as the looks have it; an Arena Clash of China, India, the United States and Russia (the four biggest countries, the owner's pick) balanced to 30 s, an eighth of the way, with its title (`SHOWCASE` in stills.ts). Made again when either game's look changes | 540×960, 30 and 76 KB |
+| [public/games/](../public/games/) `ball-race.svg`, `arena-clash.svg` | not from the stills page: each game's icon, drawn by hand on a 48-unit grid as a tile (the race's ball falling on its layers on violet; the arena's ring with two balls and their fans on the stage's ink). Written into the pages (§4) and shown as an `<img>` on the Videos page | 1–2 KB |
 | [public/og.png](../public/og.png) | the Open Graph and Twitter image, as the hero: the ink, the mark and the name, the headline, one line on what it makes, and at the bottom the address (`SITE_HOST`, narrowed if it would reach the phones), then a violet rule and "Free to start"; two phones (night, paper) in the balls' light. Made again when the address changes | 1200×630, ~300 KB |
 | [public/favicon-32.png](../public/favicon-32.png), [public/favicon.png](../public/favicon.png), [public/apple-touch-icon.png](../public/apple-touch-icon.png) | the icons every head links (the app's too), one drawing at three sizes: [public/favicon.svg](../public/favicon.svg) drawn from the vector at each size, never scaled down from a bigger PNG (that is what makes a favicon soft in the tab strip). 32 px for the tab, with the tile's rounded corners; 512 px for Google's results and Search Console and 180 px for the iOS home screen, filled to the edge with the ink, since those crop or round the square themselves and iOS turns a transparent corner black. The SVG is no longer linked: the PNGs are what every browser and Google read | 32, 512 and 180 px square |
 | [brand/profile.png](../brand/profile.png) | not for the site: the profile picture for Instagram, YouTube and TikTok, the mark on the ink in the balls' light, sized to stay inside the circle each shows it in (offered at `./brand/profile.png` on the stills page) | 1080×1080, ~940 KB |
@@ -512,3 +530,6 @@ used for.
 - 2026-11-07 - `data-signups` pairs: the header, the footer, the hero, the close, /login and /signup in an open and a closed version, the build keeping one; a disabled button on the ink stage in the dark cards' look.
 - 2026-11-07 - BounceReel's accounts (TikTok, Instagram, YouTube, `SOCIAL` in shared/site.ts): round marks in the footer, three follow cards under the gallery, and an `Organization` with `sameAs` in the home page's structured data.
 - 2026-11-07 - Google's "Continue with Google" button (its brand guidelines' look, light and dark) on /login and /signup and Google on the privacy page, as `data-google` pairs dropped while `GOOGLE_LOGIN` is off; the privacy page lists the profile (names, picture) and Cloudflare's picture storage.
+- 2026-11-11 - every plan's card says whether it makes Arena Clash ("Every game: ball races, Arena Clash and each new one", or "Ball races; no Arena Clash" among what it leaves out).
+- 2026-11-12 - `drawMark` is in src/render/draw.ts, with what both games' renderers share.
+- 2026-11-12 - /games, a card for each game (Ball Race, Arena Clash), and the same cards on the home page under the hero; Games in the header and the footer, and in the sitemap; each game's icon (public/games/, `<!-- game:icon -->`) and frame (stills.ts); which plans make a game filled in from the plans (`fillGamePlans`).

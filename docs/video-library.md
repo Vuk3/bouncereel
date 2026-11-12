@@ -50,7 +50,7 @@ or with the browser's voice, opens as Music only (`savedConfig`,
 | Column | Holds |
 | --- | --- |
 | `user_id` | the account it belongs to; deleting the account deletes its videos. NULL only for the videos recorded before accounts, until the first superadmin is made and receives them ([accounts-and-billing](./accounts-and-billing.md#1-accounts-and-roles)) |
-| `game` | `ball-race` for every video so far |
+| `game` | `ball-race` or `arena-clash` |
 | `recorded_at` | when the recording finished, ISO UTC, as the browser saw it (a save retried later keeps its own time) |
 | `title` | "Fibonacci Ball vs Doubling Ball" |
 | `file_name`, `format` | the downloaded file's name, and "MP4 · H.264 · AAC" |
@@ -58,6 +58,7 @@ or with the browser's voice, opens as Music only (`savedConfig`,
 | `stopped_early` | 1 when **Stop & save** ended it before the winner card had its time |
 | `seed`, `config` | the seed, and the whole config as JSON |
 | `app_version` | section 1 |
+| `battle` | an Arena Clash's `BattleSummary` as JSON: the flags' codes in the order the battle was given them, the winner, the order they went out ([0011_flag_battle.sql](../migrations/0011_flag_battle.sql)); NULL for a race. Small enough that the list parses it per row ([arena-clash](./arena-clash.md#7-in-the-library)) |
 | `a_*`, `b_*` | name, sequence and special of the top (`a`) and bottom (`b`) ball, copied out of the config so sorting and grouping never parse JSON |
 | `winner`, `margin`, `lead_changes` | `'a'`/`'b'` (NULL only if nobody finished), seconds between the two at the line, how often the lead changed: from the prediction, which is the race |
 | `texts` | a superadmin's texts for posting it (`VideoTexts` as JSON: YouTube's title, description, tags and pinned comment, the TikTok and Instagram captions and pinned comments, when they were saved); NULL until pasted (section 6). Read and replaced whole, never queried by field |
@@ -95,7 +96,7 @@ does not exist (404 `video_not_found`), never 403, so nothing tells them apart. 
 | `invalid_texts` (400) | texts missing a field or past a platform's limit ([shared/texts.ts](../shared/texts.ts)); the message says which |
 | `video_not_found`, `post_not_found`, `not_found` (404) | no such video, link, platform or route |
 | `post_taken` (409) | that post is already linked to another of the account's videos |
-| `not_in_plan` (403) | the video is longer than the plan's longest, or made with a sound, a look, a power or the follow button the plan does not include |
+| `not_in_plan` (403) | the video is a game the plan does not make (Arena Clash without `allGames`), longer than the plan's longest, or made with a sound, a look, a power or the follow button the plan does not include |
 | `library_full` (403) | the account's library holds as many videos as its plan keeps |
 | `unauthenticated` (401) | no session ([accounts-and-billing](./accounts-and-billing.md#5-the-session-check)) |
 | `method_not_allowed` (405), `cross_origin` (403), `unsupported_media_type` (415) | as named |
@@ -186,7 +187,8 @@ address, redirects here. It shows the signed-in account's videos only.
   anywhere, not on YouTube / TikTok / Instagram; **sort**: newest or oldest first, title, length
   either way, closest finish. Ties stay newest first.
 - **A row per video**: a thumbnail (its two cards on the dark stage, each ball in the colour its
-  config gave it, from `colors` in the list), the title (opens the drawer), the sequences with
+  config gave it, from `colors` in the list; an Arena Clash's arena with its winner's flag; the
+  game's icon from public/games/ on its corner, so a list of both games reads at a glance), the title (opens the drawer), the sequences with
   their powers, then when it was recorded, its length and the finish (winner and margin), with
   a tag for **Stopped early** and, for a superadmin, **Texts ready**. Then a **tick per platform**
   and **All**, **Open in studio**, and the arrow to the drawer. Narrower, the ticks go under the
@@ -268,10 +270,12 @@ an API on a schedule, note that the account's five cron triggers are all Hoops'
 
 ## 8. Another game
 
-`videos.game` names the game. A new one stores its own config in `config`, leaves the
-`a_*`/`b_*`/`winner`/`margin`/`lead_changes` columns NULL, and adds the columns it sorts
-by in a migration; `NewVideo` gets a variant per game, and `toSummary` in
-[worker/videos.ts](../worker/videos.ts) returns `race: null` for anything but `ball-race`.
+`videos.game` names the game. Arena Clash shows the way: its config is in `config`, the race's
+`a_*`/`b_*`/`winner`/`margin`/`lead_changes` stay NULL, and what it came to is one JSON column of
+its own (`battle`, 0011); `NewVideo` has a variant per game (`race` or `battle`), `toSummary` in
+[worker/videos.ts](../worker/videos.ts) returns `race` for `ball-race` and `battle` for
+`arena-clash`, null otherwise, and `checkPlan` asks `gameAllowed`. A third game adds its
+variant, its column and its line in `parseNewVideo` the same way.
 
 ## Changelog
 
@@ -294,3 +298,5 @@ by in a migration; `NewVideo` gets a variant per game, and `toSummary` in
 - 2026-10-30 - the follow button (`look.follow`) checked on save; the text a superadmin copies for posts says when a video asks viewers to follow.
 - 2026-11-02 - All on each row of the Videos page: ticks YouTube, TikTok and Instagram at once.
 - 2026-11-07 - a meter's row stays on one line (the name cut with an ellipsis when it must), and the golden ratio is named "Golden ratio" without its ×1.618.
+- 2026-11-11 - Arena Clash in the library: `game` `arena-clash`, its `battle` column (0011), `BattleSummary` in the list, the game checked against the plan on save, the Videos page's line, winner and flag thumbnail, its text for posts.
+- 2026-11-12 - the game's icon on each thumbnail (public/games/); Flag Battle is called Arena Clash (`arena-clash`).

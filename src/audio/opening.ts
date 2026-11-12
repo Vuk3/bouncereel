@@ -2,7 +2,8 @@ import type { Config } from '../config.ts';
 import { createRng } from '../sim/rng.ts';
 
 // The opening's question, in a file of its own: the narrator ends the opening on it
-// (narration.ts) and the video shows it over its first frame (src/render, `drawOpening`).
+// (narration.ts) and the video shows it over its first frame (src/render, `drawOpening`), a
+// Arena Clash as its title all through.
 // The renderer is on the home page too, which must not load narration.ts: it would bring the
 // Kokoro loader, and the build would tie the home page's scripts to the 2 MB voice chunk.
 
@@ -35,6 +36,28 @@ export const QUESTIONS = [
 ];
 
 /**
+ * Arena Clash's questions: the same idea, in its words (no ball, no top or bottom, nobody gets
+ * anywhere first: a flag survives). A battle's question is also its title, over the arena for the
+ * whole video (src/render/battle.ts), so each is short enough for one line of big type there:
+ * "WHICH FLAG SURVIVES?" is the longest. None tells viewers to comment: Instagram says it may
+ * not recommend a video that asks for a comment in so many words.
+ */
+export const BATTLE_QUESTIONS = [
+  'Which flag survives?',
+  'Who survives?',
+  'Pick one.',
+  "Who's your pick?",
+  'Last flag standing?',
+  'Who wins this one?',
+  'Pick your country.',
+  'Who takes the arena?',
+  'Who are you rooting for?',
+  'Who would you bet on?',
+  'Which flag wins?',
+  'So, who wins?',
+];
+
+/**
  * How many questions there were before a config kept its own (`look.question`): a config saved
  * then asked its seed's pick among these, and keeps it (`firstQuestion`, savedConfig).
  */
@@ -55,9 +78,10 @@ export function firstQuestion(seed: string): string {
   return QUESTIONS[Math.floor(openingDraws(seed).question * FIRST)];
 }
 
-/** The config's question: the creator's (`look.question`), else the seed's pick. */
+/** The config's question: the creator's (`look.question`), else the seed's pick from its game's questions. */
 export function configQuestion(cfg: Config): string {
-  return cfg.look.question.trim() || QUESTIONS[Math.floor(openingDraws(cfg.seed).question * QUESTIONS.length)];
+  const pool = cfg.game === 'arena-clash' ? BATTLE_QUESTIONS : QUESTIONS;
+  return cfg.look.question.trim() || pool[Math.floor(openingDraws(cfg.seed).question * pool.length)];
 }
 
 /**

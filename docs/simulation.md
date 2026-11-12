@@ -13,6 +13,7 @@ rests on.
 | the prediction, finish times, lead changes | [src/sim/world.ts](../src/sim/world.ts) |
 | a sequence | [src/sim/sequences.ts](../src/sim/sequences.ts) |
 | where the walls, floor and finish are | [src/layout.ts](../src/layout.ts) |
+| Arena Clash's rules, physics and determinism | [arena-clash](./arena-clash.md#1-the-rules), [src/sim/battle.ts](../src/sim/battle.ts) |
 
 ## 1. The rules
 
@@ -149,3 +150,5 @@ line was generated for the ball that wins, and balancing measures the race that 
 - 2026-11-02 - crowds: a team may start with up to 200 balls (`count`), its extra balls from a stream of their own; a hit is its term times the ball's strength (Always the same at 1 to a million); the golden ratio (exact, as the Lucas numbers).
 - 2026-11-03 - the prediction says how the race was won (`decided`, `trailed`, `led`), for the comebacks balancing makes; read only, nothing in a race moves.
 - 2026-11-07 - the golden ratio's label is "Golden ratio", the name alone like the others (the ×1.618 stays in its rule and brief): the studio's picker, the Videos page, the winner card's "… reached", the narrator's "Both hit with … numbers" and the post text say it so.
+- 2026-11-11 - Arena Clash's world (src/sim/battle.ts) follows the same determinism rules; its rules are in arena-clash.md.
+- 2026-11-12 - Arena Clash's world steps by distance (`STRIDE` px a step, `BattleWorld.dt` seconds each), not by `STEP`; a string's place round the ring is `ringKey`, sums and a division in place of an arctangent.

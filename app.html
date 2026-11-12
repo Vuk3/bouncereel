@@ -73,11 +73,17 @@
         </section>
 
         <fieldset id="controls">
+          <!-- Which game (app.ts buildBattleBlock): Ball Race in every plan, Arena Clash with the plan's "Every game". Each with its icon (public/games/). -->
+          <div class="games" role="radiogroup" aria-label="Game">
+            <label><input type="radio" name="game" value="ball-race" autocomplete="off" /><span><!-- game:icon ball-race --><b>Ball Race</b></span></label>
+            <label><input type="radio" name="game" value="arena-clash" autocomplete="off" /><span><!-- game:icon arena-clash --><b>Arena Clash</b></span></label>
+          </div>
+
           <!--
             The matchup as the video stacks it: top ball, bottom ball, each with its lane to the line as
             the predicted race ends (the winner's full, the loser's where it was), and how the race ends.
           -->
-          <section class="matchup" aria-label="This matchup">
+          <section class="matchup race-only" aria-label="This matchup">
             <div class="contender" data-team="a">
               <span class="contender-ball" aria-hidden="true"></span>
               <div class="contender-text">
@@ -120,6 +126,34 @@
             <p id="balance-note" class="balance-note" role="status" hidden></p>
           </section>
 
+          <!--
+            Arena Clash's card (app.ts buildBattleBlock, syncBattle): the flags, each with its strings'
+            colour, how many, where the dice picks from, the winner, and how the battle ends.
+          -->
+          <section class="battle battle-only" aria-label="This battle">
+            <ol id="flag-list" class="flag-list"></ol>
+            <div class="battle-fields">
+              <div class="field">
+                <span class="field-label" id="flags-label">Flags</span>
+                <div class="stepper" role="group" aria-labelledby="flags-label">
+                  <button id="flags-less" type="button" class="icon-button small" title="One flag fewer" aria-label="One flag fewer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" /></svg></button>
+                  <output id="flags-count" aria-live="polite"></output>
+                  <button id="flags-more" type="button" class="icon-button small" title="One flag more" aria-label="One flag more"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12" /></svg></button>
+                </div>
+              </div>
+              <div class="field">
+                <label for="region"><span>Dice picks from</span></label>
+                <select id="region" name="region"></select>
+              </div>
+              <div class="field">
+                <label for="battle-winner"><span>Winner</span></label>
+                <select id="battle-winner" name="battle-winner"></select>
+              </div>
+            </div>
+            <div id="battle-verdict" class="verdict" aria-live="polite"><p id="battle-prediction"></p></div>
+            <p id="battle-note" class="balance-note" role="status" hidden></p>
+          </section>
+
           <div class="deal">
             <!-- Violet while nothing is ready to record, a ghost once Record is (app.ts syncPrimary). -->
             <button id="dice" type="button" class="button dice" title="A brand-new matchup, balanced to the video length">
@@ -129,7 +163,7 @@
                 <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
                 <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" stroke="none" />
               </svg>
-              <span id="dice-label">Random matchup</span>
+              <span id="dice-label" class="race-only">Random matchup</span><span class="battle-only">Random flags</span>
             </button>
             <div class="row">
               <!-- What Play and Restart do about the narrator (app.ts voiceOn); Record follows Sound alone. -->
@@ -143,17 +177,17 @@
                   <path d="M3 17h3c1.5 0 2.5-.4 3.4-1.4M14.6 8.4C15.5 7.4 16.5 7 18 7h3" />
                   <path d="m18 4 3 3-3 3M18 14l3 3-3 3" />
                 </svg>
-                New race
+                <span class="race-only">New race</span><span class="battle-only">New battle</span>
               </button>
             </div>
-            <div class="deal-options">
+            <div class="deal-options race-only">
               <label class="switch">
                 <input id="powers" name="powers" type="checkbox" role="switch" autocomplete="off" aria-describedby="powers-hint" />
                 <span>Powers in random matchups</span>
               </label>
               <select id="preset" name="preset" aria-label="Load a classic matchup"><option value="">Classics…</option></select>
             </div>
-            <p id="powers-hint" class="hint deal-hint">On: about every other roll gives a ball a power.</p>
+            <p id="powers-hint" class="hint deal-hint race-only">On: about every other roll gives a ball a power.</p>
           </div>
 
           <!-- Three parts under hairlines: how long and how close, what it sounds like, what it looks like. -->
@@ -164,7 +198,7 @@
               <label for="video"><span>Length</span><output id="video-out"></output></label>
               <input id="video" name="video" type="range" min="20" max="90" step="5" />
             </div>
-            <div class="field" title="How far behind the winner the loser reaches the line">
+            <div class="field race-only" title="How far behind the winner the loser reaches the line">
               <label for="gap"><span>Finish gap</span><output id="gap-out"></output></label>
               <input id="gap" name="gap" type="range" min="0" max="10" step="1" />
             </div>
@@ -181,7 +215,8 @@
             </div>
             </div>
             <div class="part">
-            <div class="field">
+            <!-- The race's alone: an Arena Clash has one look, its black stage (src/render/battle.ts). -->
+            <div class="field race-only">
               <span class="field-label" id="look-label">Look</span>
               <div class="looks" role="radiogroup" aria-labelledby="look-label">
                 <label class="look" title="Cream boxes, glossy layers, glowing balls"><input type="radio" name="skin" value="paper" autocomplete="off" /><canvas></canvas><span>Paper</span></label>
@@ -194,7 +229,7 @@
                 <input id="follow" name="follow" type="checkbox" role="switch" autocomplete="off" aria-describedby="follow-hint" />
                 <span>Ask viewers to follow</span>
               </label>
-              <small id="follow-hint" class="hint">A follow button once in the race and under the winner card, and the narrator ends on “Follow for more!”</small>
+              <small id="follow-hint" class="hint">A follow button once in the video and under the winner card, and the narrator ends on “Follow for more!”</small>
             </div>
             </div>
           </section>

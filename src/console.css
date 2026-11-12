@@ -1393,6 +1393,7 @@
  * colour the config gave it (--a, --b from dashboard.ts paintThumb). 9:16, like the video.
  */
 .thumb {
+  position: relative;
   display: grid;
   grid-template-rows: 1fr 1fr;
   gap: 3px;
@@ -1420,11 +1421,40 @@
   background: var(--ball);
   box-shadow: 0 0 12px color-mix(in srgb, var(--ball) 75%, transparent);
 }
-.thumb i:first-child {
+.thumb i:first-of-type {
   --ball: var(--a, var(--team-a));
 }
-.thumb i:last-child {
+.thumb i:last-of-type {
   --ball: var(--b, var(--team-b));
+}
+/* An Arena Clash in small: one arena, the winner's flag in it (--flag, from dashboard.ts paintThumb). */
+.thumb.battle {
+  grid-template-rows: 1fr;
+}
+.thumb.battle i:last-of-type {
+  display: none;
+}
+.thumb.battle i::before {
+  width: 24px;
+  height: 24px;
+  background: var(--flag) center / cover, #fff;
+  box-shadow:
+    0 0 0 2px rgb(255 255 255 / 0.85),
+    0 0 12px rgb(255 255 255 / 0.25);
+}
+.drawer-video .thumb.battle i::before {
+  width: 20px;
+  height: 20px;
+}
+/* The game's icon (public/games/) over the thumbnail's bottom corner: which game a video is, at a glance. */
+.thumb-game {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  box-shadow: 0 0 0 2px var(--surface);
 }
 
 .video-main {

@@ -14,9 +14,12 @@ import {
   type VideosResponse,
   type VideoTexts,
 } from '../shared/api.ts';
+import { GAMES, type Game } from '../shared/features.ts';
 import { parsePostLink } from '../shared/links.ts';
 import { parseTexts, readPasted, textsTarget } from '../shared/texts.ts';
 import { api, ApiError } from './api.ts';
+import { flagName } from './battle/countries.ts';
+import { flagSrc } from './battle/flags.ts';
 import { savedConfig } from './config.ts';
 import { postPrompt, retryPending } from './library.ts';
 import { loadAccount, toLogin } from './session.ts';
@@ -103,16 +106,18 @@ function sequenceLabel(id: string): string {
   return SEQUENCES[id as SequenceId]?.label ?? id;
 }
 
-/** "Fibonacci vs Factorial (speeds up)", the line under a video's title. */
+/** "Fibonacci vs Factorial (speeds up)", or "Arena Clash, 3 flags": the line under a video's title. */
 function matchupLine(video: VideoSummary): string {
+  if (video.battle) return `Arena Clash, ${video.battle.flags.length} flags`;
   const race = video.race;
   if (!race) return video.game;
   const side = (s: { sequence: string; special: string }) => sequenceLabel(s.sequence) + (SPECIALS[s.special] ? ` (${SPECIALS[s.special]})` : '');
   return `${side(race.a)} vs ${side(race.b)}`;
 }
 
-/** "Fibonacci Ball by 0.3 s", or null for a game that is not a race. */
+/** "Fibonacci Ball by 0.3 s", "Serbia survives", or null for a game that is neither. */
 function finishLine(video: VideoSummary): string | null {
+  if (video.battle?.winner) return `${flagName(video.battle.winner)} survives`;
   const race = video.race;
   if (!race) return null;
   const winner = race.winner === 'a' ? race.a.name : race.winner === 'b' ? race.b.name : 'Nobody';
@@ -128,10 +133,20 @@ function color(value: string | undefined, fallback: string): string {
   return value && /^#[0-9a-f]{3,8}$/i.test(value) ? value : fallback;
 }
 
-/** The two balls on the dark stage, top then bottom: the video's two cards in small. */
+/**
+ * The two balls on the dark stage, top then bottom: the video's two cards in small. An Arena Clash
+ * is its one arena with the winner's flag in it. Either way the game's icon sits on its corner.
+ */
 function paintThumb(thumb: HTMLElement, video: VideoSummary): void {
+  const flag = video.battle?.winner ?? video.battle?.flags[0];
+  thumb.classList.toggle('battle', !!flag);
+  thumb.style.setProperty('--flag', flag ? `url("${flagSrc(flag)}")` : 'none');
   thumb.style.setProperty('--a', color(video.colors?.a, 'var(--team-a)'));
   thumb.style.setProperty('--b', color(video.colors?.b, 'var(--team-b)'));
+  // The game's icon in a corner, so a list of both games reads at a glance (public/games/).
+  let icon = thumb.querySelector<HTMLImageElement>('.thumb-game');
+  if (!icon) thumb.append((icon = Object.assign(document.createElement('img'), { className: 'thumb-game', alt: '', width: 18, height: 18 })));
+  icon.src = `/games/${GAMES.includes(video.game as Game) ? video.game : 'ball-race'}.svg`;
 }
 
 function thumb(video: VideoSummary): HTMLElement {
@@ -530,6 +545,11 @@ function factsSection(video: VideoSummary): HTMLElement {
     ['Length', `${video.videoLength} s${video.stoppedEarly ? `, stopped early at ${video.seconds.toFixed(1)} s` : ` (the file is ${video.seconds.toFixed(1)} s)`}`],
   ];
   if (race) pairs.push(['Finish', `${finishLine(video)}, ${race.leadChanges === 1 ? '1 lead change' : `${race.leadChanges} lead changes`}`]);
+  const battle = video.battle;
+  if (battle) {
+    pairs.push(['Flags', battle.flags.map(flagName).join(', ')]);
+    if (battle.winner) pairs.push(['Winner', `${finishLine(video)}${battle.out.length ? `; out first to last: ${battle.out.map(flagName).join(', ')}` : ''}`]);
+  }
   pairs.push(['Seed', video.seed], ['File', video.fileName], ['Format', `${video.format}, BounceReel ${video.appVersion}`]);
   for (const [term, value] of pairs) facts.append(el('dt', '', term), el('dd', '', value));
   section.append(el('h3', '', 'Details'), facts);

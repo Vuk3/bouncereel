@@ -1,5 +1,5 @@
 import { PLATFORM_LABELS, type CreatedResponse, type NewVideo, type PostResponse, type PostTexts, type TextsResponse, type VideoResponse, type VideosResponse } from '../../shared/api.ts';
-import { SOUNDS, soundAllowed, type Features, type Look, type Sound } from '../../shared/features.ts';
+import { gameAllowed, SOUNDS, soundAllowed, type Features, type Look, type Sound } from '../../shared/features.ts';
 import { parsePostLink } from '../../shared/links.ts';
 import { parseTexts } from '../../shared/texts.ts';
 import { HttpError, json, noContent, readJsonObject } from '../lib/http.ts';
@@ -29,13 +29,14 @@ function soundOf(video: NewVideo): Sound {
 }
 
 /**
- * What passes through the server is checked against the plan: the length the video was made
- * for, the sound it was recorded with, its look, its powers and the follow button. The studio
- * never sends one that breaks them (it disables what the plan does not include); this is for a
- * hand-made request or a stale page.
+ * What passes through the server is checked against the plan: the game, the length the video was
+ * made for, the sound it was recorded with, its look, (a race's) its powers and the follow button.
+ * The studio never sends one that breaks them (it disables what the plan does not include); this
+ * is for a hand-made request or a stale page.
  */
 function checkPlan(video: NewVideo, features: Features): void {
   const config = video.config as { timing?: { video?: unknown }; look?: { skin?: unknown; follow?: unknown }; a?: Ball; b?: Ball };
+  if (!gameAllowed(features, video.game)) throw notInPlan('Your plan does not include Arena Clash.');
   const length = config.timing?.video;
   if (video.videoLength > features.maxSeconds || (typeof length === 'number' && length > features.maxSeconds)) {
     throw notInPlan(`Your plan makes videos up to ${features.maxSeconds} s.`);
@@ -43,7 +44,7 @@ function checkPlan(video: NewVideo, features: Features): void {
   if (!soundAllowed(features, soundOf(video))) throw notInPlan('Your plan does not include that sound for a recording.');
   const skin = config.look?.skin;
   if (typeof skin === 'string' && !features.looks.includes(skin as Look)) throw notInPlan('Your plan does not include that look.');
-  if (!features.powers && [config.a, config.b].some((ball) => ball?.special !== 'none' && Number(ball?.amount) > 0)) {
+  if (video.game === 'ball-race' && !features.powers && [config.a, config.b].some((ball) => ball?.special !== 'none' && Number(ball?.amount) > 0)) {
     throw notInPlan('Your plan does not include powers.');
   }
   if (!features.follow && config.look?.follow === true) throw notInPlan('Your plan does not include the follow button.');

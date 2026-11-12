@@ -1,8 +1,9 @@
-import type { NewVideo, Platform, Post, VideoDetail, VideoSummary, VideoTexts } from '../shared/api.ts';
+import type { BattleSummary, NewVideo, Platform, Post, VideoDetail, VideoSummary, VideoTexts } from '../shared/api.ts';
 import type { PostLink } from '../shared/links.ts';
 
 // Every D1 query of the video library, and the mappers from rows (migrations/0001_initial.sql,
-// 0002_accounts.sql, 0007_video_texts.sql) to the API's shapes (shared/api.ts). Handlers never write SQL themselves.
+// 0002_accounts.sql, 0007_video_texts.sql, 0011_flag_battle.sql) to the API's shapes (shared/api.ts).
+// Handlers never write SQL themselves.
 //
 // Every query names the account (`user_id`): a video or link of another account is not found,
 // exactly like one that does not exist, so no answer tells one from the other.
@@ -28,6 +29,8 @@ interface VideoRow {
   winner: 'a' | 'b' | null;
   margin: number | null;
   lead_changes: number | null;
+  /** An Arena Clash's BattleSummary as JSON; NULL for a race. */
+  battle: string | null;
   has_texts: number;
   a_color: unknown;
   b_color: unknown;
@@ -48,7 +51,7 @@ interface PostRow {
  * not the Worker's.
  */
 const SUMMARY_COLUMNS = `id, game, recorded_at, title, file_name, format, seconds, stopped_early, video_length, seed,
-  app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes,
+  app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes, battle,
   texts IS NOT NULL AS has_texts, json_extract(config, '$.a.color') AS a_color, json_extract(config, '$.b.color') AS b_color`;
 const POST_COLUMNS = 'video_id, platform, url, external_id, added_at';
 
@@ -79,7 +82,9 @@ function toSummary(row: VideoRow, posts: Post[]): VideoSummary {
             leadChanges: row.lead_changes ?? 0,
           }
         : null,
-    colors: typeof row.a_color === 'string' && typeof row.b_color === 'string' ? { a: row.a_color, b: row.b_color } : null,
+    // A hundred bytes of JSON a row, unlike the config: parsing it for the whole list costs nothing.
+    battle: row.game === 'arena-clash' && row.battle ? (JSON.parse(row.battle) as BattleSummary) : null,
+    colors: row.game === 'ball-race' && typeof row.a_color === 'string' && typeof row.b_color === 'string' ? { a: row.a_color, b: row.b_color } : null,
     posts,
     hasTexts: row.has_texts === 1,
   };
@@ -135,12 +140,14 @@ export async function countVideos(db: D1Database, userId: number): Promise<numbe
  * The count is checked inside the INSERT, so two saves at once cannot both take the last place.
  */
 export async function insertVideo(db: D1Database, video: NewVideo, userId: number, limit: number | null): Promise<number | null> {
-  const { race } = video;
+  // A race fills the race's columns, a battle its one: the other game's stay NULL.
+  const race = video.game === 'ball-race' ? video.race : null;
+  const battle = video.game === 'arena-clash' ? JSON.stringify(video.battle) : null;
   const row = await db
     .prepare(
       `INSERT INTO videos (user_id, game, recorded_at, title, file_name, format, seconds, stopped_early, video_length, seed, config,
-        app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes)
-       SELECT ?21, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20
+        app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes, battle)
+       SELECT ?21, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?23
         WHERE ?22 IS NULL OR (SELECT COUNT(*) FROM videos WHERE user_id = ?21) < ?22
        RETURNING id`,
     )
@@ -156,17 +163,18 @@ export async function insertVideo(db: D1Database, video: NewVideo, userId: numbe
       video.seed,
       JSON.stringify(video.config),
       video.appVersion,
-      race.a.name,
-      race.a.sequence,
-      race.a.special,
-      race.b.name,
-      race.b.sequence,
-      race.b.special,
-      race.winner,
-      race.margin,
-      race.leadChanges,
+      race?.a.name ?? null,
+      race?.a.sequence ?? null,
+      race?.a.special ?? null,
+      race?.b.name ?? null,
+      race?.b.sequence ?? null,
+      race?.b.special ?? null,
+      race?.winner ?? null,
+      race?.margin ?? null,
+      race?.leadChanges ?? null,
       userId,
       limit,
+      battle,
     )
     .first<{ id: number }>();
   return row?.id ?? null;

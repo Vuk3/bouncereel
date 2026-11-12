@@ -1,17 +1,23 @@
 import { introLine, synthesize, VOICES } from '../src/audio/narration.ts';
-import { mergeConfig, PRESETS, type Config, type Skin } from '../src/config.ts';
+import { loadFlags } from '../src/battle/flags.ts';
+import { mergeConfig, PRESETS, switchGame, type Config, type Skin } from '../src/config.ts';
 import { H, W } from '../src/layout.ts';
-import { Renderer, drawMark } from '../src/render/renderer.ts';
+import { BattleRenderer } from '../src/render/battle.ts';
+import { drawMark } from '../src/render/draw.ts';
+import { Renderer } from '../src/render/renderer.ts';
 import { SITE_HOST } from '../shared/site.ts';
 import { heroConfig } from '../src/site/hero.ts';
+import { BattleWorld, STRIDE, predictBattle } from '../src/sim/battle.ts';
+import { balanceBattle } from '../src/sim/battle-balance.ts';
 import { STEP } from '../src/sim/types.ts';
 import { createWorld, predict } from '../src/sim/world.ts';
 
-// The public site's images, drawn by the studio's own renderer (docs/website.md says when to
+// The public site's images, drawn by the studio's own renderers (docs/website.md says when to
 // remake them): the hero's first frame, which must match the first frame src/site/hero.ts draws,
-// the three looks mid-race, and the 1200×630 Open Graph image; and, on a press, the narrator's
-// opening that the home page plays, said by the studio's own Kokoro. Only built with STILLS=1
-// (vite.config.ts); each is offered as a download, to be saved under public/.
+// the three looks mid-race, a frame of each game for the Games cards, and the 1200×630 Open Graph
+// image; and, on a press, the narrator's opening that the home page plays, said by the studio's
+// own Kokoro. Only built with STILLS=1 (vite.config.ts); each is offered as a download, to be
+// saved under public/.
 
 /** The part of the frame a look's thumbnail shows, as in the studio's look picker (src/app.ts THUMB). */
 const THUMB = { x: 60, y: 168, w: 960, h: 832 };
@@ -51,6 +57,32 @@ function midRace(cfg: Config, at: number): HTMLCanvasElement {
   return renderer.canvas;
 }
 
+/**
+ * The Games card's Arena Clash: the four biggest countries by people and land (the owner's pick),
+ * balanced to 30 s, with the title it opens on.
+ */
+const SHOWCASE = { flags: ['cn', 'in', 'us', 'ru'], question: 'Which flag survives?', seed: '7' };
+
+/** An Arena Clash `at` (0..1) of the way to the predicted win, drawn as playback would: trails, ripples, the balls a step ahead. */
+async function midBattle(cfg: Config, at: number): Promise<HTMLCanvasElement> {
+  await loadFlags(cfg.battle.flags);
+  const renderer = new BattleRenderer(document.createElement('canvas'));
+  renderer.reset(cfg);
+  const world = new BattleWorld(cfg);
+  const until = predictBattle(cfg).time * at;
+  let acc = 0;
+  while (world.time < until) {
+    acc += 1 / 60;
+    while (acc >= world.nextStep) {
+      acc -= world.nextStep;
+      world.step();
+    }
+    renderer.handle(world.drain(), world, cfg);
+    renderer.draw(world, cfg, 1 / 60, { winner: 0, age: 0, lead: (acc / world.nextStep) * STRIDE });
+  }
+  return renderer.canvas;
+}
+
 async function main(): Promise<void> {
   await Promise.all([400, 600, 700, 800, 900].map((w) => document.fonts.load(`${w} 40px Rubik`)));
   const hero = heroConfig(PRESETS[0].config)!;
@@ -69,6 +101,19 @@ async function main(): Promise<void> {
     frames[skin] = midRace(cfg, 0.55);
     offer(scaled(frames[skin], THUMB.x, THUMB.y, THUMB.w, THUMB.h, 480, 416), `looks/${skin}.webp`, 'image/webp', 0.85);
   }
+
+  // 2b. A frame of each game, whole, for the Games cards (the home page and /games): the race in the
+  // night look as the looks have it, and the showcase Arena Clash an eighth of the way, its fans
+  // still wide and the first bundles tied round the ring.
+  offer(scaled(frames.night!, 0, 0, W, H, 540, 960), 'games/ball-race.webp', 'image/webp', 0.86);
+  const clash = balanceBattle(
+    mergeConfig(switchGame(mergeConfig(PRESETS[0].config, { timing: { video: 30 } }), 'arena-clash'), {
+      seed: SHOWCASE.seed,
+      battle: { flags: SHOWCASE.flags },
+      look: { question: SHOWCASE.question },
+    }),
+  );
+  if (clash) offer(scaled(await midBattle(clash, 0.12), 0, 0, W, H, 540, 960), 'games/arena-clash.webp', 'image/webp', 0.86);
 
   // 3. Open Graph, 1200×630, as the site's hero: the ink stage, the mark, the name and the headline
   // on the left with the address along the bottom (as vukcvetkovic.com's card has it), two phones

@@ -9,7 +9,10 @@ platforms. The owner runs it from an admin area (users, plans, subscriptions) an
 like everyone else. It runs on Cloudflare: Workers Assets for the pages, a Worker for the
 API and the sign-in.
 Its first game is ball races: two balls, each in its own card, break layers with the
-numbers of a sequence (Fibonacci, factorial…).
+numbers of a sequence (Fibonacci, factorial…). Its second is Arena Clash, a game of its own
+on a black stage: 2 to 12 flags in a round arena, each tied to the ring by a fan of strings,
+cut each other's strings, and the last flag standing wins
+([docs/arena-clash.md](./docs/arena-clash.md)).
 
 > **`CLAUDE.md` is a symlink to this file**, so the two names can never drift and there
 > is only ever one file to edit. Do not replace the symlink with a copy.
@@ -28,7 +31,7 @@ Documentation is layered, so you only pay for what the task needs:
    [src/render](./src/render/CLAUDE.md) (the video's look) ·
    [worker](./worker/CLAUDE.md) (the API, the sign-in) ·
    [migrations](./migrations/CLAUDE.md) (the database schema).
-4. **[docs/](./docs/)** - the detail. Ten deep-dives, each written to be self-sufficient:
+4. **[docs/](./docs/)** - the detail. Eleven deep-dives, each written to be self-sufficient:
    paste one link into a prompt and start working. [docs/README.md](./docs/README.md)
    indexes them. Accounts, plans and the admin area are
    [accounts-and-billing](./docs/accounts-and-billing.md); the public site is
@@ -66,6 +69,12 @@ Documentation is layered, so you only pay for what the task needs:
   in [worker/router.ts](./worker/router.ts) with its reason. Every video query names the
   account; nothing over HTTP grants `superadmin`.
   [docs/accounts-and-billing.md](./docs/accounts-and-billing.md#5-the-session-check) says why.
+- **An Arena Clash is the format as its channels play it.** Strings come from bounces off the
+  ring alone, **every** bounce ties ten however many a ball holds, strings go only by being cut,
+  a ball cuts every rival string it touches at once, and the balls speed up as a battle goes on.
+  No lives, shields, sudden death, growing balls, a most a ball may hold, or strings that come or
+  go on their own: the owner asked for each of those to go
+  ([docs/arena-clash.md](./docs/arena-clash.md#1-the-rules)).
 - **The simulation is deterministic, and stays so.** Nothing in [src/sim](./src/sim/)
   may use `Math.random`, `Math.sin`, `Math.cos`, `Math.atan2`, `Math.pow` on non-integers
   or `Date`; it uses [rng.ts](./src/sim/rng.ts) and [detmath.ts](./src/sim/detmath.ts).
@@ -102,7 +111,9 @@ Documentation is layered, so you only pay for what the task needs:
   written from the rules in [src/audio/narration.ts](./src/audio/narration.ts).
 - **The opening never explains the floor, the layers or the finish line.** It names the
   two balls, says in one clause what each does, adds one fact and asks a question. Viewers
-  understand the rest from the picture within a second.
+  understand the rest from the picture within a second. An Arena Clash's opening says its
+  rule in one sentence, the one thing its first second does not show
+  ([arena-clash](./docs/arena-clash.md#5-sound-and-narrator)).
 - **Numbers on screen are whole, every digit**, with a thousands separator. Never
   scientific notation: generated layers stay at or under 10^18 so they always fit.
 

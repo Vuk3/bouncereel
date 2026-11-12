@@ -1,7 +1,8 @@
-import type { AccountResponse, CreatedResponse, NewVideo, RaceSide, VideoSummary } from '../shared/api.ts';
+import type { AccountResponse, BattleSummary, CreatedResponse, NewVideo, RaceSide, RaceSummary, VideoSummary } from '../shared/api.ts';
 import { LOOK_LABELS, SOUND_LABELS } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
 import { openingQuestion } from './audio/opening.ts';
+import { flagName } from './battle/countries.ts';
 import { FOLLOW_LINE, type Config, type Contestant } from './config.ts';
 import { SEQUENCES, formatBig, type SequenceId } from './sim/sequences.ts';
 
@@ -29,7 +30,11 @@ const POWERS: Record<string, string> = { faster: 'speeds up', slower: 'slows dow
  * the library id lets the skill's answer find its way back to the video. The winner is in it for
  * the writer, who keeps it out of what viewers see first.
  */
-export function postPrompt(video: Pick<VideoSummary, 'title' | 'fileName' | 'videoLength' | 'seed' | 'race'> & { id?: number | null }, cfg?: Config): string {
+export function postPrompt(
+  video: Pick<VideoSummary, 'title' | 'fileName' | 'videoLength' | 'seed'> & { race?: RaceSummary | null; battle?: BattleSummary | null; id?: number | null },
+  cfg?: Config,
+): string {
+  if (video.battle) return battlePrompt(video, video.battle, cfg);
   const lines = [`BounceReel ball race: ${video.title}`];
   const race = video.race;
   if (race) {
@@ -53,6 +58,27 @@ export function postPrompt(video: Pick<VideoSummary, 'title' | 'fileName' | 'vid
     lines.push(`First frame: the two names with what each does, VS and "${openingQuestion(cfg)}"`);
     if (cfg.look.cta.trim()) lines.push(`Last line on the winner card: "${cfg.look.cta.trim()}"`);
     if (cfg.look.follow) lines.push(`Asks viewers to follow: a follow button in the race and under the winner card, and the narrator's "${FOLLOW_LINE}"`);
+  } else lines.push(`Video: ${video.videoLength} s`);
+  lines.push(`Seed: ${video.seed}`, `File: ${video.fileName}`);
+  if (video.id) lines.push(`Library id: ${video.id}`);
+  return lines.join('\n');
+}
+
+/**
+ * The same for an Arena Clash: its flags, the winner, the order they went out, the length and
+ * sound, and what is on screen. The strings' colours are left out: they come from the flags'
+ * pictures in the page, and the posts name countries, not colours.
+ */
+function battlePrompt(video: Pick<VideoSummary, 'title' | 'fileName' | 'videoLength' | 'seed'> & { id?: number | null }, battle: BattleSummary, cfg?: Config): string {
+  const lines = [`BounceReel arena clash: ${video.title}`, `Flags: ${battle.flags.map(flagName).join(', ')} (${battle.flags.length})`];
+  lines.push(battle.winner ? `Winner: ${flagName(battle.winner)}, the last flag standing` : 'Winner: none');
+  if (battle.out.length) lines.push(`Out, first to last: ${battle.out.map(flagName).join(', ')}`);
+  if (cfg) {
+    lines.push(`Video: ${video.videoLength} s, on a black stage, ${SOUND_LABELS[cfg.sound.track].toLowerCase()}`);
+    const who = battle.flags.length <= 4 ? "the flags' names with VS between them" : `"${battle.flags.length} FLAGS · ONE SURVIVES"`;
+    lines.push(`On screen all through: ${who}, the title "${openingQuestion(cfg).toUpperCase().replace(/\.$/, '')}", how many flags are left, and each flag's strings counted under it`);
+    if (cfg.look.cta.trim()) lines.push(`Last line on the winner card: "${cfg.look.cta.trim()}"`);
+    if (cfg.look.follow) lines.push(`Asks viewers to follow: a follow button once in the battle and under the winner card, and the narrator's "${FOLLOW_LINE}"`);
   } else lines.push(`Video: ${video.videoLength} s`);
   lines.push(`Seed: ${video.seed}`, `File: ${video.fileName}`);
   if (video.id) lines.push(`Library id: ${video.id}`);

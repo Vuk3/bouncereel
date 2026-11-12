@@ -1,5 +1,5 @@
-import { LOOKS, type Look, type Sound } from '../shared/features.ts';
-import { firstQuestion } from './audio/opening.ts';
+import { GAMES, LOOKS, type Game, type Look, type Sound } from '../shared/features.ts';
+import { BATTLE_QUESTIONS, QUESTIONS, firstQuestion } from './audio/opening.ts';
 import { SEQUENCES, type SequenceId } from './sim/sequences.ts';
 
 // Everything a video is made of. A Config fully determines the run, so a
@@ -43,7 +43,22 @@ export interface Contestant {
   strength: number;
 }
 
+/** Arena Clash's own settings (src/sim/battle.ts); a ball race ignores them. */
+export interface Battle {
+  /** The flags in the arena, by code (src/battle/countries.ts): 2 to MAX_FLAGS. */
+  flags: string[];
+  /** The flag balancing makes win, by code; '' for whichever the seed gives. */
+  winner: string;
+  /**
+   * px/s every ball starts at; they speed up from it as the battle goes on (src/sim/battle.ts
+   * pace). Balancing sets it: a battle is the same at any speed, only sooner over.
+   */
+  speed: number;
+}
+
 export interface Config {
+  /** Which game this is: everything below is shared but `a`, `b`, `layers` and `physics` (the race's) and `battle`. */
+  game: Game;
   seed: string;
   /** Top box. */
   a: Contestant;
@@ -51,6 +66,7 @@ export interface Config {
   b: Contestant;
   /** Health of each layer, top first: "1000, 1e10, 1e15" (also 1k, 10b, 1q). */
   layers: string;
+  battle: Battle;
   physics: {
     /** px/s². 0 is the format: balls fly straight and keep their speed. */
     gravity: number;
@@ -95,7 +111,8 @@ export interface Config {
     skin: Skin;
     /**
      * The question over the first frame, which the automatic opening ends on too; empty for the
-     * seed's pick of QUESTIONS (src/audio/opening.ts).
+     * seed's pick of QUESTIONS (src/audio/opening.ts). An Arena Clash's is its title, over the
+     * arena all through.
      */
     question: string;
     /** The last line on the winner card ("Did you call it? Comment below!"); empty for none. The dice deals one of LAST_LINES. */
@@ -103,8 +120,8 @@ export interface Config {
     /** The last half second cross-fades into the first frame, so the video loops without a visible cut. */
     loop: boolean;
     /**
-     * Ask viewers to follow: a follow button once in the race and under the winner card
-     * (src/render), and FOLLOW_LINE after the winner line. Only on a plan with `follow`
+     * Ask viewers to follow: a follow button once in the race or the battle and under the winner
+     * card (src/render), and FOLLOW_LINE after the winner line. Only on a plan with `follow`
      * (shared/features.ts); the studio turns it off on one without.
      */
     follow: boolean;
@@ -153,6 +170,11 @@ export const WINNER_LINES = [
  */
 export const FOLLOW_LINE = 'Follow for more!';
 
+/** Whether the video asks viewers to follow (`look.follow`): the button once in the run and under the winner card, and FOLLOW_LINE. */
+export function asksToFollow(cfg: Config): boolean {
+  return cfg.look.follow;
+}
+
 /** A ball's name as the narrator says it: the sign in "100× Millionaire Balls" is read as nothing. */
 export function spokenName(name: string): string {
   return name.replace(/(\d)\s*×\s*/g, '$1 ');
@@ -165,15 +187,37 @@ export function spokenName(name: string): string {
  * "100 Millionaire Balls wins".
  */
 export function spokenOutro(cfg: Config, vars: { winner: string; time: string }): string {
-  const crowd = [cfg.a, cfg.b].some((c) => c.name === vars.winner && c.count > 1);
+  const crowd = cfg.game === 'ball-race' && [cfg.a, cfg.b].some((c) => c.name === vars.winner && c.count > 1);
   const winner = `${crowd ? 'the crowd of ' : ''}${spokenName(vars.winner)}`;
   const filled = fillTemplate(cfg.voice.outro, { ...vars, winner }).trim();
   const line = filled.charAt(0).toUpperCase() + filled.slice(1);
   // The written line, not the filled one: a ball may be called "Follower Ball".
-  return cfg.look.follow && !/\bfollow/i.test(cfg.voice.outro) ? `${line} ${FOLLOW_LINE}`.trim() : line;
+  return asksToFollow(cfg) && !/\bfollow/i.test(cfg.voice.outro) ? `${line} ${FOLLOW_LINE}`.trim() : line;
 }
 
+/** Arena Clash's winner lines: no race, no finish line, and "survives" says how it is won. */
+export const BATTLE_WINNER_LINES = [
+  '{winner} wins!',
+  '{winner} survives!',
+  '{winner} takes the arena!',
+  'Victory for {winner}!',
+  'The last flag standing: {winner}!',
+  '{winner} wins it in {time} seconds!',
+  'And {winner} is the last one left!',
+];
+
+/** Arena Clash's last lines on the winner card, answering its questions. */
+export const BATTLE_LAST_LINES = [
+  'Did your country win?',
+  'Who should fight next?',
+  'Did you call it?',
+  'Was that your pick?',
+  'Which flags next? Comment below!',
+  'Want a rematch?',
+];
+
 const BASE: Config = {
+  game: 'ball-race',
   seed: '1',
   // Speeds here are only a starting point: loading a matchup balances them
   // (src/sim/balance.ts) so the race fits the video length and ends close.
@@ -182,6 +226,7 @@ const BASE: Config = {
   // A small first layer, broken within the first four hits: something happens in the first second.
   // The top is 10^14 rather than the format's 10^15, which with it would take Fibonacci past 3,200 px/s at 30 s.
   layers: '5, 1000, 1e10, 1e14',
+  battle: { flags: ['rs', 'hr', 'si'], winner: '', speed: 340 },
   physics: { gravity: 0, maxSpeed: 5000 },
   sound: { melody: 'ode', timbre: 'marimba', volume: 0.8, track: 'narrator' },
   voice: { voice: 'af_heart', script: '', outro: WINNER_LINES[0] },
@@ -289,6 +334,11 @@ export function mergeConfig<T>(base: T, patch: unknown): T {
   if (typeof base !== 'object' || base === null) {
     return typeof patch === typeof base ? (patch as T) : base;
   }
+  // A list (the battle's flags) is taken whole when every item has the type of the default's.
+  if (Array.isArray(base)) {
+    const ok = Array.isArray(patch) && patch.every((item) => typeof item === typeof base[0]);
+    return (ok ? [...patch] : [...base]) as T;
+  }
   const from = typeof patch === 'object' && patch !== null ? (patch as Record<string, unknown>) : {};
   const out: Record<string, unknown> = {};
   for (const key of Object.keys(base)) out[key] = mergeConfig((base as Record<string, unknown>)[key], from[key]);
@@ -316,6 +366,10 @@ export function savedConfig(saved: unknown): Config {
   if (cfg.look.cta === OLD_CTA) cfg.look.cta = BASE.look.cta;
   if (!('question' in look)) cfg.look.question = firstQuestion(cfg.seed);
   for (const ball of [cfg.a, cfg.b]) fitBall(ball);
+  // Arena Clash was called Flag Battle while it was being made: a config kept from then is one.
+  if ((cfg.game as string) === 'flag-battle') cfg.game = 'arena-clash';
+  // A game this version does not make (a config from a newer one): the race it can make.
+  if (!GAMES.includes(cfg.game)) cfg.game = 'ball-race';
   return cfg;
 }
 
@@ -336,6 +390,30 @@ function fitBall(ball: Contestant): void {
   ball.strength = Number.isFinite(Number(ball.strength)) && Number(ball.strength) >= 1 ? Math.round(Number(ball.strength)) : 1;
   // A crowd is Always the same's alone.
   ball.count = ball.sequence === 'ones' && Number.isFinite(ball.count) && ball.count >= 1 ? Math.round(ball.count) : 1;
+}
+
+/**
+ * `cfg` as the other game, not yet balanced. What both games share (length, sound, voice, the
+ * follow switch, the loop) stays, and the race's look is kept for the race; a winner line, last
+ * line or question the dice dealt from one game's words is dealt again from the other's, at the
+ * same place in the list, and one the creator wrote stays. A typed opening goes: it names the
+ * other game's players.
+ */
+export function switchGame(cfg: Config, game: Game): Config {
+  const out = structuredClone(cfg);
+  if (out.game === game) return out;
+  out.game = game;
+  const battle = game === 'arena-clash';
+  const swap = (line: string, race: readonly string[], flags: readonly string[]) => {
+    const [from, to] = battle ? [race, flags] : [flags, race];
+    const at = from.indexOf(line);
+    return at < 0 ? line : to[at % to.length];
+  };
+  out.voice.outro = swap(out.voice.outro, WINNER_LINES, BATTLE_WINNER_LINES);
+  out.look.cta = swap(out.look.cta, LAST_LINES, BATTLE_LAST_LINES);
+  if (QUESTIONS.includes(out.look.question) || BATTLE_QUESTIONS.includes(out.look.question)) out.look.question = '';
+  out.voice.script = '';
+  return out;
 }
 
 /** Fills {winner}, {time}… in a line. */

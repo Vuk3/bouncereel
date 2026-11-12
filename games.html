@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- site:head /games -->
+    <title>Games · BounceReel</title>
+    <meta
+      name="description"
+      content="The games BounceReel makes videos of: Ball Race, two balls racing through ever bigger numbers, and Arena Clash, flags cutting each other's strings until one is left. Both balanced to the length you pick."
+    />
+  </head>
+  <body>
+    <!-- site:header -->
+
+    <main id="main">
+      <section class="shell page-top" aria-labelledby="games-title">
+        <header class="section-head">
+          <h1 id="games-title" class="page-title">Two games, one studio</h1>
+          <p>
+            Every BounceReel video is a game played out on screen and balanced to end at the length you pick. Pick the game at the top of the
+            studio: the length, the sound, the narrator, recording and your library work the same in both.
+          </p>
+        </header>
+
+        <!-- One card per game (docs/website.md §4): its frame, icon, name, which plans make it, what it is. The plans are filled in from GET /api/plans (src/site/games-page.ts). -->
+        <ul class="game-list game-list-wide">
+          <li class="game-card" id="ball-race">
+            <div class="game-shot">
+              <img
+                src="/games/ball-race.webp"
+                width="540"
+                height="960"
+                alt="A Ball Race in the night look: two balls, each in its own card, breaking layers of big numbers."
+              />
+            </div>
+            <div class="game-body">
+              <div class="game-head">
+                <!-- game:icon ball-race -->
+                <div>
+                  <h2 class="game-name">Ball Race</h2>
+                  <p class="game-plans" data-game-plans="ball-race">Every plan</p>
+                </div>
+              </div>
+              <p class="game-pitch">Two balls race through layers of ever bigger numbers: Fibonacci against factorial, primes against squares.</p>
+              <ul class="game-points">
+                <li>Each ball hits the floor with the numbers of its sequence, and the first to break every layer reaches the line.</li>
+                <li>Balanced to end close at the length you pick, down to a photo finish.</li>
+                <li>A new matchup every roll of the dice: fourteen sequences, 65 pairings, and powers for a twist on the paid plans.</li>
+                <li>Three looks: paper, night and cards.</li>
+              </ul>
+            </div>
+          </li>
+          <li class="game-card" id="arena-clash">
+            <div class="game-shot">
+              <img
+                src="/games/arena-clash.webp"
+                width="540"
+                height="960"
+                alt="An Arena Clash on its black stage: China, India, the United States and Russia in a round arena, each tied to the ring by a fan of strings in its colour."
+              />
+            </div>
+            <div class="game-body">
+              <div class="game-head">
+                <!-- game:icon arena-clash -->
+                <div>
+                  <h2 class="game-name">Arena Clash</h2>
+                  <p class="game-plans" data-game-plans="arena-clash">Paid plans</p>
+                </div>
+              </div>
+              <p class="game-pitch">Flags in one round arena, each tied to the ring by a fan of strings. Cut theirs, keep yours: the last flag standing wins.</p>
+              <ul class="game-points">
+                <li>Every bounce off the ring ties ten new strings, and a flag that touches a rival's strings cuts them.</li>
+                <li>A flag with no strings left is out. The balls speed up as it goes, and the last outs play in slow motion.</li>
+                <li>Made for three or four flags, from 199 countries; pick the winner yourself, or let the arena decide.</li>
+                <li>Balanced to end at the length you pick, on a black stage made for the feed.</li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="shell close" aria-labelledby="close-title">
+        <div class="stage close-stage">
+          <h2 id="close-title">Pick a game, roll the dice.</h2>
+          <p>Free to start, no card needed.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/signup" data-guest data-signups="open">Start free</a>
+            <button class="btn btn-primary" type="button" disabled data-guest data-signups="closed">Coming soon</button>
+            <a class="btn btn-primary" href="/app" data-member>Open studio</a>
+            <a class="btn btn-ghost" href="/pricing">Compare the plans</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- site:footer -->
+    <script type="module" src="/src/site/games-page.ts"></script>
+  </body>
+</html>

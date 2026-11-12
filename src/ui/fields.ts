@@ -1,6 +1,6 @@
 import { LAST_LINES, type Config, type Special } from '../config.ts';
 import { MELODIES } from '../audio/music.ts';
-import { autoScript } from '../audio/narration.ts';
+import { autoScript, battleScript } from '../audio/narration.ts';
 import { configQuestion } from '../audio/opening.ts';
 import { COLORS } from '../sim/balance.ts';
 import { MAX_BALLS, MAX_CROWD } from '../sim/duel.ts';
@@ -8,7 +8,9 @@ import { SEQUENCES, STRENGTHS, formatBig, parseLayers } from '../sim/sequences.t
 
 // The control panel's tabs, as data. Each field names a path into Config; the
 // panel builds the inputs from this list. The matchup block above the tabs
-// (dice, length, finish gap, sound, look) lives in app.html and app.ts.
+// (dice, length, finish gap, sound, look) and Arena Clash's flags live in
+// app.html and app.ts. A tab, a section or a field with `show` is there only
+// when it says so: the race's balls, layers and physics only in a race.
 //
 // `live` fields take effect on the running video (looks, sound, words);
 // every other change restarts the run, since it changes the simulation.
@@ -36,9 +38,13 @@ export type Field =
   | (Base & { kind: 'color'; swatches: readonly string[] })
   | (Base & { kind: 'check' });
 
+/** Only in a ball race: what is the race's alone (its balls, layers, physics, big numbers). */
+const race: When = (cfg) => cfg.game === 'ball-race';
+
 export interface Section {
   id: string;
   title: string;
+  show?: When;
   /** A ball's section carries that ball's colour. */
   team?: 'a' | 'b';
   fields: Field[];
@@ -47,6 +53,7 @@ export interface Section {
 export interface Tab {
   id: string;
   title: string;
+  show?: When;
   sections: Section[];
 }
 
@@ -131,6 +138,7 @@ export const TABS: Tab[] = [
   {
     id: 'balls',
     title: 'Balls',
+    show: race,
     sections: [
       ball('a', 'Top ball'),
       ball('b', 'Bottom ball'),
@@ -159,7 +167,13 @@ export const TABS: Tab[] = [
         title: 'Narrator',
         // The voices, each with a way to hear it, are drawn above these by app.ts (buildVoiceBlock).
         fields: [
-          { kind: 'textarea', path: 'voice.script', label: 'Opening (leave empty for the automatic one)', live: true, placeholder: autoScript },
+          {
+            kind: 'textarea',
+            path: 'voice.script',
+            label: 'Opening (leave empty for the automatic one)',
+            live: true,
+            placeholder: (cfg) => (cfg.game === 'arena-clash' ? battleScript(cfg) : autoScript(cfg)),
+          },
           { kind: 'text', path: 'voice.outro', label: 'Winner line', live: true, hint: '{winner} and {time} are filled in. The dice deals a new one unless you write your own. Leave it empty for none.' },
         ],
       },
@@ -222,6 +236,7 @@ export const TABS: Tab[] = [
             path: 'look.separator',
             label: 'Big numbers',
             part: 'On screen',
+            show: race,
             live: true,
             options: () => [
               ['.', '1.000.000 (as in the format)'],
@@ -234,6 +249,7 @@ export const TABS: Tab[] = [
       {
         id: 'physics',
         title: 'Physics',
+        show: race,
         fields: [
           { ...speed('a', 'Top ball speed'), hint: 'Balancing sets both speeds when a matchup loads' },
           speed('b', 'Bottom ball speed'),

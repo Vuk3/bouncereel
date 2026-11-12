@@ -10,7 +10,7 @@ sign up; a **plan** decides what the account may make (the free plan's videos ca
 watermark), and the owner manages users, plans and subscriptions in an **admin area**, while using
 the studio like anyone else.
 
-Its first game, and the only one so far, is **ball races**. Two balls race, one in each
+Its first game is **ball races**. Two balls race, one in each
 card, top and bottom. A ball flies in a straight line and bounces off the walls and the
 ceiling for nothing; **only a hit on the floor counts**. The floor is the top **layer**, and
 each floor hit takes the next **term** of the ball's **sequence** off it (Fibonacci 1, 1, 2,
@@ -36,6 +36,17 @@ served by Cloudflare Workers Assets; a small Worker answers `/api/*` and checks 
 before serving the pages behind the sign-in. The only runtime dependency is `kokoro-js`,
 loaded the first time the narrator speaks.
 
+Its second game is **Arena Clash** (`game: 'arena-clash'`, on plans with `allGames`), the
+format known as the string circle: 2 to 12 balls, each a country's **flag**, in one round
+**arena** on a black stage, each tied to the ring by a fan of **strings**. A ball touching a
+rival's strings **cuts** every one it touches; a bounce off the ring ties a bundle of new ones;
+a ball with no strings is out, and the last flag standing wins. It steps by distance, so
+balancing picks a seed and then the speed that puts the last string on the video's length
+exactly ([arena-clash](docs/arena-clash.md)). The two are games of their own: each has its
+world, prediction, balancing, renderer and look. They share the studio around them (phases, the
+narrator, recording, the library, the plans) and, in the drawing, only
+[draw.ts](src/render/draw.ts) and [follow.ts](src/render/follow.ts).
+
 ## Maintaining this document
 
 **This file is a map, not the territory.** It answers *where do I look?*. Keep it short
@@ -53,6 +64,7 @@ enough to read whole before the real work starts.
 | the video library: schema, API routes, links, saving after Record, the Videos page | [docs/video-library.md](docs/video-library.md) |
 | accounts, sessions, roles, plans and features, subscriptions, the change log, the admin area, payments | [docs/accounts-and-billing.md](docs/accounts-and-billing.md) |
 | the public site: pages, shared parts, its look, the home page and hero, images, speed, SEO, legal pages | [docs/website.md](docs/website.md) |
+| Arena Clash: its rules, balancing, the flags and their figures, its look, sound and calls, its card in the studio, what the library keeps | [docs/arena-clash.md](docs/arena-clash.md) |
 | a rule that cuts across areas | **here**, under [Conventions and gotchas](#conventions-and-gotchas) |
 
 **Describe only the present.** History lives in git and on each deep-dive's changelog.
@@ -80,8 +92,10 @@ enough to read whole before the real work starts.
 | [src/config.ts](src/config.ts) | the `Config` type, defaults, the seven built-in matchups, `mergeConfig` |
 | [src/pacing.ts](src/pacing.ts) | the frame around the race (hold, slow motion, winner card) and the race length it leaves |
 | [src/layout.ts](src/layout.ts) | frame geometry: the two cards, built from one template |
-| [src/sim/](src/sim/) | the deterministic simulation, prediction, balancing, random matchups, sequences |
-| [src/render/](src/render/) | Canvas drawing in three looks, and visual-only effects |
+| [src/sim/](src/sim/) | the deterministic simulation, prediction, balancing, random matchups, sequences; Arena Clash's world and balancing (`battle.ts`, `battle-balance.ts`) |
+| [public/games/](public/games/) | each game's icon (`<id>.svg`) and the frame its card on the site shows (`<id>.webp`); [games.html](games.html) is the page about the games ([website](docs/website.md#4-the-home-page)) |
+| [src/battle/](src/battle/) | Arena Clash's countries (names, figures, regions) and the flags' pictures and strings' colours; the SVGs are [public/flags/](public/flags/) |
+| [src/render/](src/render/) | Canvas drawing: the race's three looks and effects (`renderer.ts`, `effects.ts`), Arena Clash's black stage (`battle.ts`), and what both draw with (`draw.ts`, the follow button in `follow.ts`) |
 | [src/audio/](src/audio/) | synth, melodies, the narrator's opening and winner line, Kokoro and its voices |
 | [src/record/recorder.ts](src/record/recorder.ts) | `MediaRecorder`: format choice, start, stop, download |
 | [src/ui/](src/ui/) | the panel's tabs, generated from [fields.ts](src/ui/fields.ts); the theme toggle every page shares; the plan's notes and the account's banner ([plan.ts](src/ui/plan.ts)) |
@@ -135,6 +149,9 @@ enough to read whole before the real work starts.
 | **day** | the daily allowance's window: the UTC calendar day, so it comes back at midnight UTC; what it has used is kept on the account ([accounts-and-billing](docs/accounts-and-billing.md#6-plans-and-features)) |
 | **subscription** | an account's one row naming its plan, status (`active`, `canceled`), source (`manual` or a provider), optional end date; in force or not is worked out on every request, and an ended one falls back to the default plan |
 | **change log** | the append-only record of every subscription, plan and account-standing change: who, when, before, after |
+| **game** | `game` in the config and the library: `ball-race` or `arena-clash`; the panel's switch picks it, and the plan's `allGames` allows the second |
+| **flag**, **arena**, **string**, **cut** | Arena Clash's ball (a country, by code: `rs`, `gb-eng`), its round field, a tie from the ring to a ball (a hundred in a fan at the start, a bundle of ten from every bounce, no most), and a ball touching a rival's strings, which removes every one it touches: the only way strings go ([arena-clash](docs/arena-clash.md)) |
+| **pace** | how many times its starting speed (`battle.speed`) every ball flies at, up to twice by the end, so long duels play faster |
 
 ## Architecture
 
@@ -184,6 +201,14 @@ and the loser the finish gap after it, repeats a few times, and rejects anything
 more than 0.6 s or slower than 140 / faster than 3200 px/s; the generator then tries the
 next combination. The result replaces the config, the run restarts and the matchup card at
 the top of the panel shows "X wins by 0.3 s".
+
+**Arena Clash is picked.** The switch at the top of the panel (`.games`) turns the config into a
+battle (`switchGame`: length, sound, voice and the follow switch stay; the dice's words come from
+the battle's lists) and balances it between frames (`searchBattle`, a seed at a time), the battle
+card saying "Balancing the battle…" while the run on screen goes on; then it loads like any
+matchup. Every edit of the card (flags, how many, winner) balances a new battle the same way.
+Play and Record wait for the flags' pictures; the outs among the last flags play in slow motion,
+as the win does. On a plan without `allGames` the switch is off.
 
 **Play is pressed.** Audio unlocks (a click is required), the run restarts, and, if the run
 has a narrator (the Sound set to Narrator and music, a plan that includes it), its two lines
@@ -274,9 +299,12 @@ takes effect when it passes, with nothing scheduled.
   (not just shape) needs a new key. A config from the library or a file goes through
   `savedConfig`, which reads one from before the looks as the cards look it was recorded with,
   not the new default.
+- **`.track` is the sound's radios**: app.ts reads every `.track input` as `sound.track`. The
+  game switch looks the same and is `.games`; a control styled like the sound's needs a class of
+  its own too.
 - **The dice's Powers in random matchups switch is not in the config** (`bouncereel:dice`): loading a classic, a
   file or a video replaces the config and must not change what the next roll may do. It is off
-  until someone turns it on.
+  until someone turns it on. Where Arena Clash's dice picks flags from is kept beside it (`region`).
 - **The daily allowance counts recordings, not previews or the library** (`users.day_started_at`,
   `users.day_videos`): deleting a video never gives the day back. A day is the UTC calendar
   day, the same for everyone. The server takes the video as Record starts
@@ -294,7 +322,7 @@ takes effect when it passes, with nothing scheduled.
   never sees the pixels, so it cannot check it, and the terms ask that it stays on.
 - **The logo is one drawing in three places**: [public/mark.svg](public/mark.svg),
   [public/favicon.svg](public/favicon.svg) (on an ink tile) and `drawMark` in
-  [renderer.ts](src/render/renderer.ts), which draws it on canvases (the watermark, the share
+  [draw.ts](src/render/draw.ts), which draws it on canvases (the watermark, the share
   image). Change all three together, then make the PNG icons again from favicon.svg on the
   stills page ([website](docs/website.md#5-the-images)).
 - **The site's images are drawn by the renderer** ([scripts/stills.ts](scripts/stills.ts)):

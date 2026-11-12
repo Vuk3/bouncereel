@@ -62,3 +62,15 @@ function panel(pillTop: number): Panel {
 const TOP = panel(FIRST_PILL_TOP);
 export const PANELS: [Panel, Panel] = [TOP, panel(cardBottom(TOP) + BETWEEN)];
 export const VS_Y = cardBottom(TOP) + BETWEEN / 2;
+
+// ── Arena Clash ─────────────────────────────────────────────────────────────
+//
+// One round arena filling the frame's width but 55 px a side, the flags bouncing inside it. What
+// the platforms leave free is y 209 to 1521 (their top bar, their caption zone): the battle's
+// title (src/render/battle.ts) takes 225 to 416 of it, the ring 430 to 1400, and under the ring,
+// in the middle, a line for the follow button or the slow motion tag (1452) and the free plan's
+// watermark (1501). The side buttons' column (x 940 on, from y 902) crosses the ring's right
+// edge: a circle this big cannot keep out of it, and the balls are rarely there.
+
+/** The arena: centre and radius of the ring's inner edge, where balls bounce and strings are tied. */
+export const ARENA = { x: W / 2, y: 915, r: 485 };

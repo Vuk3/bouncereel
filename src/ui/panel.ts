@@ -1,5 +1,5 @@
 import type { Config } from '../config.ts';
-import { TABS, type Field, type Section } from './fields.ts';
+import { TABS, type Field, type Section, type Tab } from './fields.ts';
 
 // Builds the panel's tabs from TABS and keeps them in sync with the config:
 // inputs write straight into the config object, refresh() writes back after
@@ -31,7 +31,9 @@ export function setPath(obj: object, path: string, value: unknown): void {
 export class Panel {
   private bound: Bound[] = [];
   private bodies = new Map<string, HTMLElement>();
-  private tabs: { button: HTMLButtonElement; panel: HTMLElement }[] = [];
+  private tabs: { button: HTMLButtonElement; panel: HTMLElement; tab: Tab }[] = [];
+  private sections: { section: Section; el: HTMLElement }[] = [];
+  private current = 0;
   private readonly config: () => Config;
   private readonly onChange: (field: Field) => void;
 
@@ -60,19 +62,21 @@ export class Panel {
       for (const section of tab.sections) panel.append(this.section(section));
       list.append(button);
       root.append(panel);
-      this.tabs.push({ button, panel });
+      this.tabs.push({ button, panel, tab });
     }
-    // Arrow keys move between tabs, as a tab list should.
+    // Arrow keys move between the tabs shown, as a tab list should.
     list.addEventListener('keydown', (e) => {
-      const current = this.tabs.findIndex((t) => t.button === document.activeElement);
+      const shown = this.tabs.filter((t) => !t.button.hidden);
+      const current = shown.findIndex((t) => t.button === document.activeElement);
       if (current < 0) return;
-      const n = this.tabs.length;
+      const n = shown.length;
       const moves: Partial<Record<string, number>> = { ArrowRight: current + 1, ArrowLeft: current - 1 + n, Home: 0, End: n - 1 };
       const next = moves[e.key];
       if (next === undefined) return;
       e.preventDefault();
-      this.select(next % n);
-      this.tabs[next % n].button.focus();
+      const tab = shown[next % n];
+      this.select(this.tabs.indexOf(tab));
+      tab.button.focus();
     });
     this.select(0);
     this.refresh();
@@ -87,6 +91,10 @@ export class Panel {
 
   refresh(): void {
     const cfg = this.config();
+    // What belongs to the other game goes; a tab gone while open hands over to the first one shown.
+    for (const t of this.tabs) t.button.hidden = t.tab.show ? !t.tab.show(cfg) : false;
+    for (const s of this.sections) s.el.hidden = s.section.show ? !s.section.show(cfg) : false;
+    if (this.tabs[this.current].button.hidden) this.select(this.tabs.findIndex((t) => !t.button.hidden));
     for (const b of this.bound) {
       const { field, input } = b;
       b.row.hidden = field.show ? !field.show(cfg) : false;
@@ -117,6 +125,7 @@ export class Panel {
   }
 
   private select(index: number): void {
+    this.current = index;
     for (const [i, { button, panel }] of this.tabs.entries()) {
       const on = i === index;
       button.setAttribute('aria-selected', String(on));
@@ -140,6 +149,7 @@ export class Panel {
     }
     el.append(heading, body);
     this.bodies.set(section.id, body);
+    this.sections.push({ section, el });
     return el;
   }
 

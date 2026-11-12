@@ -3,7 +3,7 @@ import { LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, soundAllowed, type Sound } from 
 import type { Config, Skin } from '../config.ts';
 import './chrome.ts';
 import type { Facts, Settings } from './hero.ts';
-import { renderPlans } from './pricing.ts';
+import { fillGamePlans, renderPlans } from './pricing.ts';
 
 // The home page. The still frames in the phones are the first paint; the race engine
 // (src/site/hero.ts, the simulation and the renderer) loads only after the page has, so it never
@@ -625,4 +625,5 @@ gallery();
 void renderPlans().then((data) => {
   const line = data && freeLine(data.plans);
   if (line) how.free.textContent = line;
+  if (data) fillGamePlans(data);
 });

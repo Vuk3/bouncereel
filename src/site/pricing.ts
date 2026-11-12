@@ -1,5 +1,5 @@
 import type { AccountResponse, PlanTone, PlansResponse, Price, PublicPlan } from '../../shared/api.ts';
-import { describeFeatures } from '../../shared/features.ts';
+import { GAMES, describeFeatures, gamePlans, type Game } from '../../shared/features.ts';
 import { SIGNUPS_OPEN } from '../../shared/site.ts';
 import { api } from '../api.ts';
 
@@ -107,6 +107,20 @@ function planCard(plan: PublicPlan, data: PlansResponse, current: number | null,
   }
   li.append(top, price, el('p', 'plan-desc', plan.description), action, list);
   return li;
+}
+
+/**
+ * Writes which plans make each game into every `[data-game-plans]` on the page, the Games cards on
+ * the home page and on /games: "Every plan", or "With Champion". A game no plan makes keeps the
+ * words its card was written with.
+ */
+export function fillGamePlans(data: PlansResponse): void {
+  for (const tag of document.querySelectorAll<HTMLElement>('[data-game-plans]')) {
+    const game = tag.dataset.gamePlans as Game;
+    if (!GAMES.includes(game)) continue;
+    const which = gamePlans(game, data.plans);
+    if (which) tag.textContent = which === 'Every plan' ? which : `With ${which}`;
+  }
 }
 
 /**

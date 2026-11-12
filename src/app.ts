@@ -1,15 +1,21 @@
 import type { AccountResponse, DayResponse, NewVideo, PublicPlan, VideoResponse } from '../shared/api.ts';
-import { LOOK_LABELS, soundAllowed, SOUND_LABELS, type Features, type Sound } from '../shared/features.ts';
+import { gameAllowed, LOOK_LABELS, soundAllowed, SOUND_LABELS, type Features, type Game, type Sound } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
 import { AudioEngine } from './audio/engine.ts';
 import { Music } from './audio/music.ts';
 import { VOICES, VoiceCache, introLine, outroLine, plannedLines, previewLine, voiceOf } from './audio/narration.ts';
 import { Sonifier } from './audio/sonify.ts';
-import { DEFAULT_CONFIG, PRESETS, SKINS, mergeConfig, savedConfig, type Config, type Contestant, type Skin, type Special } from './config.ts';
+import { COUNTRIES, DICE_REGIONS, flagName, type DiceRegion } from './battle/countries.ts';
+import { flagSrc, lineColors, loadFlags } from './battle/flags.ts';
+import { DEFAULT_CONFIG, PRESETS, SKINS, asksToFollow, mergeConfig, savedConfig, switchGame, type Battle, type Config, type Contestant, type Skin, type Special } from './config.ts';
 import { addToLibrary, APP_VERSION, postPrompt, retryPending, type Saved } from './library.ts';
 import { download, describeType, pickType, Recorder } from './record/recorder.ts';
-import { Renderer, followAt } from './render/renderer.ts';
+import { BattleRenderer, battleFollowAt, type BattleOverlay } from './render/battle.ts';
+import type { Overlay } from './render/draw.ts';
+import { Renderer, followAt, type RaceOverlay } from './render/renderer.ts';
 import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL, cardHold, narrated, openingShown, spokenSeconds, videoSeconds } from './pacing.ts';
+import { BattleWorld, MAX_FLAGS, MIN_FLAGS, STRIDE, predictBattle, type BattleOutcome } from './sim/battle.ts';
+import { balanceBattle, randomBattle, searchBattle, slowExtra } from './sim/battle-balance.ts';
 import { KEEP_ALL, balance, balanceProblem, diceName, keptWhole, plainName, randomMatchup, relayer, sizeFor, type Keep } from './sim/balance.ts';
 import { SEQUENCES, formatBig } from './sim/sequences.ts';
 import { STEP } from './sim/types.ts';
@@ -19,13 +25,16 @@ import { Panel } from './ui/panel.ts';
 import { bindAccountChrome, dayLine, nextVideoAt, paidTag, planChips, planHoldsBack, planInvite, upgradeLink } from './ui/plan.ts';
 import { bindThemeToggle } from './ui/theme.ts';
 
-// The page: one run at a time, driven by requestAnimationFrame.
+// The page: one run at a time, driven by requestAnimationFrame. A run is a ball race or a Flag
+// Battle (`cfg.game`): each has its world, prediction and renderer, and everything around them
+// (phases, narration, recording, the library, the plan) is the same for both.
 //
 //   intro ─▶ race ─▶ slowmo ─▶ winner ─▶ done
 //
-// The simulation advances in fixed STEPs whatever the frame rate; a phase only
-// changes how much simulated time a frame gets (slow motion is fewer steps per
-// frame, never a different step), so slowing down cannot change the outcome.
+// The simulation advances in fixed steps whatever the frame rate (the race's STEP of time, the
+// battle's of distance, `BattleWorld.nextStep` seconds each); a phase only changes how much simulated
+// time a frame gets (slow motion is fewer steps per frame, never a different step), so slowing
+// down cannot change the outcome.
 // The same determinism lets the page know the whole run in advance: when the
 // deciding moment comes (for slow motion) and both lines the narrator will say
 // (so a recording can generate them before it starts).
@@ -83,12 +92,24 @@ export class App {
   /** What the account's plan includes; anything else stays visible but disabled (applyPlan). */
   private readonly features: Features;
   private cfg: Config;
-  private world: World;
-  private outcome: Outcome;
+  private world: World | BattleWorld;
+  private outcome: Outcome | BattleOutcome;
   private readonly canvas = $<HTMLCanvasElement>('#canvas');
   private readonly renderer: Renderer;
+  /** Draws an Arena Clash, on the same canvas: one game at a time has it. */
+  private readonly arena: BattleRenderer;
   /** Draws first frames off screen: the look thumbnails, and the frame a looping video fades into. */
   private readonly still = new Renderer(document.createElement('canvas'));
+  /** The same for an Arena Clash, on the same canvas, so `still.canvas` is the first frame either way. */
+  private readonly stillArena = new BattleRenderer(this.still.canvas);
+  /** Where the dice picks flags from: the dice's own setting, kept with `powers` (loadDice). */
+  private region: DiceRegion = 'world';
+  /**
+   * An Arena Clash being balanced between frames (searchBattle), and its number: an edit made
+   * meanwhile starts a new one and the old one stops. The battle card shows `pending` until it is done.
+   */
+  private searchJob = 0;
+  private pending: Config | null = null;
   private readonly panel: Panel;
   /**
    * Whether the dice may give a ball a power. The dice's own setting, kept apart from the config
@@ -117,7 +138,7 @@ export class App {
   private raceAt: number | null = null;
   /** Seconds between the winner and the loser touching the line. */
   private margin = 0;
-  /** When in the race the follow button pops up (followAt), from the prediction; null for no room. */
+  /** When in the race or the battle the follow button pops up (planFollow), from the prediction; null for no room. */
   private followTime: number | null = null;
   private acc = 0;
   private paused = true;
@@ -182,16 +203,19 @@ export class App {
     this.plans = plans;
     this.cfg = this.fitPlan(this.load());
     this.before = { a: structuredClone(this.cfg.a), b: structuredClone(this.cfg.b) };
-    this.powers = this.loadDice();
-    this.world = createWorld(this.cfg);
-    this.outcome = predict(this.cfg);
+    ({ powers: this.powers, region: this.region } = this.loadDice());
+    this.world = this.createWorld();
+    this.outcome = this.predictRun();
     this.margin = this.measureMargin();
-    this.followTime = followAt(this.outcome.time, this.outcome.leads);
+    this.followTime = this.planFollow();
     this.renderer = new Renderer(this.canvas);
+    this.arena = new BattleRenderer(this.canvas);
     this.renderer.reset(this.cfg);
+    this.arena.reset(this.cfg);
     this.panel = new Panel($('#sections'), () => this.cfg, (field) => this.changed(field));
     this.panel.body('files').append($('#files'));
     this.buildPresetBlock();
+    this.buildBattleBlock();
     this.buildLookBlock();
     this.buildSoundBlock();
     this.buildFollowSwitch();
@@ -229,6 +253,7 @@ export class App {
     // draws in the fallback, which a recording started later never sees. The
     // thumbnails drawn before it are drawn again in Rubik.
     void Promise.all([600, 700, 800, 900].map((w) => document.fonts.load(`${w} 40px Rubik`))).then(() => this.drawStills());
+    if (this.cfg.game === 'arena-clash') this.loadBattleFlags();
     requestAnimationFrame((t) => this.frame(t));
     void this.openFromLibrary();
     void retryPending(account).then((added) => {
@@ -259,7 +284,7 @@ export class App {
   /** One frame on the canvas: the preview, or the take Record captures from it. */
   private drawFrame(dt: number): void {
     const showing = this.phase === 'winner' || this.phase === 'done';
-    this.renderer.draw(this.world, this.cfg, dt, {
+    const overlay: Overlay = {
       winner: showing ? Math.min(1, this.winnerAge / 0.35) : 0,
       age: showing ? this.winnerAge : 0,
       // The end of a looping video: the first frame fades in over most of END_PAD and holds for
@@ -270,11 +295,20 @@ export class App {
       // has the marks across it too (#preview-note says so), gone from the press of Record on.
       watermark: this.features.watermark,
       preview: this.features.watermark && !this.recorder && !this.takePending,
+      follow: asksToFollow(this.cfg) ? { at: this.followTime } : undefined,
+    };
+    if (this.world instanceof BattleWorld) {
+      const battle: BattleOverlay = { ...overlay, slow: this.phase === 'race' && this.slowed(), lead: (this.acc / this.world.nextStep) * STRIDE };
+      this.arena.draw(this.world, this.cfg, dt, battle);
+      return;
+    }
+    const race: RaceOverlay = {
+      ...overlay,
       opening: openingShown(this.raceAt === null ? null : this.elapsed - this.raceAt),
-      leads: this.outcome.leads,
+      leads: 'leads' in this.outcome ? this.outcome.leads : [],
       margin: this.margin,
-      follow: this.cfg.look.follow ? { at: this.followTime } : undefined,
-    });
+    };
+    this.renderer.draw(this.world, this.cfg, dt, race);
   }
 
   private advance(dt: number): void {
@@ -287,8 +321,7 @@ export class App {
         break;
       case 'race': {
         // The prediction says when the deciding moment comes: slow down just before it.
-        const finish = this.outcome.timedOut ? null : this.outcome.time;
-        this.simulate(dt * (finish !== null && this.world.time > finish - SLOWMO_LEAD ? SLOWMO : 1));
+        this.simulate(dt * (this.slowed() ? SLOWMO : 1));
         if (this.world.winner !== null) this.setPhase(this.world.timedOut ? 'winner' : 'slowmo');
         break;
       }
@@ -312,20 +345,46 @@ export class App {
     }
   }
 
+  /**
+   * Whether the run is at a moment the prediction marked for slow motion: the last SLOWMO_LEAD
+   * before the win, and in a battle the outs among its last flags (BattleOutcome.slow).
+   */
+  private slowed(): boolean {
+    const o = this.outcome;
+    const t = this.world.time;
+    if (!o.timedOut && t > o.time - SLOWMO_LEAD) return true;
+    return 'slow' in o && o.slow.some(([from, to]) => t >= from && t < to);
+  }
+
   private simulate(simDt: number): void {
     this.acc += simDt;
+    const world = this.world;
+    if (world instanceof BattleWorld) {
+      // A battle's step is a px of travel: about six a frame, and up to two seconds' worth after a stall.
+      let steps = 0;
+      while (this.acc >= world.nextStep && steps < 900) {
+        this.acc -= world.nextStep;
+        world.step();
+        steps++;
+      }
+      if (steps === 900) this.acc = 0;
+      const events = world.drain();
+      if (events.length) this.arena.handle(events, world, this.cfg);
+      if (this.cfg.sound.track !== 'silent') this.sonifier?.battle(events, this.cfg);
+      return;
+    }
     let steps = 0;
     while (this.acc >= STEP && steps < 240) {
-      this.world.step(STEP);
+      world.step(STEP);
       this.acc -= STEP;
       steps++;
     }
     // Hopelessly behind (the tab was in the background): drop it rather than spiral.
     if (steps === 240) this.acc = 0;
-    const events = this.world.drain();
-    if (events.length) this.renderer.handle(events, this.world, this.cfg);
+    const events = world.drain();
+    if (events.length) this.renderer.handle(events, world, this.cfg);
     // Every frame, events or not: a lead change can come between hits.
-    if (this.cfg.sound.track !== 'silent') this.sonifier?.play(events, this.cfg, this.world);
+    if (this.cfg.sound.track !== 'silent') this.sonifier?.play(events, this.cfg, world);
   }
 
   private setPhase(phase: Phase): void {
@@ -336,7 +395,8 @@ export class App {
     if (phase === 'done') this.endsAt = this.elapsed + END_PAD;
     if (phase === 'winner') {
       this.winnerAge = 0;
-      this.renderer.celebrate(this.world);
+      if (this.world instanceof BattleWorld) this.arena.celebrate(this.world, this.cfg);
+      else this.renderer.celebrate(this.world);
       this.outroPending = this.narrating();
       // A narrated video played without the narrator holds the card as long as the line would
       // take, so the preview ends where the video will.
@@ -346,12 +406,13 @@ export class App {
 
   private restart(): void {
     window.clearTimeout(this.restartTimer);
-    this.world = createWorld(this.cfg);
-    this.outcome = predict(this.cfg);
+    this.world = this.createWorld();
+    this.outcome = this.predictRun();
     this.margin = this.measureMargin();
-    this.followTime = followAt(this.outcome.time, this.outcome.leads);
+    this.followTime = this.planFollow();
     this.renderer.reset(this.cfg);
-    this.sonifier?.reset(this.cfg, this.outcome.leads);
+    this.arena.reset(this.cfg);
+    this.sonifier?.reset(this.cfg, 'leads' in this.outcome ? this.outcome.leads : []);
     this.acc = 0;
     this.elapsed = 0;
     this.endsAt = Infinity;
@@ -376,14 +437,15 @@ export class App {
   private buildTimeline(): void {
     const t = this.cfg.timing;
     const o = this.outcome;
-    const race = o.timedOut ? o.time : Math.max(0, o.time - SLOWMO_LEAD);
+    // A battle's outs in slow motion are part of the battle: only the win's own is the slow motion here.
+    const race = (o.timedOut ? o.time : Math.max(0, o.time - SLOWMO_LEAD)) + ('slow' in o ? slowExtra(o) : 0);
     const slow = o.timedOut ? 0 : SLOWMO_LEAD / SLOWMO + SLOWMO_TAIL;
     const card = t.startDelay + race + slow;
     const shown = Math.max(1.5, cardHold(this.cfg), this.lineSeconds() + AFTER_OUTRO);
     this.timelineEnd = card + shown + END_PAD;
     const phases: [string, string, number][] = [
       ['hold', 'Hold', t.startDelay],
-      ['race', 'Race', race],
+      ['race', this.cfg.game === 'arena-clash' ? 'Battle' : 'Race', race],
       ['slow', 'Slow motion', slow],
       ['card', 'Winner', shown],
       ['end', this.cfg.look.loop ? 'Loop' : 'End', END_PAD],
@@ -421,8 +483,23 @@ export class App {
     this.clock.classList.toggle('over', shown > video + 0.05);
   }
 
-  /** Seconds between the winner and the loser touching the line, for the predicted race. */
+  /** This config's world: the race's two boxes, or the battle's arena. */
+  private createWorld(cfg = this.cfg): World | BattleWorld {
+    return cfg.game === 'arena-clash' ? new BattleWorld(cfg) : createWorld(cfg);
+  }
+
+  private predictRun(): Outcome | BattleOutcome {
+    return this.cfg.game === 'arena-clash' ? predictBattle(this.cfg) : predict(this.cfg);
+  }
+
+  /** When in the race or the battle the follow button pops up (followAt, battleFollowAt); null for no room. */
+  private planFollow(): number | null {
+    return 'leads' in this.outcome ? followAt(this.outcome.time, this.outcome.leads) : battleFollowAt(this.outcome);
+  }
+
+  /** Seconds between the winner and the loser touching the line, for the predicted race; a battle has no line. */
   private measureMargin(): number {
+    if (this.cfg.game === 'arena-clash') return 0;
     const finish = finishTimes(this.cfg, this.outcome.time + 30);
     return Math.abs(finish[0] - finish[1]);
   }
@@ -434,7 +511,7 @@ export class App {
     if (!this.audio) {
       this.audio = new AudioEngine();
       this.audio.volume = this.cfg.sound.volume;
-      this.sonifier = new Sonifier(this.audio, this.cfg, this.outcome.leads);
+      this.sonifier = new Sonifier(this.audio, this.cfg, 'leads' in this.outcome ? this.outcome.leads : []);
     }
     await this.audio.resume();
     return this.audio;
@@ -460,6 +537,8 @@ export class App {
       if (fromStart) this.paused = true;
       await this.unlock();
       if (fromStart) this.restart();
+      // A battle starts with every flag drawn: a recording must never open on a blank ball.
+      if (this.cfg.game === 'arena-clash') await loadFlags(this.cfg.battle.flags);
       if (this.narrating()) await this.prepareVoice();
       if (ready && !(await ready())) return false;
       this.paused = false;
@@ -475,6 +554,10 @@ export class App {
       return;
     }
     if (this.starting) return;
+    if (this.pending) {
+      this.flash('The battle is still being balanced: Record once it says who wins.');
+      return;
+    }
     const day = this.account.day;
     if (day.limit !== null && day.used >= day.limit) {
       this.flash(`Your plan makes ${day.limit} video${day.limit === 1 ? '' : 's'} a day: the next one is ${nextVideoAt(this.dayEnds())}. Play stays free until then.`, true);
@@ -630,7 +713,7 @@ export class App {
     this.endTake();
     const seconds = (performance.now() - rec.startedAt) / 1000;
     const blob = await rec.stop();
-    const name = `${slug(`${this.cfg.a.name} vs ${this.cfg.b.name}`)}-seed-${slug(this.cfg.seed)}.${rec.extension}`;
+    const name = `${slug(this.title())}-seed-${slug(this.cfg.seed)}.${rec.extension}`;
     download(blob, name);
     const entry = this.libraryEntry(name, rec.type, seconds, stoppedEarly);
     const saved = await addToLibrary(entry, this.account.account.id);
@@ -762,14 +845,41 @@ export class App {
     $('#plan-card').hidden = false;
   }
 
+  /** "Fibonacci Ball vs Doubling Ball", "Serbia vs Croatia vs Slovenia": the video's title and file name. */
+  private title(): string {
+    return this.cfg.game === 'arena-clash' ? this.cfg.battle.flags.map(flagName).join(' vs ') : `${this.cfg.a.name} vs ${this.cfg.b.name}`;
+  }
+
   /** What the library keeps of this run: the config replays it; the rest is for sorting and grouping. */
   private libraryEntry(fileName: string, type: string, seconds: number, stoppedEarly: boolean): NewVideo {
+    const common = {
+      recordedAt: new Date().toISOString(),
+      title: this.title(),
+      fileName,
+      format: describeType(type),
+      seconds: Math.round(seconds * 100) / 100,
+      stoppedEarly,
+      videoLength: this.cfg.timing.video,
+      seed: this.cfg.seed,
+      appVersion: APP_VERSION,
+      // A copy: the panel edits the live config in place, and a save that has to wait is sent later.
+      config: structuredClone(this.cfg) as unknown as Record<string, unknown>,
+    };
+    const o = this.outcome;
+    if ('outs' in o) {
+      const flags = this.cfg.battle.flags;
+      return {
+        ...common,
+        game: 'arena-clash',
+        battle: { flags: [...flags], winner: o.winner === null ? null : flags[o.winner], out: o.outs.map((out) => flags[out.flag]) },
+      };
+    }
     const { a, b } = this.cfg;
-    const winner = this.outcome.winner;
+    const winner = o.winner;
     return {
       game: 'ball-race',
-      recordedAt: new Date().toISOString(),
-      title: `${a.name} vs ${b.name}`,
+      recordedAt: common.recordedAt,
+      title: common.title,
       fileName,
       format: describeType(type),
       seconds: Math.round(seconds * 100) / 100,
@@ -784,7 +894,7 @@ export class App {
         b: { name: b.name, sequence: b.sequence, special: b.special },
         winner: winner === 0 ? 'a' : winner === 1 ? 'b' : null,
         margin: Number.isFinite(this.margin) ? Math.round(this.margin * 1000) / 1000 : null,
-        leadChanges: this.outcome.leadChanges,
+        leadChanges: o.leadChanges,
       },
     };
   }
@@ -868,8 +978,7 @@ export class App {
   private sayOutroWhenFree(): void {
     if (!this.outroPending || this.busy()) return;
     this.outroPending = false;
-    const winner = this.world.teams.find((t) => t.id === this.world.winner);
-    this.outroEnds = this.winnerAge + this.say(outroLine(this.cfg, winner?.name ?? '', this.world.winTime));
+    this.outroEnds = this.winnerAge + this.say(outroLine(this.cfg, this.outcome.winnerName, this.world.winTime));
   }
 
   /**
@@ -951,7 +1060,11 @@ export class App {
     if (!this.features.follow) cfg.look.follow = false;
     this.cfg = cfg;
     this.before = { a: structuredClone(cfg.a), b: structuredClone(cfg.b) };
+    this.pending = null;
+    this.searchJob++;
     $('#balance-note').hidden = true;
+    $('#battle-note').hidden = true;
+    if (cfg.game === 'arena-clash') this.loadBattleFlags();
     this.save();
     this.panel.refresh();
     this.syncTopBlock();
@@ -971,6 +1084,11 @@ export class App {
   }
 
   private syncTopBlock(): void {
+    document.body.dataset.game = this.cfg.game;
+    for (const input of document.querySelectorAll<HTMLInputElement>('.games input')) input.checked = input.value === this.cfg.game;
+    // A race's dice says what a roll will do with its locks (syncDice, from syncMatchup).
+    if (this.cfg.game === 'arena-clash') $('#dice').title = 'New flags from where the dice picks, balanced to the video length';
+    $('#reroll').title = this.cfg.game === 'arena-clash' ? 'The same flags, a new battle' : 'Same matchup, a new race';
     $<HTMLInputElement>('#seed').value = this.cfg.seed;
     $<HTMLInputElement>('#video').value = String(this.cfg.timing.video);
     $('#video-out').textContent = `${this.cfg.timing.video} s`;
@@ -994,6 +1112,11 @@ export class App {
   private fitPlan(cfg: Config): Config {
     const f = this.features;
     let retime = false;
+    // A battle saved on a plan that had Arena Clash opens as a race on one that has not.
+    if (!gameAllowed(f, cfg.game)) {
+      cfg = switchGame(cfg, 'ball-race');
+      retime = true;
+    }
     if (!f.looks.includes(cfg.look.skin)) cfg.look.skin = f.looks[0];
     if (!f.follow && cfg.look.follow) {
       cfg.look.follow = false;
@@ -1009,17 +1132,18 @@ export class App {
       cfg.timing.video = f.maxSeconds;
       retime = true;
     }
-    return retime ? (balance(cfg) ?? cfg) : cfg;
+    return retime ? ((cfg.game === 'arena-clash' ? balanceBattle(cfg) : balance(cfg)) ?? cfg) : cfg;
   }
 
   /** Why the plan does not let this config be recorded, or null when it does. */
   private planProblem(): string | null {
     const f = this.features;
     const c = this.cfg;
+    if (!gameAllowed(f, c.game)) return 'Arena Clash is not in your plan: switch back to Ball race at the top.';
     if (c.timing.video > f.maxSeconds) return `Your plan makes videos up to ${f.maxSeconds} s: set a shorter length under Video.`;
     if (!f.looks.includes(c.look.skin)) return 'That look is not in your plan: pick another under Video.';
     if (!soundAllowed(f, c.sound.track)) return `${SOUND_LABELS[c.sound.track]} is not in your plan: pick another sound under Video.`;
-    if (!f.powers && [c.a, c.b].some((ball) => ball.special !== 'none' && ball.amount > 0)) {
+    if (c.game === 'ball-race' && !f.powers && [c.a, c.b].some((ball) => ball.special !== 'none' && ball.amount > 0)) {
       return 'A ball in this matchup has a power, which your plan does not include: roll a new matchup.';
     }
     return null;
@@ -1038,6 +1162,17 @@ export class App {
     const onPaid = (has: (plan: Features) => boolean) => paid.length > 0 && paid.every((p) => has(p.features));
     const gate = (after: Element, has: (plan: Features) => boolean, invite: string, plain: string) => after.after(planInvite(invite, onPaid(has), plain));
 
+    if (!gameAllowed(f, 'arena-clash')) {
+      const input = $<HTMLInputElement>('.games input[value="arena-clash"]');
+      input.disabled = true;
+      const label = input.closest('label');
+      label?.classList.add('locked');
+      label?.querySelector('span')?.append(paidTag(onPaid((plan) => plan.allGames)));
+      // Which plans have it, by what they are called: only some of the paid ones do.
+      const having = paid.filter((p) => p.features.allGames).map((p) => p.name);
+      const which = having.length ? `Arena Clash comes with ${having.join(' and ')}.` : 'Arena Clash is not in your plan.';
+      gate($('.games'), (plan) => plan.allGames, which, which);
+    }
     if (f.maxSeconds < Number($<HTMLInputElement>('#video').max)) {
       const longest = Math.min(...paid.map((p) => p.features.maxSeconds));
       gate($('#video'), (plan) => plan.maxSeconds > f.maxSeconds, `Up to ${longest} s on the paid plans.`, `Your plan makes videos up to ${f.maxSeconds} s.`);
@@ -1153,8 +1288,12 @@ export class App {
       : 'The narrator speaks when Sound is Narrator and music.';
   }
 
-  /** The matchup card: each ball's name, colour, numbers and power, and its speed against the slower one. */
+  /** The matchup card: each ball's name, colour, numbers and power, and its speed against the slower one. Or the battle's card. */
   private syncMatchup(): void {
+    if (this.cfg.game === 'arena-clash' || this.pending) {
+      this.syncBattle();
+      return;
+    }
     const slower = Math.max(1, Math.min(this.cfg.a.speed, this.cfg.b.speed));
     for (const key of ['a', 'b'] as const) {
       const ball = this.cfg[key];
@@ -1181,18 +1320,25 @@ export class App {
    * The first frame of this run in every look, for the thumbnails of the look picker (without the
    * opening title, which would hide the look under its words); then, drawn last so the still
    * canvas keeps it, the current look's as the video opens, title and all, which a looping video
-   * fades into at the end.
+   * fades into at the end. A battle has one look and its title all through: its first frame alone.
    */
   private drawStills(): void {
+    if (this.cfg.game === 'arena-clash') {
+      this.stillArena.reset(this.cfg);
+      this.stillArena.draw(new BattleWorld(this.cfg), this.cfg, 0, { winner: 0, age: 0 });
+      return;
+    }
+    const first = (cfg: Config, overlay: RaceOverlay) => {
+      this.still.reset(cfg);
+      this.still.draw(createWorld(cfg), cfg, 0, overlay);
+    };
     for (const skin of SKINS) {
       const cfg = { ...this.cfg, look: { ...this.cfg.look, skin } };
-      this.still.reset(cfg);
-      this.still.draw(createWorld(cfg), cfg, 0, { winner: 0, age: 0 });
+      first(cfg, { winner: 0, age: 0 });
       const tile = document.querySelector<HTMLCanvasElement>(`.look input[value="${skin}"] ~ canvas`);
       tile?.getContext('2d')?.drawImage(this.still.canvas, THUMB.x, THUMB.y, THUMB.w, THUMB.h, 0, 0, tile.width, tile.height);
     }
-    this.still.reset(this.cfg);
-    this.still.draw(createWorld(this.cfg), this.cfg, 0, { winner: 0, age: 0, opening: 1 });
+    first(this.cfg, { winner: 0, age: 0, opening: 1 });
   }
 
   /**
@@ -1236,17 +1382,20 @@ export class App {
    * What the dice may do lives under its own key, not in the config: loading a classic, a
    * file or a video from the library replaces the config, and must not change the next roll.
    */
-  private loadDice(): boolean {
+  private loadDice(): { powers: boolean; region: DiceRegion } {
+    const none = { powers: false, region: 'world' as DiceRegion };
     try {
-      return mergeConfig({ powers: false }, JSON.parse(localStorage.getItem(DICE_KEY) ?? '{}')).powers;
+      const dice = mergeConfig<{ powers: boolean; region: string }>(none, JSON.parse(localStorage.getItem(DICE_KEY) ?? '{}'));
+      const region = DICE_REGIONS.find((r) => r.id === dice.region)?.id ?? 'world';
+      return { powers: dice.powers, region };
     } catch {
-      return false;
+      return none;
     }
   }
 
   private saveDice(): void {
     try {
-      localStorage.setItem(DICE_KEY, JSON.stringify({ powers: this.powers }));
+      localStorage.setItem(DICE_KEY, JSON.stringify({ powers: this.powers, region: this.region }));
     } catch {
       // Storage unavailable: the choice lasts until reload.
     }
@@ -1254,8 +1403,12 @@ export class App {
 
   // ── Matchups and prediction ──────────────────────────────────────────────
 
-  /** Balances a matchup to the video length and shows it; says why when it cannot fit. */
+  /** Balances a matchup to the video length and shows it; says why when it cannot fit. A battle is balanced between frames. */
   private loadMatchup(cfg: Config): void {
+    if (cfg.game === 'arena-clash') {
+      this.searchBattle(cfg);
+      return;
+    }
     const balanced = balance(cfg);
     this.setConfig(balanced ?? cfg);
     if (!balanced) this.explainUnbalanced(cfg);
@@ -1375,6 +1528,11 @@ export class App {
    * get new layers and a new race. Says why when nothing fits the locked balls.
    */
   private randomize(): void {
+    if (this.cfg.game === 'arena-clash') {
+      const base = this.pending ?? this.cfg;
+      this.loadMatchup(randomBattle(String(1 + Math.floor(Math.random() * 999_999)), base, base.battle.flags.length, this.region));
+      return;
+    }
     const keep = structuredClone(this.locks);
     const next = randomMatchup(String(1 + Math.floor(Math.random() * 999_999)), this.cfg, { powers: this.powers && this.features.powers, keep });
     if (!next) {
@@ -1395,6 +1553,10 @@ export class App {
 
   /** Same matchup, a new race: new angles from a new seed, balanced again. */
   private reroll(): void {
+    if (this.cfg.game === 'arena-clash') {
+      this.loadMatchup({ ...(this.pending ?? this.cfg), seed: String(1 + Math.floor(Math.random() * 999_999)) });
+      return;
+    }
     for (let i = 0; i < 12; i++) {
       const balanced = balance({ ...this.cfg, seed: String(1 + Math.floor(Math.random() * 999_999)) });
       if (balanced) {
@@ -1407,6 +1569,10 @@ export class App {
 
   private showPrediction(): void {
     const o = this.outcome;
+    if ('outs' in o) {
+      this.showBattlePrediction(o);
+      return;
+    }
     const video = videoSeconds(this.cfg, o.time, o.winnerName);
     const gap = this.cfg.timing.gap;
     // As close as asked: a photo finish, or within 1.5 s of the chosen gap.
@@ -1446,6 +1612,176 @@ export class App {
       !this.uneven && this.planProblem() === null && (day.limit === null || day.used < day.limit) && pickType(this.cfg.sound.track !== 'silent') !== null;
     $('#record').classList.toggle('ghost', !ready && !this.recorder);
     $('#dice').classList.toggle('ghost', ready || this.recorder !== null);
+  }
+
+  // ── Arena Clash ──────────────────────────────────────────────────────────
+
+  /** The game switch, and the battle card's controls: how many flags, where the dice picks, the winner. */
+  private buildBattleBlock(): void {
+    for (const input of document.querySelectorAll<HTMLInputElement>('.games input')) {
+      input.addEventListener('change', () => {
+        if (input.checked) this.setGame(input.value as Game);
+      });
+    }
+    const region = $<HTMLSelectElement>('#region');
+    region.append(...DICE_REGIONS.map((r) => new Option(r.label, r.id)));
+    region.value = this.region;
+    region.addEventListener('change', () => {
+      this.region = region.value as DiceRegion;
+      this.saveDice();
+    });
+    $('#flags-more').addEventListener('click', () => this.editBattle((b) => b.flags.push(this.randomFlag(b.flags))));
+    $('#flags-less').addEventListener('click', () => this.editBattle((b) => b.flags.pop()));
+    const winner = $<HTMLSelectElement>('#battle-winner');
+    // The same battle if it already ends that way: balancing tries the current seed first.
+    winner.addEventListener('change', () => this.editBattle((b) => (b.winner = winner.value), false));
+    const list = $('#flag-list');
+    list.addEventListener('change', (e) => {
+      const select = (e.target as HTMLElement).closest('select');
+      if (!select) return;
+      const i = Number(select.dataset.index);
+      this.editBattle((b) => {
+        // A flag already in the battle swaps places with the one it replaces.
+        const other = b.flags.indexOf(select.value);
+        if (other >= 0) b.flags[other] = b.flags[i];
+        b.flags[i] = select.value;
+      });
+    });
+    list.addEventListener('click', (e) => {
+      const button = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-index]');
+      if (button) this.editBattle((b) => (b.flags[Number(button.dataset.index)] = this.randomFlag(b.flags)));
+    });
+  }
+
+  /** Ball race or Arena Clash: the settings both share stay (switchGame), and the other game is balanced to them. */
+  private setGame(game: Game): void {
+    const current = this.pending ?? this.cfg;
+    if (game === current.game) return;
+    this.loadMatchup(switchGame(current, game));
+  }
+
+  /** A change to the battle's flags or winner, balanced as a new battle (a new seed, unless `reseed` is off). */
+  private editBattle(change: (b: Battle) => void, reseed = true): void {
+    const next = structuredClone(this.pending ?? this.cfg);
+    change(next.battle);
+    if (!next.battle.flags.includes(next.battle.winner)) next.battle.winner = '';
+    if (reseed) next.seed = String(1 + Math.floor(Math.random() * 999_999));
+    this.loadMatchup(next);
+  }
+
+  /** A flag not yet in the battle from where the dice picks, or from everywhere when that has none left. */
+  private randomFlag(taken: string[]): string {
+    const free = COUNTRIES.filter((c) => !taken.includes(c.code));
+    const test = DICE_REGIONS.find((r) => r.id === this.region)?.test ?? (() => true);
+    const near = free.filter(test);
+    const from = near.length ? near : free;
+    return from[Math.floor(Math.random() * from.length)].code;
+  }
+
+  /**
+   * Balances a battle a seed at a time between frames (searchBattle), the card showing its flags
+   * and "Balancing" meanwhile; the run on screen goes on until the new one is ready. An edit made
+   * meanwhile starts over from it.
+   */
+  private searchBattle(cfg: Config): void {
+    const job = ++this.searchJob;
+    this.pending = cfg;
+    document.body.dataset.game = cfg.game;
+    $('#battle-note').hidden = true;
+    this.syncBattle();
+    this.loadBattleFlags(cfg);
+    const search = searchBattle(cfg);
+    const slice = () => {
+      if (job !== this.searchJob) return;
+      // A dozen milliseconds a slice: the preview keeps its frames while a hard battle takes a second.
+      const until = performance.now() + 12;
+      let step = search.next();
+      while (!step.done && performance.now() < until) step = search.next();
+      if (!step.done) {
+        window.setTimeout(slice, 0);
+        return;
+      }
+      this.setConfig(step.value ?? cfg);
+      if (!step.value) this.explainBattle(cfg);
+    };
+    window.setTimeout(slice, 0);
+  }
+
+  /** Why a battle did not balance, under its card until it changes, and in a message. */
+  private explainBattle(cfg: Config): void {
+    const winner = cfg.battle.winner ? flagName(cfg.battle.winner) : '';
+    const text = winner
+      ? `No battle of these flags ended with ${winner} winning in a ${cfg.timing.video} s video. Try another length, or Random as the winner.`
+      : `These flags did not fit a ${cfg.timing.video} s video. Try another length, or fewer flags.`;
+    const note = $('#battle-note');
+    note.textContent = text;
+    note.hidden = false;
+    this.flash(text);
+  }
+
+  /** Loads the battle's flags, then shows them: in the card's rings, their strings' colours, and the first frames. */
+  private loadBattleFlags(cfg = this.cfg): void {
+    void loadFlags(cfg.battle.flags).then(() => {
+      this.syncBattle();
+      if (this.cfg.game === 'arena-clash') this.drawStills();
+    });
+  }
+
+  /** The battle card: a row per flag (its flag in its strings' colour, its country, a die), how many, and the winner. */
+  private syncBattle(): void {
+    const { flags, winner } = (this.pending ?? this.cfg).battle;
+    const colors = lineColors(flags);
+    const list = $('#flag-list');
+    while (list.children.length < flags.length) list.append(this.flagRow(list.children.length));
+    while (list.children.length > flags.length) list.lastElementChild?.remove();
+    flags.forEach((code, i) => {
+      const row = list.children[i] as HTMLElement;
+      row.style.setProperty('--line', colors[i]);
+      const img = row.querySelector('img')!;
+      if (img.getAttribute('src') !== flagSrc(code)) img.src = flagSrc(code);
+      row.querySelector('select')!.value = code;
+    });
+    setText($('#flags-count'), String(flags.length));
+    $<HTMLButtonElement>('#flags-less').disabled = flags.length <= MIN_FLAGS;
+    $<HTMLButtonElement>('#flags-more').disabled = flags.length >= MAX_FLAGS;
+    const select = $<HTMLSelectElement>('#battle-winner');
+    select.replaceChildren(new Option('Random', ''), ...flags.map((c) => new Option(flagName(c), c)));
+    select.value = winner;
+    if (this.pending) {
+      $('#battle-verdict').classList.remove('warn');
+      $('#battle-prediction').textContent = 'Balancing the battle…';
+    }
+  }
+
+  /** One flag's row in the card: its flag, every country to pick from, and a die for a random one. */
+  private flagRow(i: number): HTMLLIElement {
+    const row = document.createElement('li');
+    const img = Object.assign(document.createElement('img'), { alt: '', width: 26, height: 26, decoding: 'async' });
+    const select = document.createElement('select');
+    select.dataset.index = String(i);
+    select.setAttribute('aria-label', `Flag ${i + 1}`);
+    select.append(...COUNTRIES.map((c) => new Option(c.name, c.code)));
+    const dice = Object.assign(document.createElement('button'), { type: 'button', className: 'icon-button small', title: 'A random flag here' });
+    dice.dataset.index = String(i);
+    dice.setAttribute('aria-label', `A random flag in place ${i + 1}`);
+    dice.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" /><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" stroke="none" /></svg>';
+    row.append(img, select, dice);
+    return row;
+  }
+
+  /** Who wins, when, and how long the video runs; warned when it no longer lands on the length. */
+  private showBattlePrediction(o: BattleOutcome): void {
+    const video = videoSeconds(this.cfg, o.time + slowExtra(o), o.winnerName);
+    this.uneven = o.timedOut || Math.abs(video - this.cfg.timing.video) > 1.5;
+    $('#battle-verdict').classList.toggle('warn', this.uneven);
+    const winner = Object.assign(document.createElement('strong'), { textContent: o.winnerName });
+    const first = o.outs.length > 1 ? ` · first flag out at ${o.outs[0].time.toFixed(1)} s` : '';
+    const detail = Object.assign(document.createElement('span'), {
+      textContent: o.timedOut ? `Time runs out at ${o.time.toFixed(1)} s, so the most strings wins` : `The video runs ${Math.round(video)} s${first}`,
+    });
+    $('#battle-prediction').replaceChildren(winner, ` ${o.timedOut ? 'leads' : 'wins'} after ${o.time.toFixed(1)} s`, detail);
+    this.syncPrimary();
   }
 
   // ── Panel extras ─────────────────────────────────────────────────────────
@@ -1518,7 +1854,7 @@ export class App {
 
     $('#export').addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(this.cfg, null, 2)], { type: 'application/json' });
-      download(blob, `${slug(`${this.cfg.a.name} vs ${this.cfg.b.name}`)}.json`);
+      download(blob, `${slug(this.title())}.json`);
     });
     const importer = $<HTMLInputElement>('#import');
     importer.addEventListener('change', async () => {
@@ -1551,13 +1887,15 @@ export class App {
 
   /**
    * Ask viewers to follow (look.follow): the follow button and "Follow for more!". It keeps the
-   * winner card up longer (pacing.ts), so the race is balanced again, as for Sound.
+   * winner card up longer (pacing.ts), so the race or the battle is balanced again, as for Sound.
    */
   private buildFollowSwitch(): void {
     const follow = $<HTMLInputElement>('#follow');
     follow.addEventListener('change', () => {
-      this.cfg.look.follow = follow.checked;
-      this.loadMatchup(this.cfg);
+      // A battle still being balanced is the one to change, not the one on screen.
+      const cfg = this.pending ?? this.cfg;
+      cfg.look.follow = follow.checked;
+      this.loadMatchup(cfg);
     });
   }
 
@@ -1730,7 +2068,7 @@ export class App {
         ? `REC ${((performance.now() - this.recorder.startedAt) / 1000).toFixed(1)} s`
         : this.paused
           ? `Paused · ${time} s`
-          : `${this.phase === 'race' ? 'Racing' : this.phase === 'intro' ? 'Starting' : this.phase === 'slowmo' ? 'Slow motion' : 'Finished'}${this.cfg.sound.track === 'silent' ? ' · silent' : this.narrating() ? '' : ' · no voice'} · ${time} s`;
+          : `${this.phase === 'race' ? (this.cfg.game === 'arena-clash' ? 'Fighting' : 'Racing') : this.phase === 'intro' ? 'Starting' : this.phase === 'slowmo' ? 'Slow motion' : 'Finished'}${this.cfg.sound.track === 'silent' ? ' · silent' : this.narrating() ? '' : ' · no voice'} · ${time} s`;
     setText($('#status'), status);
   }
 
