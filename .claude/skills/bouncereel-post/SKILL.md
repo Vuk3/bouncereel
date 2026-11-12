@@ -54,7 +54,7 @@ changes:
 | `BounceReel arena clash: A vs B vs C` | the countries, as written |
 | `Flags: A, B, C (3)` | the countries in the video's order, and how many |
 | `Winner: …` and `Out, first to last: …` | **for you only**: the winner and the order the others went out. Neither is told, nor who goes first or lasts long |
-| `On screen all through: …` | what the video shows from its first frame: who is in it, its title (the question), how many flags are left, each flag's strings counted under it. The title is the video's own question: the posts pose the same choice |
+| `On screen all through: …` | what the video shows from its first frame: who is in it, its title (the question), how many flags are left, each flag's strings counted under it. The title is the video's own question: the posts pose the same choice. A region over the names (`"THE BALKANS" over …`, when every flag is from one) is the format's own lead ("EAST ASIA: WHICH FLAG SURVIVES?"): a title may open with it |
 | `Video`, `Last line…`, `Asks viewers to follow…`, `Seed`, `File`, `Library id` | as for a race |
 
 - **Equal billing**: name every country up to four; with more, how many and a few of them in the

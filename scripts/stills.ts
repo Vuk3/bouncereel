@@ -75,7 +75,14 @@ function midRace(cfg: Config, at: number): HTMLCanvasElement {
  */
 const SHOWCASE = { flags: ['cn', 'in', 'us', 'ru'], question: 'Which flag survives?', seed: '7' };
 
-/** An Arena Clash `at` (0..1) of the way to the predicted win, drawn as playback would: trails, ripples, the balls a step ahead. */
+/**
+ * An Arena Clash `at` (0..1) of the way to the predicted win, drawn as playback would: trails,
+ * ripples, the balls a step ahead. Then on to the first moment with no number in the air (QUIET
+ * seconds since the last bounce's "+10" and the last cut's "-34", within MAX_WAIT): on a still card
+ * they read as stuck to the balls.
+ */
+const QUIET = 0.9;
+const MAX_WAIT = 4;
 async function midBattle(cfg: Config, at: number): Promise<HTMLCanvasElement> {
   await loadFlags(cfg.battle.flags);
   const renderer = new BattleRenderer(document.createElement('canvas'));
@@ -83,13 +90,16 @@ async function midBattle(cfg: Config, at: number): Promise<HTMLCanvasElement> {
   const world = new BattleWorld(cfg);
   const until = predictBattle(cfg).time * at;
   let acc = 0;
-  while (world.time < until) {
+  let quiet = 0;
+  while (world.time < until || (quiet < QUIET && world.time < until + MAX_WAIT)) {
     acc += 1 / 60;
     while (acc >= world.nextStep) {
       acc -= world.nextStep;
       world.step();
     }
-    renderer.handle(world.drain(), world, cfg);
+    const events = world.drain();
+    quiet = events.some((e) => e.type === 'tie' || e.type === 'cut') ? 0 : quiet + 1 / 60;
+    renderer.handle(events, world, cfg);
     renderer.draw(world, cfg, 1 / 60, { winner: 0, age: 0, lead: (acc / world.nextStep) * STRIDE });
   }
   return renderer.canvas;

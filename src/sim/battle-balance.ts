@@ -72,6 +72,21 @@ const RUSH = 1;
 const TRIES = 120;
 /** One flag of up to twelve has to win: more seeds before giving up. */
 const WANTED_TRIES = 400;
+/**
+ * Four battles in five ask for a comeback, as four races in five do (balance.ts COMEBACK): the
+ * winner holds fewer strings than a rival for longer than it holds the most, and takes the lead
+ * for good only in the battle's last 30 %, so the counts under the balls never give the end away
+ * and viewers stay to see it. The fifth asks for the flag ahead to hold on: a viewer who learnt
+ * that the flag behind always wins would know the end from the first seconds. Which a battle asks
+ * for comes from the seed it is balanced from, not each one tried.
+ */
+const COMEBACK = 0.8;
+const COMEBACK_FROM = 0.7;
+
+/** Behind for longer than ahead, and ahead for good only in the battle's last 30 %. */
+export function isBattleComeback(o: BattleOutcome): boolean {
+  return o.trailed > o.led && o.decided >= COMEBACK_FROM * o.time;
+}
 
 /** The longest stretch of the battle without a flag going out, as a share of it: 0 for two flags, who have only the end. */
 export function spread(outcome: BattleOutcome, flags: number): number {
@@ -118,6 +133,7 @@ export function* searchBattle(cfg: Config): Generator<number, Config | null, voi
   // The longest a flag's winner line allows: what the time limit is set for.
   const race = raceSeconds(cfg);
   const wanted = cfg.battle.winner ? cfg.battle.flags.indexOf(cfg.battle.winner) : -1;
+  const comeback = createRng(`comeback:${cfg.seed}`).next() < COMEBACK;
   let best: { cfg: Config; score: number } | null = null;
   const tries = wanted >= 0 ? WANTED_TRIES : TRIES;
   for (let i = 0; i < tries; i++) {
@@ -130,9 +146,11 @@ export function* searchBattle(cfg: Config): Generator<number, Config | null, voi
     const speed = (run.time + slowExtra(run)) / targets[run.winner];
     if (speed < MIN_SPEED || speed > MAX_SPEED || (wanted >= 0 && run.winner !== wanted)) continue;
     const landed = mergeConfig(trial, { battle: { speed }, timing: { maxSeconds: Math.ceil(race) + 30 } });
-    const { score, good, fair } = uneven(run, flags, speed);
+    const fit = uneven(run, flags, speed);
+    // A battle that is not the story its seed asks for is worse than any schedule, and kept only if no other lands.
+    const score = fit.score + (isBattleComeback(run) === comeback ? 0 : 1);
     if (!best || score < best.score) best = { cfg: landed, score };
-    if (score <= good || (i >= FAIR_AFTER && score <= fair)) return best.cfg;
+    if (score <= fit.good || (i >= FAIR_AFTER && score <= fit.fair)) return best.cfg;
   }
   return best?.cfg ?? null;
 }

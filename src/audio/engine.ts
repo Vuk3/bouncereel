@@ -205,6 +205,32 @@ export class AudioEngine {
     this.start(t, len + 0.05, thump);
   }
 
+  /**
+   * A heartbeat, lub then dub 170 ms later (an Arena Clash's flag in danger): each a sine falling
+   * from 150 to 50 Hz, with its octave above for phone speakers, which give out below about
+   * 200 Hz and would leave the beat silent. It never waits for the voice cap, as the picture
+   * beats either way.
+   */
+  heartbeat(): void {
+    const now = this.ctx.currentTime + 0.004;
+    for (const [after, level] of [
+      [0, 0.7],
+      [0.17, 0.45],
+    ]) {
+      const t = now + after;
+      for (const [ratio, part] of [
+        [1, 1],
+        [2, 0.35],
+      ]) {
+        const o = this.ctx.createOscillator();
+        o.frequency.setValueAtTime(150 * ratio, t);
+        o.frequency.exponentialRampToValueAtTime(50 * ratio, t + 0.14);
+        o.connect(envelope(this.channel(0), t, level * part, 0.004, 0.15));
+        this.start(t, 0.2, o);
+      }
+    }
+  }
+
   /** The win: an arpeggio into a held major chord over a noise swell. */
   fanfare(): void {
     const ctx = this.ctx;

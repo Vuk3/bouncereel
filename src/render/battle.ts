@@ -1,10 +1,10 @@
 import { SITE_HOST } from '../../shared/site.ts';
 import { openingQuestion } from '../audio/opening.ts';
-import { country } from '../battle/countries.ts';
+import { country, sharedRegion } from '../battle/countries.ts';
 import { flagPicture, lineColors } from '../battle/flags.ts';
 import type { Config } from '../config.ts';
 import { ARENA, H, W } from '../layout.ts';
-import type { BattleEvent, BattleOutcome, BattleWorld, Flag, Str } from '../sim/battle.ts';
+import { BUNDLE, HEARTBEAT, inDanger, type BattleEvent, type BattleOutcome, type BattleWorld, type Flag, type Str } from '../sim/battle.ts';
 import { createRng, type Rng } from '../sim/rng.ts';
 import { Effects } from './effects.ts';
 import { FONT, PREVIEW_MARK_FONT, WHITE, drawMark, easeOutBack, fitFont, outlined, paintPreviewMarks, rgba, roundRect, type Overlay } from './draw.ts';
@@ -14,15 +14,18 @@ import { END_HAND, FOLLOW_IN, FOLLOW_PAD, FOLLOW_RACE_TAP, FOLLOW_RED, FOLLOW_SH
 // where only the strings and the flags are lit. The race's looks (`look.skin`) are the race's;
 // a battle has none to choose.
 //
-//   the title   under the platforms' top bar: who is in it (the names up to four flags, those
-//               out struck through, else how many), the video's question in big type, and
-//               under it how many are left, which turns into "CROATIA OUT" as a flag goes
+//   the title   under the platforms' top bar: the region all its flags are from, if one; who is
+//               in it (the names up to four flags, those out struck through, else how many), the
+//               video's question in big type, and under it how many are left, which turns into
+//               "CROATIA OUT" as a flag goes
 //   the arena   a thin white ring; every string from where it is tied to its ball, fine lines in
 //               the flag's colour that add up to a lit wedge where they are many; the balls, each
-//               its flag in a ring of its colour, glowing, the strings it holds counted under it
+//               its flag in a ring of its colour, glowing, the strings it holds counted under it,
+//               red and beating once it is down to its last bundle
 //
-// A cut string lingers a moment as a ghost, with sparks where the rival is; a bounce ripples on
-// the ring where it ties its bundle; a flag out bursts and shakes the frame. Slow motion says so under
+// A cut string lingers a moment as a ghost, with sparks where the rival is, and a sweep through a
+// bundle or more shows how many it took over the cutter ("-34"); a bounce ripples on the ring where
+// it ties its bundle, and "+10" rises from there; a flag out bursts and shakes the frame. Slow motion says so under
 // the ring, in the middle, where the follow button also pops up once (FOLLOW_SHOW). The winner card, the loop and
 // the watermark do what the race's do, each game drawing its own; what the two share is in
 // draw.ts and follow.ts. Effects run on frame time with their own seeded randomness: nothing
@@ -45,7 +48,19 @@ const MUTED = '#9aa3b5';
  * (3:4), so the names at 244 were cut and the black under the ring was a third of the frame.
  */
 const DROP = 80;
-/** The title block, by the middle of each line: under TikTok's search bar (to y 247) and the profile grid's top (240), over the ring (from 510). */
+/**
+ * How big the arena is drawn, of the simulation's, round its centre: 892 px across, not 970. At
+ * full size the ring came within 55 px of the frame's sides, and Instagram on an iPhone, filling
+ * the screen's height, crops about 38 px a side (measured on a screenshot): the ring touched the
+ * screen's edges and its right was cut, under the side buttons. The balls, strings and counts
+ * are smaller by as much. The drawing alone, as DROP is.
+ */
+const SCALE = 0.92;
+/** Where the arena's centre is drawn on the frame, and its ring's lowest point (y 1441). */
+const CENTRE_Y = ARENA.y + DROP;
+const RING_BOTTOM = CENTRE_Y + ARENA.r * SCALE;
+/** The title block, by the middle of each line: under TikTok's search bar (to y 247) and the profile grid's top (240), over the ring (from 549). */
+const REGION_Y = 196 + DROP;
 const KICKER_Y = 244 + DROP;
 const HEADLINE_Y = 308 + DROP;
 const STATUS_Y = 388 + DROP;
@@ -63,18 +78,30 @@ const STRING_W = 2.2;
 const STRING_ALPHA = 0.6;
 /** Seconds a cut string stays as a fading ghost: long enough to see what the rival took. */
 const GHOST = 0.22;
+/** A bounce's "+10": its size, and how far inside the ring from where the bundle is tied, so it reads off the ring's line. */
+const TIE_SIZE = 42;
+const TIE_IN = 34;
+/**
+ * A sweep's "-34" over the cutter: cuts of one flag's strings by one ball count as one sweep while
+ * they come within TALLY_JOIN seconds of each other (a ball crossing a fan cuts a few a step), it
+ * shows once it is a bundle or more (a nick of three would be numbers all over the arena), and
+ * after the sweep it rises and fades over TALLY_FADE.
+ */
+const TALLY_JOIN = 0.2;
+const TALLY_FADE = 0.7;
+const BIG_CUT = BUNDLE;
 /** Positions a ball's trail keeps: about a sixth of a second at 60 fps. */
 const TRAIL = 10;
 /**
  * The line under the ring, in the middle of the frame: the follow button and the slow motion
- * tag, never both at once (battleFollowAt). Between the ring (to y 1480, its glow a little
+ * tag, never both at once (battleFollowAt). Between the ring (to y 1441, its glow a little
  * further) and the free plan's mark; the black below that is the platforms' caption, account
  * and music (from about y 1620 on TikTok, 1690 on Shorts, 1740 on Reels, measured), where a
  * button would be read by nobody.
  */
-const FOOTER_Y = 1452 + DROP;
+const FOOTER_Y = RING_BOTTOM + 52;
 /** Where the free plan's mark sits: under that line, above the platforms' captions. */
-const WATERMARK_Y = 1501 + DROP;
+const WATERMARK_Y = FOOTER_Y + 49;
 /** The follow button on the stage: framed in white, and white with dark type once followed. */
 const FOLLOW_STYLE: FollowStyle = { ink: WHITE, card: WHITE, text: STAGE, shadow: false };
 /** The winner card's middle, over the ring's, and its button under it, as the race's is. */
@@ -98,6 +125,19 @@ interface Spark {
   color: string;
 }
 
+/** One sweep of `by` through `flag`'s strings: how many it has cut, and where its number is (BIG_CUT). */
+interface Tally {
+  flag: number;
+  by: number;
+  n: number;
+  /** Seconds since its last cut: it follows the cutter while cuts keep coming (TALLY_JOIN), then rises and fades. */
+  idle: number;
+  /** Seconds it has been shown, for its pop. */
+  shown: number;
+  x: number;
+  y: number;
+}
+
 /** Strings just cut: where each was tied, and where their ball was. */
 interface Ghost {
   strings: Str[];
@@ -116,6 +156,7 @@ export class BattleRenderer {
   private sparks: Spark[] = [];
   private ghosts: Ghost[] = [];
   private rings: { x: number; y: number; age: number; color: string; size: number }[] = [];
+  private tallies: Tally[] = [];
   /** The flag that last went out and the seconds since: its OUT in place of the count. */
   private out: { flag: number; age: number } | null = null;
   /** Each ball's last positions, flattened x, y, oldest first: its trail. */
@@ -145,6 +186,7 @@ export class BattleRenderer {
     this.sparks = [];
     this.ghosts = [];
     this.rings = [];
+    this.tallies = [];
     this.out = null;
     this.trails = new Map();
     this.slow = 0;
@@ -154,7 +196,15 @@ export class BattleRenderer {
   handle(events: BattleEvent[], world: BattleWorld, cfg: Config): void {
     const colors = lineColors(cfg.battle.flags);
     for (const e of events) {
-      if (e.type === 'tie') this.rings.push({ x: e.x, y: e.y, age: 0, color: colors[e.flag], size: 46 });
+      if (e.type === 'tie') {
+        this.rings.push({ x: e.x, y: e.y, age: 0, color: colors[e.flag], size: 46 });
+        // Where the strings come from, as a number: the bundle it tied, rising from where it is tied.
+        const text = `+${e.n}`;
+        this.ctx.font = `800 ${TIE_SIZE}px ${FONT}`;
+        const nx = (e.x - ARENA.x) / ARENA.r;
+        const ny = (e.y - ARENA.y) / ARENA.r;
+        this.effects.float(e.x - nx * TIE_IN, e.y - ny * TIE_IN, text, colors[e.flag], TIE_SIZE, this.ctx.measureText(text).width);
+      }
       else if (e.type === 'clash') this.rings.push({ x: e.x, y: e.y, age: 0, color: WHITE, size: 30 });
       else if (e.type === 'cut') {
         const owner = world.flags[e.flag];
@@ -162,6 +212,11 @@ export class BattleRenderer {
         this.ghosts.push({ strings: e.strings, x: owner.x, y: owner.y, age: 0, color });
         // Sparks off the rival's edge, toward the ball whose strings it is in; a few, since a fan being swept sends them every frame.
         const cutter = world.flags[e.by];
+        const sweep = this.tallies.find((t) => t.flag === e.flag && t.by === e.by && t.idle < TALLY_JOIN);
+        if (sweep) {
+          sweep.n += e.n;
+          sweep.idle = 0;
+        } else this.tallies.push({ flag: e.flag, by: e.by, n: e.n, idle: 0, shown: 0, x: cutter.x, y: cutter.y });
         const dx = owner.x - cutter.x;
         const dy = owner.y - cutter.y;
         const d = Math.hypot(dx, dy) || 1;
@@ -202,9 +257,11 @@ export class BattleRenderer {
     ctx.save();
     ctx.translate(sx, sy);
     this.drawTitle(world, cfg, colors);
-    // The arena and all that happens in it, in the simulation's own px, DROP lower on the frame.
+    // The arena and all that happens in it, in the simulation's own px: SCALE of its size round its centre, DROP lower on the frame.
     ctx.save();
-    ctx.translate(0, DROP);
+    ctx.translate(ARENA.x, CENTRE_Y);
+    ctx.scale(SCALE, SCALE);
+    ctx.translate(-ARENA.x, -ARENA.y);
     this.drawRing();
     this.drawGhosts();
     this.drawStrings(world, colors);
@@ -212,8 +269,10 @@ export class BattleRenderer {
     for (const f of world.flags) if (f.alive) this.drawTrail(f, colors[f.id]);
     for (const f of world.flags) if (f.alive) this.drawBall(f, colors[f.id]);
     // Every count over every ball: two balls side by side would hide one's number behind the other. None once the battle is won.
-    if (world.winner === null) for (const f of world.flags) if (f.alive) this.drawCount(f);
+    if (world.winner === null) for (const f of world.flags) if (f.alive) this.drawCount(f, world.time);
     this.drawSparks();
+    this.effects.drawTexts(ctx, FONT, STAGE);
+    this.drawTallies(world, colors);
     this.effects.drawPieces(ctx, false);
     ctx.restore();
     if (this.slow > 0 && world.winner === null) this.drawSlowTag();
@@ -247,6 +306,11 @@ export class BattleRenderer {
     this.ghosts = this.ghosts.filter((g) => g.age < GHOST);
     for (const r of this.rings) r.age += dt;
     this.rings = this.rings.filter((r) => r.age < 0.45);
+    for (const t of this.tallies) {
+      t.idle += dt;
+      if (t.n >= BIG_CUT) t.shown += dt;
+    }
+    this.tallies = this.tallies.filter((t) => t.idle < TALLY_JOIN + TALLY_FADE);
     if (this.out) this.out.age += dt;
     this.slow = slow ? this.slow + dt : 0;
   }
@@ -271,6 +335,7 @@ export class BattleRenderer {
   private drawTitle(world: BattleWorld, cfg: Config, colors: string[]): void {
     const ctx = this.ctx;
     ctx.textBaseline = 'middle';
+    this.drawRegion(cfg);
     this.drawKicker(world, colors);
     // The question, without the full stop a spoken sentence ends on.
     const headline = openingQuestion(cfg).toUpperCase().replace(/\.$/, '');
@@ -281,6 +346,20 @@ export class BattleRenderer {
     ctx.fillText(headline, W / 2, HEADLINE_Y);
     ctx.letterSpacing = '0px';
     this.drawStatus(world, colors);
+  }
+
+  /** The region every flag is from, small over the names ("THE BALKANS"), as the format's titles lead with it; nothing when they are from all over. */
+  private drawRegion(cfg: Config): void {
+    const region = sharedRegion(cfg.battle.flags);
+    if (!region) return;
+    const ctx = this.ctx;
+    ctx.letterSpacing = '8px';
+    ctx.font = `800 30px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = MUTED;
+    // Centred on the letters, not on the trailing letter spacing.
+    ctx.fillText(region.label.toUpperCase(), W / 2 + 4, REGION_Y);
+    ctx.letterSpacing = '0px';
   }
 
   /**
@@ -492,15 +571,63 @@ export class BattleRenderer {
     this.flagDisc(f.code, x, y, f.r - ring, color, ring);
   }
 
-  /** The strings a ball holds, under it, white in a dark outline so it reads over strings and other balls alike. */
-  private drawCount(f: Flag): void {
+  /**
+   * The strings a ball holds, under it, white in a dark outline so it reads over strings and other
+   * balls alike; red once it is down to its last bundle (inDanger), kicking up a quarter on every
+   * HEARTBEAT of the battle's clock, the beat the sonifier's heart plays on.
+   */
+  private drawCount(f: Flag, time: number): void {
     const ctx = this.ctx;
     const { x, y } = this.at[f.id];
     const size = Math.round(Math.max(28, f.r * 0.5));
+    const danger = inDanger(f);
+    const beat = danger ? 1 + 0.25 * Math.max(0, 1 - (time % HEARTBEAT) / 0.25) : 1;
+    ctx.save();
+    ctx.translate(x, y + f.r + size * 0.62);
+    ctx.scale(beat, beat);
     ctx.font = `900 ${size}px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    outlined(ctx, String(f.strings.length), x, y + f.r + size * 0.62, WHITE, STAGE, Math.round(size * 0.28));
+    outlined(ctx, String(f.strings.length), 0, 0, danger ? FOLLOW_RED : WHITE, STAGE, Math.round(size * 0.28));
+    ctx.restore();
+  }
+
+  /**
+   * Each sweep of a bundle or more as "-34" in the cut strings' colour, over the cutter while it
+   * lasts (one over another when it sweeps two flags), then rising and fading where it ended. A
+   * cutter against the top of the ring has no room over it, where the number would sit on "3 LEFT":
+   * it goes under the ball's count instead.
+   */
+  private drawTallies(world: BattleWorld, colors: string[]): void {
+    const ctx = this.ctx;
+    const stacked = new Map<number, number>();
+    for (const t of this.tallies) {
+      if (t.n < BIG_CUT) continue;
+      const cutter = world.flags[t.by];
+      const size = Math.round(Math.min(64, 40 + t.n * 0.25));
+      const live = t.idle < TALLY_JOIN;
+      if (live && cutter.alive) {
+        const above = stacked.get(t.by) ?? 0;
+        stacked.set(t.by, above + 1);
+        const { x, y } = this.at[t.by];
+        const ringTop = ARENA.y - Math.sqrt(Math.max(0, ARENA.r * ARENA.r - (x - ARENA.x) ** 2));
+        const over = y - cutter.r - size * (0.75 + above);
+        const count = Math.max(28, cutter.r * 0.5);
+        t.x = x;
+        t.y = over - size / 2 > ringTop + 8 ? over : y + cutter.r + count * 1.3 + size * (0.6 + above);
+      }
+      const after = live ? 0 : t.idle - TALLY_JOIN;
+      const pop = easeOutBack(Math.min(1, t.shown / 0.15));
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - after / TALLY_FADE);
+      ctx.translate(t.x, t.y - after * 60);
+      ctx.scale(pop, pop);
+      ctx.font = `900 ${size}px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      outlined(ctx, `-${t.n}`, 0, 0, colors[t.flag], STAGE, Math.round(size * 0.24));
+      ctx.restore();
+    }
   }
 
   /** The flag in a circle of radius `r`, a ring of `color` round it `ring` wide, and a soft shine; its colour alone until the picture has loaded. */
@@ -718,7 +845,7 @@ function paintStage(): HTMLCanvasElement {
   const ctx = canvas.getContext('2d')!;
   ctx.fillStyle = STAGE;
   ctx.fillRect(0, 0, W, H);
-  const light = ctx.createRadialGradient(ARENA.x, ARENA.y + DROP, 0, ARENA.x, ARENA.y + DROP, ARENA.r * 1.5);
+  const light = ctx.createRadialGradient(ARENA.x, CENTRE_Y, 0, ARENA.x, CENTRE_Y, ARENA.r * SCALE * 1.5);
   light.addColorStop(0, STAGE_LIT);
   light.addColorStop(1, rgba(STAGE_LIT, 0));
   ctx.fillStyle = light;

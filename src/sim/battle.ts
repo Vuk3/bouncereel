@@ -36,6 +36,21 @@ export const MAX_FLAGS = 12;
 export const STRINGS = 100;
 /** Strings every bounce off the ring ties: ten bounces to a whole new fan. */
 export const BUNDLE = 10;
+/**
+ * A flag down to its last bundle or fewer is in danger, one rival's pass from out: the renderer
+ * turns its count red and beats it, and the sonifier beats a heart, both every HEARTBEAT seconds of
+ * battle, so picture and sound keep time and slow down with the slow motion. Only shown and heard:
+ * nothing in the battle depends on either.
+ */
+export const DANGER = BUNDLE;
+/** 80 beats a minute, a resting heart's quicker end: tense without hurrying a battle that is already loud. */
+export const HEARTBEAT = 0.75;
+
+/** Whether a flag is in danger (DANGER). */
+export function inDanger(f: Flag): boolean {
+  return f.alive && f.strings.length <= DANGER;
+}
+
 /** px every ball moves in a step: a fifth of a frame's travel at the usual speeds, so the motion is even frame to frame. */
 export const STRIDE = 1;
 /**
@@ -468,12 +483,26 @@ export interface BattleOutcome {
   cuts: number[];
   /** The stretches of the battle played in slow motion, in its seconds: into and just past an out among the last flags. */
   slow: [number, number][];
+  /**
+   * Seconds the winner held more strings than every rival still in (`led`) and fewer than one of
+   * them (`trailed`), as the counts under the balls show it, and the second from which it led to
+   * the end (`decided`): whether the battle is a comeback (battle-balance.ts).
+   */
+  led: number;
+  trailed: number;
+  decided: number;
 }
 
 export function predictBattle(cfg: Config): BattleOutcome {
   const world = new BattleWorld(cfg);
   const outs: BattleOutcome['outs'] = [];
   const steps: number[] = [];
+  // Every flag's seconds ahead and behind, and the last second it was not ahead: only the winner's are kept.
+  const n = cfg.battle.flags.length;
+  const led = new Array<number>(n).fill(0);
+  const trailed = new Array<number>(n).fill(0);
+  const notAhead = new Array<number>(n).fill(0);
+  let before = 0;
   while (world.winner === null) {
     world.step();
     for (const e of world.drain()) {
@@ -481,6 +510,18 @@ export function predictBattle(cfg: Config): BattleOutcome {
       outs.push({ flag: e.flag, time: world.time, by: e.by });
       steps.push(world.steps);
     }
+    const now = world.time;
+    for (const f of world.flags) {
+      if (!f.alive) continue;
+      let most = 0;
+      for (const o of world.flags) if (o !== f && o.alive) most = Math.max(most, o.strings.length);
+      if (f.strings.length > most) led[f.id] += now - before;
+      else {
+        notAhead[f.id] = now;
+        if (f.strings.length < most) trailed[f.id] += now - before;
+      }
+    }
+    before = now;
   }
   const winner = world.winner;
   // In px, where a stretch is the same at any speed, then in this battle's seconds.
@@ -504,5 +545,8 @@ export function predictBattle(cfg: Config): BattleOutcome {
     outs,
     cuts: world.flags.map((f) => f.cuts),
     slow: slow.map(([from, to]) => [world.timeAt(Math.round(from / STRIDE)), world.timeAt(Math.round(to / STRIDE))]),
+    led: led[winner],
+    trailed: trailed[winner],
+    decided: notAhead[winner],
   };
 }

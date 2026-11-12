@@ -16,7 +16,7 @@ determinism) · [matchups and balancing](../../docs/matchups-and-balancing.md).
 | randomness, sine and cosine | [rng.ts](./rng.ts), [detmath.ts](./detmath.ts) |
 | events the page reacts to | [types.ts](./types.ts): `SimEvent` |
 | Arena Clash: strings, cuts, bundles, the speed-up, ball sizes; its events, `predictBattle` and the stretches played in slow motion | [battle.ts](./battle.ts) ([arena-clash](../../docs/arena-clash.md)) |
-| fitting an Arena Clash to the video length (the seed, then the starting speed, exactly), the spread of its outs, a chosen winner, its dice | [battle-balance.ts](./battle-balance.ts) |
+| fitting an Arena Clash to the video length (the seed, then the starting speed, exactly), the spread of its outs, its comebacks, a chosen winner, its dice | [battle-balance.ts](./battle-balance.ts) |
 
 ## Rules
 

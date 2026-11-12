@@ -132,6 +132,16 @@ video needs it to, with its outs spread over it:
      the share of outs within a second of each other (`RUSH`) against it;
    - never a flag out in the video's first 2.5 s.
 
+   And the story its seed asks for (`isBattleComeback`): four battles in five ask for a
+   **comeback**, as four races in five do: the winner holds fewer strings than a rival for longer
+   than it holds the most, and takes the lead for good only in the battle's last 30 %
+   (`BattleOutcome.led`, `trailed`, `decided`, from the counts under the balls), so the numbers
+   never give the end away. The fifth asks for the flag ahead to hold on, or a viewer would learn
+   that the one behind always wins. Which it asks for comes from the seed balancing starts from
+   (`comeback:<seed>`); a battle that is not that story counts as worse than any schedule, and is
+   taken only when no seed lands. Left to chance, 40 to 65 % of battles are comebacks; asked for,
+   all 20 of each size tried land as asked, three flags in about 95 ms.
+
    After 120 seeds (400 with a chosen winner) the best found is taken. With a chosen winner
    (`battle.winner`) only seeds where that flag wins land.
 
@@ -197,6 +207,10 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
 
 - **The title**, under the platforms' top bar and over the ring, from the first frame to the
   last, so the first frame is the thumbnail:
+  - the region, at y 276, when every flag is from one (`sharedRegion` in
+    [countries.ts](../src/battle/countries.ts), the narrowest of the dice's regions: THE BALKANS
+    before EUROPE), small and spaced in grey, as the format's most watched titles lead with it
+    ("EAST ASIA: WHICH FLAG SURVIVES?"); none for flags from all over;
   - who is in it, at y 324: up to four flags' names, each in its strings' colour, with VS
     between ("SERBIA VS CROATIA VS SLOVENIA"), 38 px or as small as 28 to fit, those out dimmed
     and struck through; from five flags, or when four long names would not fit, "8 FLAGS · ONE
@@ -212,11 +226,24 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
   a ball a wedge of light, and where two fans cross both show. A dot of the colour where each is
   tied, so the ring wears the colours of whoever holds it. A ball is its flag in a ring of its
   colour, glowing, with a short comet trail and **the strings it holds counted under it**, every
-  count drawn over every ball, so one ball never hides another's.
+  count drawn over every ball, so one ball never hides another's. Down to its last bundle (10 or
+  fewer, `inDanger`) a count is red and kicks up a quarter on every `HEARTBEAT` (0.75 s of the
+  battle's clock), the beat the heart in the sound plays on.
+- **The arena is drawn at 92 % of its size** round its centre (`SCALE`): 892 px across, the ring
+  from y 549 to 1441, at least 94 px from the frame's sides. Full size, it came within 55 px of
+  them, and Instagram on an iPhone, filling the screen's height, crops about 38 px a side: the ring
+  touched the screen's edges and its right was cut under the side buttons. Balls, strings and
+  counts are smaller by as much; the drawing alone, as `DROP` is.
 - **Effects**: cut strings linger 0.22 s as ghosts, white then their colour, with sparks off the
   rival; every bounce ripples on the ring where it ties, two balls meeting ripple white; a flag
   out bursts into pieces with a shake.
-- **Under the ring, in the middle of the frame** (`FOOTER_Y`, 1532): a red dot and SLOW MOTION
+- **Numbers**: every bounce sends up "+10" in the flag's colour from where it tied the bundle, so
+  a viewer sees where strings come from. A ball sweeping through a rival's fan shows how many it
+  took over itself, "-34" in the cut strings' colour, growing while the sweep goes on (cuts within
+  0.2 s of each other are one sweep) and then rising and fading; only from a bundle up, or the
+  arena would be full of nicks of three. Against the top of the ring, where it would sit on
+  "3 LEFT", it goes under the ball's count.
+- **Under the ring, in the middle of the frame** (`FOOTER_Y`, 1493, 52 px under the ring): a red dot and SLOW MOTION
   while an out plays slowed, and once in the battle the **follow button** (`look.follow`), the
   race's own (follow.ts): it pops in red, a hand comes up and taps it, it turns to FOLLOWING and
   fades, 2.4 s in all. `battleFollowAt` picks the moment: near 45 % of the battle, clear of every
@@ -225,8 +252,8 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
   screen's height: TikTok's search bar reaches y 247, Instagram's and YouTube's top buttons 210;
   the captions start at about y 1620 on TikTok (its pinned comment, while it shows, at 1460),
   1690 on Shorts and 1740 on Reels; and Instagram's profile grid shows only y 240–1680 of a reel
-  (3:4). So the title takes y 305 to 495, the ring 510 to 1480, the line under it 1532 and the
-  watermark 1581, all inside the grid's crop, and the black under the ring is the captions'. The
+  (3:4). So the title takes y 262 to 495, the ring 549 to 1441, the line under it 1493 and the
+  watermark 1542, all inside the grid's crop, and the black under the ring is the captions'. The
   picture is drawn `DROP` (80 px) lower than the simulation's arena (`ARENA`, centre y 915),
   which stays where every battle so far was worked out, so one recorded before still opens in
   the studio as it played. ⚠️ The black below the line looks free in the studio and is not: it
@@ -236,7 +263,7 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
   its name, "Last flag standing · 26.0 s", and the last line; confetti; with `look.follow` the
   follow button under it in the winner's colour, tapped 1.5 s in and left as FOLLOWING, and the
   card held 2.5 s at least (pacing.ts), as the race's.
-- **The watermark** (a plan with `watermark`) sits under the arena, centred at y 1581, above the
+- **The watermark** (a plan with `watermark`) sits under the arena, centred at y 1542, above the
   platforms' captions. The ring's right edge crosses the platforms' side
   buttons' column (x 940 on, from y 902): a circle this big cannot keep out of it. The preview
   marks across the frame are in the preview alone.
@@ -247,7 +274,9 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
 strings), two balls meeting tick, a flag out shatters, the win is the fanfare; each panned to
 where it happens. Strings being cut are plucked: one quiet note at most every three frames, climbing the
 pentatonic scale as the flag's strings run out (C4 with a hundred or more, C7 with none), so a fan being
-swept is a run up a harp and a flag's last strings the top of it.
+swept is a run up a harp and a flag's last strings the top of it. While a flag is down to its
+last bundle a heart beats (`AudioEngine.heartbeat`, lub then dub, on each `HEARTBEAT` of the
+battle's clock, so it keeps time with the red count and slows with the slow motion).
 
 **The narrator** ([narration.ts](../src/audio/narration.ts)) says two lines, as in a race, and
 nothing while the battle runs (the format's channels have no narrator at all; its sound is the
@@ -316,3 +345,4 @@ the thumbnail; Open in studio replays it exactly. The superadmin's text for post
 - 2026-11-12 - named Arena Clash (`arena-clash`), from Flag Battle: a name of its own, not its flags'; an icon for each game (public/games/), on the studio's switch, the site's game cards and the Videos page's thumbnails.
 - 2026-11-12 - the picture 80 px lower (`DROP`, the drawing alone): the names were under TikTok's search bar and cut in Instagram's profile grid, and a third of the frame was black under the ring; positions measured on the three apps.
 - 2026-11-12 - no winner line says the time ("wins it in 21.6 seconds" is gone); the winner line is said at the win, over the last slow motion, so the winner card holds only its end (2.5 s with the follow button, from 3–5 s) and the battle has those seconds.
+- 2026-11-12 - four battles in five are comebacks (`isBattleComeback`); "+10" at every bounce and "-34" over a ball sweeping a fan; a count down to its last bundle red and beating, with a heartbeat; the region over the names when every flag is from one (`sharedRegion`); the arena drawn at 92 % (`SCALE`), off the frame's sides, the line under it and the watermark moved up with it.

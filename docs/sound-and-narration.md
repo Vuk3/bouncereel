@@ -16,7 +16,7 @@ the timing that keeps the narrator from talking over itself.
 | the voices, loading Kokoro, the clip cache | [src/audio/narration.ts](../src/audio/narration.ts) `VOICES`, `loadKokoro`, `synthesize`, `VoiceCache` |
 | when lines are said, trying a voice, hearing the music | [src/app.ts](../src/app.ts) `playIntro`, `sayOutroWhenFree`, `hear`, `hearMusic` |
 | the voice list and its buttons in the Voice tab | [src/app.ts](../src/app.ts) `buildVoiceBlock` |
-| Arena Clash's sounds (strings plucked as they are cut) and its opening | [arena-clash](./arena-clash.md#5-sound-and-narrator) |
+| Arena Clash's sounds (strings plucked as they are cut, a heartbeat while a flag is down to its last bundle) and its opening | [arena-clash](./arena-clash.md#5-sound-and-narrator) |
 
 ## 1. The engine
 
@@ -234,3 +234,4 @@ end. Then:
 - 2026-11-03 - a line's clip cut to its voice: Kokoro's own silence before the first word and after the last goes; the winner card ends 0.3 s after the last word, not at the video's length, so the end is 0.8 s past the narrator rather than 1.4–1.9 s; the card planned for the winner's own line, from a guess measured on the eight voices.
 - 2026-11-11 - Arena Clash: its sounds (`Sonifier.battle`), its opening with the rule in one sentence and a fact from the countries' figures, a call as a flag goes out where there is silence for it (`battleCalls`); `plannedLines` includes the calls.
 - 2026-11-12 - Arena Clash: strings being cut are plucked up the pentatonic scale as a flag's strings run out (`Sonifier.battle`); no calls as flags go out (`battleCalls` is gone), so its narrator says two lines as a race's does, with "Follow for more!" after the winner line when asked.
+- 2026-11-12 - Arena Clash: a heartbeat (`AudioEngine.heartbeat`) while a flag is down to its last bundle, on the beats its red count pulses on.

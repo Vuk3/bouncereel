@@ -252,3 +252,22 @@ export const DICE_REGIONS = [
 ] as const;
 
 export type DiceRegion = (typeof DICE_REGIONS)[number]['id'];
+
+/** The regions narrowest first: the Balkans are in Europe too. */
+const NARROWEST: DiceRegion[] = ['balkans', 'europe', 'americas', 'asia', 'africa', 'oceania'];
+
+/**
+ * The narrowest of DICE_REGIONS every one of `codes` is in, which an Arena Clash's title names over
+ * its flags ("THE BALKANS"), as the format's most watched titles do ("EAST ASIA: WHICH FLAG
+ * SURVIVES?"); null when they are not all of one (Everywhere is no region to name).
+ */
+export function sharedRegion(codes: readonly string[]): (typeof DICE_REGIONS)[number] | null {
+  for (const id of NARROWEST) {
+    const region = DICE_REGIONS.find((r) => r.id === id)!;
+    if (codes.length && codes.every((code) => {
+      const c = country(code);
+      return c !== undefined && region.test(c);
+    })) return region;
+  }
+  return null;
+}

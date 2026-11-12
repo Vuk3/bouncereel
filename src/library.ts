@@ -2,7 +2,7 @@ import type { AccountResponse, BattleSummary, CreatedResponse, NewVideo, RaceSid
 import { LOOK_LABELS, SOUND_LABELS } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
 import { openingQuestion } from './audio/opening.ts';
-import { flagName } from './battle/countries.ts';
+import { flagName, sharedRegion } from './battle/countries.ts';
 import { FOLLOW_LINE, type Config, type Contestant } from './config.ts';
 import { SEQUENCES, formatBig, type SequenceId } from './sim/sequences.ts';
 
@@ -75,7 +75,8 @@ function battlePrompt(video: Pick<VideoSummary, 'title' | 'fileName' | 'videoLen
   if (battle.out.length) lines.push(`Out, first to last: ${battle.out.map(flagName).join(', ')}`);
   if (cfg) {
     lines.push(`Video: ${video.videoLength} s, on a black stage, ${SOUND_LABELS[cfg.sound.track].toLowerCase()}`);
-    const who = battle.flags.length <= 4 ? "the flags' names with VS between them" : `"${battle.flags.length} FLAGS · ONE SURVIVES"`;
+    const region = sharedRegion(battle.flags);
+    const who = `${region ? `"${region.label.toUpperCase()}" over ` : ''}${battle.flags.length <= 4 ? "the flags' names with VS between them" : `"${battle.flags.length} FLAGS · ONE SURVIVES"`}`;
     lines.push(`On screen all through: ${who}, the title "${openingQuestion(cfg).toUpperCase().replace(/\.$/, '')}", how many flags are left, and each flag's strings counted under it`);
     if (cfg.look.cta.trim()) lines.push(`Last line on the winner card: "${cfg.look.cta.trim()}"`);
     if (cfg.look.follow) lines.push(`Asks viewers to follow: a follow button once in the battle and under the winner card, and the narrator's "${FOLLOW_LINE}"`);

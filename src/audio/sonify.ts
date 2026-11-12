@@ -1,6 +1,6 @@
 import type { Config } from '../config.ts';
 import { W } from '../layout.ts';
-import { STRINGS, type BattleEvent } from '../sim/battle.ts';
+import { HEARTBEAT, STRINGS, inDanger, type BattleEvent, type BattleWorld } from '../sim/battle.ts';
 import type { SimEvent } from '../sim/types.ts';
 import type { Outcome, World } from '../sim/world.ts';
 import type { AudioEngine } from './engine.ts';
@@ -34,6 +34,8 @@ export class Sonifier {
   private crowdNote = [-Infinity, -Infinity];
   /** Frames until strings being cut may be plucked again (CUT_FRAMES). */
   private cutWait = 0;
+  /** The last whole HEARTBEAT of a battle reached: a beat plays as the next is passed with a flag in danger. */
+  private beat = -1;
 
   constructor(audio: AudioEngine, cfg: Config, leads: Outcome['leads']) {
     this.audio = audio;
@@ -47,6 +49,7 @@ export class Sonifier {
     this.lead = 0;
     this.crowdNote = [-Infinity, -Infinity];
     this.cutWait = 0;
+    this.beat = -1;
   }
 
   /** A frame's events from `world`, and the sting when the race reaches a lead change the picture marks. */
@@ -92,9 +95,11 @@ export class Sonifier {
    * fanfare; each panned to where it happens. Strings being cut are plucked: one note at
    * most every CUT_FRAMES frames however many go, quiet under the tune, climbing the scale as the
    * flag's strings run out, so a fan being swept is a run up a harp and its last strings the top
-   * of it. As with the race, at most three notes and two ticks a frame.
+   * of it. As with the race, at most three notes and two ticks a frame. While a flag is in danger
+   * (DANGER) a heart beats, on the whole HEARTBEATs of the battle's clock, the beats the renderer
+   * pulses its count on.
    */
-  battle(events: BattleEvent[], cfg: Config): void {
+  battle(events: BattleEvent[], cfg: Config, world: BattleWorld): void {
     let notes = 0;
     let ticks = 0;
     let cut: Extract<BattleEvent, { type: 'cut' }> | null = null;
@@ -124,6 +129,9 @@ export class Sonifier {
       this.cutWait = CUT_FRAMES;
       this.audio.note(pentatonic(CUT_STEPS - Math.ceil((Math.min(STRINGS, cut.left) / STRINGS) * CUT_STEPS), 60), 0.3, 'pluck', pan(cut.x));
     }
+    const beat = Math.floor(world.time / HEARTBEAT);
+    if (beat > this.beat && world.winner === null && world.flags.some(inDanger)) this.audio.heartbeat();
+    this.beat = beat;
   }
 }
 

@@ -372,7 +372,7 @@ export class App {
       if (steps === 900) this.acc = 0;
       const events = world.drain();
       if (events.length) this.arena.handle(events, world, this.cfg);
-      if (this.cfg.sound.track !== 'silent') this.sonifier?.battle(events, this.cfg);
+      if (this.cfg.sound.track !== 'silent') this.sonifier?.battle(events, this.cfg, world);
       return;
     }
     let steps = 0;
