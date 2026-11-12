@@ -172,7 +172,13 @@ address, redirects here. It shows the signed-in account's videos only.
   them ("4 more fit on your plan · 1 video left today", Upgrade for more; in the warning colour
   once the library is full or the day is used); how many are not posted anywhere; and a bar per
   platform, how many of them are posted there.
-- **Who won** and **Balls raced, and won**, side by side under the totals (`renderBalls`).
+- **Each game's statistics** under the totals, under the game's name and icon, a game with no
+  videos yet showing nothing. **Arena Clash** (`renderClash`): **Flags in a battle**, how many
+  battles had how many flags ("3 flags · 2 of 3"), fewest first; and **Flags played, and won**,
+  every flag that has played (its picture and name), in how many battles and how many it won
+  ("2 videos · 1 won"), most played first, the bars as the sequences' below. Only those that
+  have played: the 199 there are would bury them. **Ball Race**:
+- **Who won** and **Balls raced, and won**, side by side (`renderBalls`).
   Who won: how many races the top ball won and how many the bottom one did, each "3 of 5"
   with a bar, and "Nobody finished" when a race timed out. Balls raced: every sequence, how
   many of the races it was in and how many it won ("4 videos · 3 won"), most raced first,
@@ -300,3 +306,4 @@ variant, its column and its line in `parseNewVideo` the same way.
 - 2026-11-07 - a meter's row stays on one line (the name cut with an ellipsis when it must), and the golden ratio is named "Golden ratio" without its ×1.618.
 - 2026-11-11 - Arena Clash in the library: `game` `arena-clash`, its `battle` column (0011), `BattleSummary` in the list, the game checked against the plan on save, the Videos page's line, winner and flag thumbnail, its text for posts.
 - 2026-11-12 - the game's icon on each thumbnail (public/games/); Flag Battle is called Arena Clash (`arena-clash`).
+- 2026-11-12 - each game's statistics under its name and icon; Arena Clash's: how many battles had how many flags, and every flag played, in how many battles and how many it won.

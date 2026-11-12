@@ -190,6 +190,7 @@ function renderSummary(): void {
   room.classList.toggle('full', full || dayUsed);
   $('#coverage').replaceChildren(...PLATFORMS.map((p) => meter(p, videos.filter((v) => postOn(v, p)).length, total)));
   renderBalls();
+  renderClash();
 }
 
 /**
@@ -217,6 +218,29 @@ function renderBalls(): void {
   $('#balls').replaceChildren(...order.map(([id, count]) => ballMeter(sequenceLabel(id), count, won.get(id) ?? 0, races.length)));
 }
 
+/**
+ * An Arena Clash's the same way: how many battles had how many flags, fewest first; then every
+ * flag that has played, in how many battles and how many it won, most played first, its bar its
+ * share of the battles with the share it won in full colour. Only the flags that have played: the
+ * 199 there are would bury them, and unlike a race's sequences no roll is short of one to try.
+ */
+function renderClash(): void {
+  const battles = videos.flatMap((v) => (v.battle ? [v.battle] : []));
+  $('#clash-stats').hidden = !battles.length;
+  const sizes = new Map<number, number>();
+  for (const b of battles) sizes.set(b.flags.length, (sizes.get(b.flags.length) ?? 0) + 1);
+  $('#sizes').replaceChildren(...[...sizes].sort((a, b) => a[0] - b[0]).map(([n, count]) => winMeter(`${n} flags`, count, battles.length)));
+  const played = new Map<string, number>();
+  const won = new Map<string, number>();
+  for (const b of battles) {
+    for (const code of new Set(b.flags)) played.set(code, (played.get(code) ?? 0) + 1);
+    if (b.winner) won.set(b.winner, (won.get(b.winner) ?? 0) + 1);
+  }
+  // Most played first, then most won, then by name.
+  const order = [...played].sort((a, b) => b[1] - a[1] || (won.get(b[0]) ?? 0) - (won.get(a[0]) ?? 0) || flagName(a[0]).localeCompare(flagName(b[0])));
+  $('#flags').replaceChildren(...order.map(([code, count]) => ballMeter(flagName(code), count, won.get(code) ?? 0, battles.length, flagSrc(code))));
+}
+
 function winMeter(label: string, wins: number, races: number): HTMLElement {
   const box = el('div', 'meter');
   const head = el('div', 'meter-label');
@@ -229,10 +253,14 @@ function winMeter(label: string, wins: number, races: number): HTMLElement {
   return box;
 }
 
-function ballMeter(label: string, count: number, wins: number, races: number): HTMLElement {
+/** A sequence's or a flag's bar: the videos it was in and, over them, the ones it won; a flag has its picture before its name. */
+function ballMeter(label: string, count: number, wins: number, races: number, picture?: string): HTMLElement {
   const box = el('div', count ? 'meter' : 'meter unused');
   const head = el('div', 'meter-label');
-  head.append(el('span', '', label), el('strong', '', count ? `${count} ${count === 1 ? 'video' : 'videos'} · ${wins} won` : 'not yet'));
+  const name = el('span', picture ? 'flag-name' : '');
+  if (picture) name.append(Object.assign(document.createElement('img'), { src: picture, alt: '', width: 18, height: 18, loading: 'lazy' }));
+  name.append(label);
+  head.append(name, el('strong', '', count ? `${count} ${count === 1 ? 'video' : 'videos'} · ${wins} won` : 'not yet'));
   const bar = el('div', 'meter-bar');
   bar.append(el('i'), el('i', 'won'));
   bar.style.setProperty('--fill', `${races ? (count / races) * 100 : 0}%`);

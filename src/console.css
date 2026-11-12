@@ -1308,6 +1308,35 @@
 .balls .meter-label span {
   color: var(--ink);
 }
+/* Each game's statistics under its name and icon (public/games/). */
+.game-stats {
+  display: grid;
+  gap: 10px;
+}
+.game-stats-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.game-stats-name img {
+  border-radius: 6px;
+}
+/* A flag before its name in the Arena Clash bars, as round as its ball. */
+.flag-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.flag-name img {
+  flex: none;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--line);
+}
 /* Who won beside the balls: two bars need a narrow column, the sixteen sequences the rest. */
 .race-stats {
   display: grid;

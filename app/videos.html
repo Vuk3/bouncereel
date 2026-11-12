@@ -57,16 +57,33 @@
         </div>
       </section>
 
-      <div class="race-stats" id="race-stats" hidden>
-        <section class="card wins" aria-labelledby="wins-title">
-          <h2 id="wins-title">Who won</h2>
-          <div id="wins" class="meters"></div>
-        </section>
-        <section class="card balls" aria-labelledby="balls-title">
-          <h2 id="balls-title">Balls raced, and won</h2>
-          <div id="balls" class="meters"></div>
-        </section>
-      </div>
+      <!-- What each game's videos came to (dashboard.ts renderBalls, renderClash), each under its name and icon; a game with no videos yet shows nothing. -->
+      <section class="game-stats" id="race-stats" aria-labelledby="race-stats-name" hidden>
+        <p class="game-stats-name" id="race-stats-name"><img src="/games/ball-race.svg" alt="" width="22" height="22" />Ball Race</p>
+        <div class="race-stats">
+          <section class="card wins" aria-labelledby="wins-title">
+            <h2 id="wins-title">Who won</h2>
+            <div id="wins" class="meters"></div>
+          </section>
+          <section class="card balls" aria-labelledby="balls-title">
+            <h2 id="balls-title">Balls raced, and won</h2>
+            <div id="balls" class="meters"></div>
+          </section>
+        </div>
+      </section>
+      <section class="game-stats" id="clash-stats" aria-labelledby="clash-stats-name" hidden>
+        <p class="game-stats-name" id="clash-stats-name"><img src="/games/arena-clash.svg" alt="" width="22" height="22" />Arena Clash</p>
+        <div class="race-stats">
+          <section class="card wins" aria-labelledby="sizes-title">
+            <h2 id="sizes-title">Flags in a battle</h2>
+            <div id="sizes" class="meters"></div>
+          </section>
+          <section class="card balls" aria-labelledby="flags-title">
+            <h2 id="flags-title">Flags played, and won</h2>
+            <div id="flags" class="meters"></div>
+          </section>
+        </div>
+      </section>
 
       <div class="filters">
         <label class="search">
