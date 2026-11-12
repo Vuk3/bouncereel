@@ -307,3 +307,4 @@ variant, its column and its line in `parseNewVideo` the same way.
 - 2026-11-11 - Arena Clash in the library: `game` `arena-clash`, its `battle` column (0011), `BattleSummary` in the list, the game checked against the plan on save, the Videos page's line, winner and flag thumbnail, its text for posts.
 - 2026-11-12 - the game's icon on each thumbnail (public/games/); Flag Battle is called Arena Clash (`arena-clash`).
 - 2026-11-12 - each game's statistics under its name and icon; Arena Clash's: how many battles had how many flags, and every flag played, in how many battles and how many it won.
+- 2026-11-12 - an Arena Clash thumbnail shows its game's icon whole, over its corner like a race's: the thumbnail is `.thumb.clash`, since the studio card's `.battle` (overflow: hidden) clipped it.

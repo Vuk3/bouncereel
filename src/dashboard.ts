@@ -139,7 +139,7 @@ function color(value: string | undefined, fallback: string): string {
  */
 function paintThumb(thumb: HTMLElement, video: VideoSummary): void {
   const flag = video.battle?.winner ?? video.battle?.flags[0];
-  thumb.classList.toggle('battle', !!flag);
+  thumb.classList.toggle('clash', !!flag);
   thumb.style.setProperty('--flag', flag ? `url("${flagSrc(flag)}")` : 'none');
   thumb.style.setProperty('--a', color(video.colors?.a, 'var(--team-a)'));
   thumb.style.setProperty('--b', color(video.colors?.b, 'var(--team-b)'));

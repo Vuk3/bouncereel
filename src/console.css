@@ -1456,14 +1456,18 @@
 .thumb i:last-of-type {
   --ball: var(--b, var(--team-b));
 }
-/* An Arena Clash in small: one arena, the winner's flag in it (--flag, from dashboard.ts paintThumb). */
-.thumb.battle {
+/*
+ * An Arena Clash in small: one arena, the winner's flag in it (--flag, from dashboard.ts paintThumb).
+ * `clash`, not `battle`: the studio's card is `.battle` (style.css, on this page too), and its
+ * overflow: hidden cut the game's icon off at the thumbnail's edge.
+ */
+.thumb.clash {
   grid-template-rows: 1fr;
 }
-.thumb.battle i:last-of-type {
+.thumb.clash i:last-of-type {
   display: none;
 }
-.thumb.battle i::before {
+.thumb.clash i::before {
   width: 24px;
   height: 24px;
   background: var(--flag) center / cover, #fff;
@@ -1471,7 +1475,7 @@
     0 0 0 2px rgb(255 255 255 / 0.85),
     0 0 12px rgb(255 255 255 / 0.25);
 }
-.drawer-video .thumb.battle i::before {
+.drawer-video .thumb.clash i::before {
   width: 20px;
   height: 20px;
 }
