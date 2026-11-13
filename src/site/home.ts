@@ -2,7 +2,7 @@ import type { PublicPlan } from '../../shared/api.ts';
 import { LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, soundAllowed, type Sound } from '../../shared/features.ts';
 import type { Config, Skin } from '../config.ts';
 import './chrome.ts';
-import type { Facts, Settings } from './hero.ts';
+import type { Settings } from './hero.ts';
 import { fillGamePlans, renderPlans } from './pricing.ts';
 
 // The home page. The still frames in the phones are the first paint; the race engine
@@ -10,14 +10,15 @@ import { fillGamePlans, renderPlans } from './pricing.ts';
 // delays it. Under prefers-reduced-motion it loads only when the dice is rolled or a step is
 // changed, to draw that matchup's first frame.
 //
-// How it works is a small working studio: step 1 rolls the dice, step 2 sets the video, step 3
-// shows the video as it will be posted, and the phone beside them plays what they set. The cards
-// on the stage below work on the same matchup: the race board (with the steps' Length and Finish
-// gap again, in step) and a look played larger; a power's sketch and the narrator's opening are
-// their own. The gallery's videos play only while they are on screen.
+// The hero plays both games, a phone each: a race (hero.ts) and an Arena Clash (arena.ts), and its
+// dice rolls both. How it works is a small working studio: step 1 rolls the dice, step 2 sets the
+// video, step 3 shows the video as it will be posted, and the phone beside them plays what they
+// set. A look on the stage below plays the same matchup larger; a power's sketch and the
+// narrator's opening are their own. The gallery's videos play only while they are on screen.
 
 const phone = document.querySelector<HTMLElement>('#phone')!;
 const canvas = phone.querySelector('canvas')!;
+const arenaCanvas = document.querySelector<HTMLElement>('#arena-phone')!.querySelector('canvas')!;
 const roll = document.querySelector<HTMLButtonElement>('#roll')!;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -37,15 +38,6 @@ const how = {
   soundHint: $('#how-sound-hint'),
   free: $('#how-free'),
 };
-const board = {
-  race: $('#board-race'),
-  lanes: $('#board-lanes'),
-  ruler: $('#board-ruler'),
-  length: $<HTMLInputElement>('#board-length'),
-  lengthOut: $('#board-length-out'),
-  gap: $<HTMLInputElement>('#board-gap'),
-  gapOut: $('#board-gap-out'),
-};
 const lookDialog = $<HTMLDialogElement>('#look-dialog');
 const lookCanvas = lookDialog.querySelector('canvas')!;
 
@@ -62,35 +54,29 @@ const SOUND_HINTS: Record<Sound, string> = {
 
 type HeroModule = typeof import('./hero.ts');
 type Phone = InstanceType<HeroModule['Hero']>;
-let engine: Promise<{ module: HeroModule; hero: Phone; demo: Phone }> | null = null;
+type Arena = InstanceType<(typeof import('./arena.ts'))['ArenaDemo']>;
+let engine: Promise<{ module: HeroModule; hero: Phone; arena: Arena; demo: Phone }> | null = null;
 /** The matchup the steps have set; null until the engine has made the first one. */
 let steps: Config | null = null;
 
-function showMatchup(cfg: Config, describe: HeroModule['describeRace']): void {
-  const side = (ball: Config['a']) => {
-    const span = document.createElement('span');
-    const dot = document.createElement('i');
-    dot.className = 'ball';
-    dot.style.setProperty('--c', ball.color);
-    span.append(dot, ball.name);
-    return span;
-  };
-  const vs = Object.assign(document.createElement('span'), { className: 'vs', textContent: 'vs' });
-  document.querySelector('#matchup-names')!.replaceChildren(side(cfg.a), vs, side(cfg.b));
-  document.querySelector('#matchup-note')!.textContent = describe(cfg);
-}
+/** Under each of the hero's phones, what it is playing. */
+const showMatchup = (text: string) => ($('#matchup-note').textContent = text);
+const showBattle = (text: string) => ($('#battle-note').textContent = text);
 
 /**
- * Only one race runs at a time: of the phones on screen, the most visible plays and the others
- * hold their frame; with a look open larger, only that one. Ratios are kept from the start, so
- * each phone has its turn as soon as the engine is there.
+ * Only one place plays at a time: of the phones on screen, the most visible plays and the others
+ * hold their frame; with a look open larger, only that one. The hero's two phones are one place,
+ * side by side: the arena plays when the hero's race does. Ratios are kept from the start, so each
+ * phone has its turn as soon as the engine is there.
  */
 const shown = new Map<Element, number>();
 let phones: [Element, Phone][] = [];
+let arenaPhone: Arena | null = null;
 function share(): void {
   let best: Element | null = lookDialog.open ? lookCanvas : null;
   if (!best) for (const [target, ratio] of shown) if (ratio > 0 && (!best || ratio > shown.get(best)!)) best = target;
   for (const [target, p] of phones) p.setActive(target === best);
+  arenaPhone?.setActive(best === canvas);
 }
 const sharing = new IntersectionObserver(
   (entries) => {
@@ -110,9 +96,14 @@ function start(): NonNullable<typeof engine> {
     // A canvas never loads a web font by itself: without this the race would draw in the
     // fallback font over a still frame drawn in Rubik.
     await Promise.all([600, 700, 800, 900].map((w) => document.fonts.load(`${w} 40px Rubik`)));
-    const module = await import('./hero.ts');
-    const hero = timed('hero', () => new module.Hero(canvas, (cfg) => showMatchup(cfg, module.describeRace)));
+    const [module, arenaModule] = await Promise.all([import('./hero.ts'), import('./arena.ts')]);
+    const hero = timed('hero', () => new module.Hero(canvas, (cfg) => showMatchup(module.describeRace(cfg))));
     phones = [[canvas, hero]];
+    share();
+    await nextTask();
+    // The arena balances its battle a seed at a time between frames (arena.ts), so it never holds the page.
+    const arena = timed('arena', () => new arenaModule.ArenaDemo(arenaCanvas, (cfg) => showBattle(arenaModule.describeBattle(cfg))));
+    arenaPhone = arena;
     share();
     await nextTask();
     // Whatever the steps were set to before the engine came, it starts from there.
@@ -124,7 +115,7 @@ function start(): NonNullable<typeof engine> {
     share();
     await nextTask();
     timed('facts', () => describeSteps(module, first));
-    return { module, hero, demo };
+    return { module, hero, arena, demo };
   })();
   return engine;
 }
@@ -132,11 +123,21 @@ function start(): NonNullable<typeof engine> {
 roll.addEventListener('click', async () => {
   roll.disabled = true;
   try {
-    (await start()).hero.roll();
+    const { hero, arena } = await start();
+    hero.roll();
+    arena.roll();
   } finally {
     roll.disabled = false;
   }
 });
+
+// "Why" by the hero's browser line opens its answer in the questions as it goes there.
+for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-open]')) {
+  link.addEventListener('click', () => {
+    const answer = document.getElementById(link.dataset.open!);
+    if (answer instanceof HTMLDetailsElement) answer.open = true;
+  });
+}
 
 if (!reducedMotion) {
   const later = () => ('requestIdleCallback' in window ? requestIdleCallback(() => void start(), { timeout: 2000 }) : setTimeout(() => void start(), 200));
@@ -164,7 +165,7 @@ function caption(cfg: Config | null): void {
 /** The margin as the studio's matchup card says it. */
 const marginLabel = (margin: number) => (Number.isFinite(margin) ? `${margin.toFixed(1)} s` : 'a mile');
 
-/** The steps' matchup in words: the two balls in step 1, how it ends, and what the phones and the race board show. */
+/** The steps' matchup in words: the two balls in step 1, how it ends, and the video as it will be posted. */
 function describeSteps(module: HeroModule, cfg: Config, outcome?: ReturnType<Phone['show']>): void {
   const facts = module.factsOf(cfg, outcome);
   how.balls.replaceChildren(
@@ -179,29 +180,7 @@ function describeSteps(module: HeroModule, cfg: Config, outcome?: ReturnType<Pho
   if (facts.winner) how.verdict.replaceChildren(el('strong', '', facts.winner), ` wins by ${marginLabel(facts.margin)}`);
   else how.verdict.textContent = 'Nobody reaches the line in time: roll another.';
   caption(cfg);
-  drawBoard(facts);
   module.drawFirstFrame(how.post, cfg);
-}
-
-/**
- * The race board: the winner's lane to the line, the loser's as far as it had got when the winner
- * touched it, on a ruler in the race's own seconds. New lanes replay the lanes' story by
- * themselves once the card has played it (site.css, Motion), and wait for it before.
- */
-function drawBoard(facts: Facts): void {
-  board.race.textContent = facts.first < 0 ? `nobody finishes in a ${facts.video} s video` : `${facts.race.toFixed(1)} s of a ${facts.video} s video`;
-  if (facts.first < 0) return;
-  const lanes = [facts.first, 1 - facts.first].map((k, place) => {
-    const ball = facts.balls[k];
-    const lane = el('span', 'lane');
-    lane.style.setProperty('--c', ball.color);
-    lane.style.setProperty('--w', place ? `${Math.round(facts.runnerUp * 100)}%` : '100%');
-    lane.append(el('i'), el('b', '', ball.name), el('em', '', place ? `${marginLabel(facts.margin)} behind` : 'wins'));
-    return lane;
-  });
-  board.lanes.replaceChildren(...lanes, el('span', 'finish-line'));
-  const t = facts.race;
-  board.ruler.replaceChildren(...[0, Math.round(t / 3), Math.round((2 * t) / 3)].map((s) => el('i', '', `${s} s`)), el('i', '', `${t.toFixed(1)} s`));
 }
 
 /** `work`, timed as a `steps …` measure in the Performance panel (docs/website.md §6 says what each costs). */
@@ -269,43 +248,20 @@ function refitSoon(): void {
   refitTimer = window.setTimeout(() => void refit(), 200);
 }
 
-/** Length and Finish gap live twice, in step 2 and on the race board: one moved moves the other. */
-function setLength(video: number): void {
-  for (const [range, out] of [
-    [how.length, how.lengthOut],
-    [board.length, board.lengthOut],
-  ] as const) {
-    range.value = String(video);
-    range.setAttribute('aria-valuetext', `${video} seconds`);
-    out.textContent = `${video} s`;
-  }
+how.length.addEventListener('input', () => {
+  const video = Number(how.length.value);
+  how.length.setAttribute('aria-valuetext', `${video} seconds`);
+  how.lengthOut.textContent = `${video} s`;
   how.lengthFact.textContent = `${video.toFixed(1)} s`;
   caption(steps);
-}
-
-function setGap(gap: number): void {
-  for (const [range, out] of [
-    [how.gap, how.gapOut],
-    [board.gap, board.gapOut],
-  ] as const) {
-    range.value = String(gap);
-    range.setAttribute('aria-valuetext', gap > 0 ? `${gap} seconds` : 'photo finish');
-    out.textContent = gapLabel(gap);
-  }
-}
-
-for (const range of [how.length, board.length]) {
-  range.addEventListener('input', () => {
-    setLength(Number(range.value));
-    refitSoon();
-  });
-}
-for (const range of [how.gap, board.gap]) {
-  range.addEventListener('input', () => {
-    setGap(Number(range.value));
-    refitSoon();
-  });
-}
+  refitSoon();
+});
+how.gap.addEventListener('input', () => {
+  const gap = Number(how.gap.value);
+  how.gap.setAttribute('aria-valuetext', gap > 0 ? `${gap} seconds` : 'photo finish');
+  how.gapOut.textContent = gapLabel(gap);
+  refitSoon();
+});
 
 for (const input of document.querySelectorAll<HTMLInputElement>('input[name="how-look"]')) {
   input.addEventListener('change', async () => {
@@ -594,31 +550,6 @@ function freeLine(plans: PublicPlan[]): string | null {
   );
 }
 
-/**
- * The drawings that tell a story (`data-story`: the race board's lanes) play
- * once, on their own clock, when their card is half in view: scrubbed by the scroll, they had
- * finished before the reader got to them. Armed only here, so without JS, an observer or motion
- * they simply stand finished (site.css, Motion).
- */
-function playStories(): void {
-  const cards = document.querySelectorAll<HTMLElement>('[data-story]');
-  if (reducedMotion || !('IntersectionObserver' in window) || !cards.length) return;
-  document.documentElement.dataset.stories = '';
-  const observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        // Half the card, or half the screen for a card taller than it.
-        if (entry.intersectionRect.height < Math.min(entry.boundingClientRect.height, innerHeight) / 2) continue;
-        entry.target.classList.add('played');
-        observer.unobserve(entry.target);
-      }
-    },
-    { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] },
-  );
-  for (const card of cards) observer.observe(card);
-}
-
-playStories();
 powerDemo();
 voicePlayer();
 gallery();

@@ -2,8 +2,8 @@
 <html lang="en">
   <head>
     <!-- site:head / -->
-    <title>BounceReel: ball race videos for Shorts, TikTok and Reels</title>
-    <meta name="description" content="Ball race and arena clash videos for Shorts, TikTok and Reels: every game balanced to end at the length you pick, ready to post as a 1080×1920 MP4. Free to start." />
+    <title>BounceReel: game videos for Shorts, TikTok and Reels</title>
+    <meta name="description" content="Ball races and arena clashes for Shorts, TikTok and Reels: every video balanced to end at the length you pick, ready to post as a 1080×1920 MP4. Free to start." />
     <!-- Who BounceReel is, for search engines: the name the results show, the logo, and its own
          accounts (sameAs, from SOCIAL in shared/site.ts). The home page only: it is about the site. -->
     <script type="application/ld+json">
@@ -35,25 +35,24 @@
     <!-- site:header -->
 
     <main id="main">
-      <!-- The hero: a dark stage with the live race. The still frame is the first paint; src/site/hero.ts draws the race over it. -->
+      <!-- The hero: a dark stage with both games live, a phone each. The still frames are the first paint; src/site/hero.ts and src/site/arena.ts draw the games over them. -->
       <section class="shell hero" aria-labelledby="hero-title">
         <div class="stage hero-stage">
           <div class="hero-copy">
-            <h1 id="hero-title">Ball race videos, ready to post.</h1>
+            <h1 id="hero-title">Game videos, ready to post.</h1>
             <p class="lede">
-              Two balls race through layers of ever bigger numbers, Fibonacci against factorial, primes against squares. Every race is balanced to
-              end close at the length you pick, and BounceReel records it as a vertical MP4 for Shorts, TikTok and Reels: a new matchup every roll,
-              nothing to edit.
+              Balls racing through ever bigger numbers, and flags cutting each other's strings until one is left. Every game is balanced to end
+              at the length you pick, and BounceReel records it as a vertical MP4 for Shorts, TikTok and Reels: a new one every roll, nothing to edit.
             </p>
             <div class="actions">
               <a class="btn btn-primary" href="/signup" data-guest data-signups="open">Start free</a>
               <button class="btn btn-primary" type="button" disabled data-guest data-signups="closed">Coming soon</button>
               <a class="btn btn-primary" href="/app" data-member>Open studio</a>
-              <a class="btn btn-ghost" href="#how">See how it works</a>
+              <a class="btn btn-ghost" href="/games">See the games</a>
             </div>
             <p class="hero-browser">
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2.5" /><path d="M8 21h8M12 17v4" /></svg>
-              <span>Records in <strong>Chrome or Edge on a computer</strong>. <a href="#browser-title">Why</a></span>
+              <span>Records in <strong>Chrome or Edge on a computer</strong>. <a href="#browsers" data-open="browsers">Why</a></span>
             </p>
           </div>
           <ul class="specs" aria-label="What a video is">
@@ -63,91 +62,92 @@
           </ul>
 
           <div class="hero-demo">
-            <div class="phone" id="phone">
-              <img
-                src="/hero/first-frame-4.webp"
-                width="540"
-                height="960"
-                fetchpriority="high"
-                alt="The first frame of a BounceReel video in the night look: Fibonacci Ball in the top card, Slow Factorial Ball in the bottom one, each above three layers of numbers to break."
-              />
-              <canvas aria-hidden="true"></canvas>
+            <div class="hero-phones">
+              <figure class="hero-game">
+                <div class="phone" id="phone">
+                  <img
+                    src="/hero/first-frame-4.webp"
+                    width="540"
+                    height="960"
+                    fetchpriority="high"
+                    alt="The first frame of a Ball Race in the night look: Fibonacci Ball in the top card, Slow Factorial Ball in the bottom one, each above three layers of numbers to break."
+                  />
+                  <canvas aria-hidden="true"></canvas>
+                </div>
+                <figcaption>
+                  <span class="hero-game-name"><!-- game:icon ball-race -->Ball Race</span>
+                  <span class="hero-game-note" id="matchup-note" aria-live="polite">Night look, Fibonacci against Factorial</span>
+                </figcaption>
+              </figure>
+              <figure class="hero-game hero-game-arena">
+                <div class="phone" id="arena-phone">
+                  <img
+                    src="/games/arena-clash.webp"
+                    srcset="/games/arena-clash-270.webp 270w, /games/arena-clash.webp 540w"
+                    sizes="232px"
+                    width="540"
+                    height="960"
+                    alt="An Arena Clash on its black stage: China, India, the United States and Russia in a round arena, each tied to the ring by a fan of strings in its colour."
+                  />
+                  <canvas aria-hidden="true"></canvas>
+                </div>
+                <figcaption>
+                  <span class="hero-game-name"><!-- game:icon arena-clash -->Arena Clash</span>
+                  <span class="hero-game-note" id="battle-note" aria-live="polite">China vs India vs United States vs Russia</span>
+                </figcaption>
+              </figure>
             </div>
-            <span class="float-chip chip-length" aria-hidden="true"><i></i>30.0 s video</span>
-            <span class="float-chip chip-finish" aria-hidden="true"><i></i>Photo finish</span>
-            <div class="demo-bar">
-              <div class="matchup" aria-live="polite">
-                <p class="matchup-names" id="matchup-names">
-                  <span><i class="ball" style="--c: #7c4dff"></i>Fibonacci Ball</span>
-                  <span class="vs">vs</span>
-                  <span><i class="ball" style="--c: #0ea5e9"></i>Slow Factorial Ball</span>
-                </p>
-                <p class="matchup-note" id="matchup-note">Night look, Fibonacci against Factorial</p>
-              </div>
-              <button class="btn btn-ghost btn-small" id="roll" type="button">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
-                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                  <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" />
-                </svg>
-                Roll a new matchup
-              </button>
-            </div>
+            <button class="btn btn-ghost btn-small" id="roll" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" />
+              </svg>
+              Roll the dice for both
+            </button>
           </div>
         </div>
-        <aside class="browser-note" aria-labelledby="browser-title">
-          <span class="browser-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2.5" /><path d="M8 21h8M12 17v4" /></svg>
-          </span>
-          <div>
-            <h2 id="browser-title">Record in Chrome or Edge, on a computer</h2>
-            <p>
-              They write the MP4 (H.264 and AAC) that Shorts, TikTok and Reels take as it is. Firefox writes WebM, which TikTok and Instagram want
-              converted first. Safari is not tested yet, and phones and tablets cannot record yet.
-            </p>
-          </div>
-        </aside>
       </section>
 
-      <!-- The games, right under the hero, which plays the first: a card each (the same as /games, shorter), and the way to the page about them. -->
+      <!-- The games in words, right under the hero that shows them: how each plays, which plans make it, and the way to its part of /games. -->
       <section class="shell section" id="games" aria-labelledby="games-title">
         <header class="section-head">
           <h2 id="games-title">Two games, one studio</h2>
           <p>Pick the game at the top of the studio. The length, the sound, the narrator, recording and your library work the same in both. <a href="/games">More about the games</a></p>
         </header>
         <ul class="game-list">
-          <li class="game-card">
-            <div class="game-shot">
-              <img src="/games/ball-race.webp" srcset="/games/ball-race-270.webp 270w, /games/ball-race.webp 540w" sizes="122px" width="540" height="960" loading="lazy" alt="A Ball Race in the night look: two balls, each in its own card, breaking layers of big numbers." />
-            </div>
-            <div class="game-body">
-              <div class="game-head">
-                <!-- game:icon ball-race -->
-                <div>
-                  <h3 class="game-name">Ball Race</h3>
-                  <p class="game-plans" data-game-plans="ball-race">Every plan</p>
-                </div>
+          <li class="game-card game-race">
+            <div class="game-head">
+              <!-- game:icon ball-race -->
+              <div>
+                <h3 class="game-name">Ball Race</h3>
+                <p class="game-plans" data-game-plans="ball-race">Every plan</p>
               </div>
-              <p class="game-pitch">Two balls race through layers of ever bigger numbers, balanced to end close at the length you pick.</p>
-              <a class="game-more" href="/games#ball-race">How it plays</a>
             </div>
+            <p class="game-pitch">Two balls race through layers of ever bigger numbers: Fibonacci against factorial, primes against squares.</p>
+            <ol class="game-rules">
+              <li><b>Every floor hit deals a number</b>The next of the ball's sequence: 1, 1, 2, 3, 5… against 1, 2, 6, 24…</li>
+              <li><b>Break every layer</b>The first ball through its last layer reaches the line.</li>
+              <li><b>Close to the very end</b>A photo finish, or a gap of 1 to 10 s that you pick.</li>
+            </ol>
+            <a class="game-more" href="/games#ball-race">How it plays</a>
           </li>
-          <li class="game-card">
-            <div class="game-shot">
-              <img src="/games/arena-clash.webp" srcset="/games/arena-clash-270.webp 270w, /games/arena-clash.webp 540w" sizes="122px" width="540" height="960" loading="lazy" alt="An Arena Clash on its black stage: China, India, the United States and Russia in a round arena, each tied to the ring by a fan of strings in its colour." />
-            </div>
-            <div class="game-body">
-              <div class="game-head">
-                <!-- game:icon arena-clash -->
-                <div>
-                  <h3 class="game-name">Arena Clash</h3>
-                  <p class="game-plans" data-game-plans="arena-clash">Paid plans</p>
-                </div>
+          <li class="game-card game-arena">
+            <div class="game-head">
+              <!-- game:icon arena-clash -->
+              <div>
+                <h3 class="game-name">Arena Clash</h3>
+                <p class="game-plans" data-game-plans="arena-clash">Paid plans</p>
               </div>
-              <p class="game-pitch">Flags in one arena, tied to the ring by fans of strings. Cut theirs, keep yours: the last flag standing wins.</p>
-              <a class="game-more" href="/games#arena-clash">How it plays</a>
             </div>
+            <p class="game-pitch">Flags in one round arena, each tied to the ring by a fan of strings: the last flag standing wins.</p>
+            <ol class="game-rules">
+              <li><b>Every bounce ties ten strings</b>Off the ring, where the ball hit it.</li>
+              <li><b>A touch cuts</b>A ball cuts every rival string it touches, at once.</li>
+              <li><b>No strings, out</b>The balls speed up as it goes, and the last outs play in slow motion.</li>
+            </ol>
+            <a class="game-more" href="/games#arena-clash">How it plays</a>
           </li>
         </ul>
       </section>
@@ -155,7 +155,7 @@
       <section class="shell section" id="how" aria-labelledby="how-title">
         <header class="section-head">
           <h2 id="how-title">From a dice roll to a finished video</h2>
-          <p>Three steps, all in your browser. The race is worked out before it plays, so what you see is what gets recorded.</p>
+          <p>Three steps, all in your browser, shown here with a Ball Race; an Arena Clash is made the same way. The game is worked out before it plays, so what you see is what gets recorded.</p>
         </header>
         <!-- A small working studio: the steps set a matchup, the phone beside them plays it (src/site/home.ts). Two lists, so the phone can come between them on a narrow screen. -->
         <div class="how-grid">
@@ -347,74 +347,13 @@
         <div class="stage features">
           <header class="section-head">
             <h2 id="why-title">Built for short video</h2>
-            <p>What keeps people watching, done for every race, so you only pick and post.</p>
+            <p>What keeps people watching, done for every video, so you only pick and post.</p>
           </header>
 
-          <section class="fgroup" aria-labelledby="group-watch">
+          <section class="fgroup" aria-labelledby="group-race">
             <header class="fgroup-head">
-              <h3 id="group-watch">Watched to the end</h3>
-              <p>A race that stays close, a question for the comments, and a replay with no cut.</p>
-            </header>
-            <div class="fbento">
-              <article class="fcard fcard-big" data-story>
-                <h4>Close to the very end</h4>
-                <p>Speeds are set so every race ends close, a photo finish or a gap of 1 to 10&nbsp;s that you pick, and the video comes out at the length you set.</p>
-                <!-- The steps' matchup as a race to the line (src/site/home.ts): its controls are the steps' Length and Finish gap, in step. -->
-                <div class="fviz viz-race">
-                  <div class="race-board">
-                    <p class="race-top"><span>Race</span><b id="board-race">22.9 s of a 30 s video</b></p>
-                    <div class="lanes" id="board-lanes">
-                      <span class="lane" style="--c: #0ea5e9; --w: 100%"><i></i><b>Slow Factorial Ball</b><em>wins</em></span>
-                      <span class="lane" style="--c: #7c4dff; --w: 95%"><i></i><b>Fibonacci Ball</b><em>0.3 s behind</em></span>
-                      <span class="finish-line"></span>
-                    </div>
-                    <p class="ruler" id="board-ruler" aria-hidden="true"><i>0 s</i><i>8 s</i><i>15 s</i><i>22.9 s</i></p>
-                  </div>
-                  <div class="race-controls">
-                    <div class="control">
-                      <div class="control-label"><label for="board-length">Length</label><output id="board-length-out" for="board-length" aria-hidden="true">30 s</output></div>
-                      <input class="range" type="range" id="board-length" min="30" max="90" step="5" value="30" aria-valuetext="30 seconds" />
-                    </div>
-                    <div class="control">
-                      <div class="control-label"><label for="board-gap">Finish gap</label><output id="board-gap-out" for="board-gap" aria-hidden="true">photo finish</output></div>
-                      <input class="range" type="range" id="board-gap" min="0" max="10" step="1" value="0" aria-valuetext="photo finish" />
-                    </div>
-                  </div>
-                </div>
-              </article>
-              <article class="fcard">
-                <h4>A narrator who asks for a pick</h4>
-                <p>It names both balls, gives each a line and ends by asking viewers to pick a winner: the answer goes in the comments. The narrator comes with the paid plans; every plan records music only or silence.</p>
-                <!-- The classic's real opening (src/audio/narration.ts autoScript), and Kokoro saying it in Heart, loaded only on a press. -->
-                <div class="fviz viz-voice" id="voice">
-                  <p class="quote">“Fibonacci Ball versus Slow Factorial Ball! Fibonacci adds up its last two hits. Slow Factorial multiplies by the next number. By its twentieth hit, Factorial deals over two quintillion. Which one are you betting on?”</p>
-                  <div class="player">
-                    <button class="play" id="voice-play" type="button" aria-pressed="false" aria-label="Hear the opening, in the Heart voice">
-                      <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
-                      <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
-                    </button>
-                    <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-                    <span class="voice-name">Heart</span>
-                  </div>
-                  <audio id="voice-audio" preload="none" data-src="/voice/opening-heart.m4a"></audio>
-                </div>
-              </article>
-              <article class="fcard">
-                <h4>A loop with no cut</h4>
-                <p>The last half second fades into the first frame, so when the app plays it again there is no cut.</p>
-                <div class="fviz viz-loop" aria-hidden="true">
-                  <span class="loop-frame"><img src="/hero/first-frame-4.webp" width="540" height="960" loading="lazy" alt="" /><em>0.0 s</em></span>
-                  <svg class="loop-arrow" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1M19.5 12a7.5 7.5 0 0 1-13 5.1M17.5 3v4h-4M6.5 21v-4h4" /></svg>
-                  <span class="loop-frame"><img src="/hero/first-frame-4.webp" width="540" height="960" loading="lazy" alt="" /><em>30.0 s</em></span>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <section class="fgroup" aria-labelledby="group-new">
-            <header class="fgroup-head">
-              <h3 id="group-new">A new video every day</h3>
-              <p>One roll makes a new matchup, balanced and ready, with nothing to edit: posting every day takes minutes.</p>
+              <h3 id="group-race"><!-- game:icon ball-race -->Ball Race</h3>
+              <p>A new matchup every roll: three looks, fifteen sequences, and powers for a twist.</p>
             </header>
             <div class="fbento">
               <article class="fcard fcard-big">
@@ -481,13 +420,90 @@
             </div>
           </section>
 
-          <section class="fgroup" aria-labelledby="group-post">
+          <section class="fgroup" aria-labelledby="group-arena">
             <header class="fgroup-head">
-              <h3 id="group-post">Ready to post</h3>
-              <p>A file the apps take as it is, laid out around their buttons, and a library that remembers how each one was made.</p>
+              <h3 id="group-arena"><!-- game:icon arena-clash -->Arena Clash</h3>
+              <p>Any countries you like, a story that stays open to the end, and a finish viewers feel.</p>
             </header>
             <div class="fbento">
               <article class="fcard fcard-big">
+                <h4>199 flags, any matchup</h4>
+                <p>Pick every flag yourself, or let the dice deal 2 to 12 from everywhere or from one region. When they all come from one, the title names it, as the format's most watched videos do.</p>
+                <!-- Some of the flags, running past in two rows (still under reduced motion), and the dice's regions. -->
+                <div class="fviz viz-flags" aria-hidden="true">
+                  <div class="flag-wall">
+                    <ul class="flag-row"><li><img src="/flags/rs.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/hr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/si.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ba.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/me.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/it.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/de.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/es.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pt.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gb.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ie.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ch.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/at.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/be.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/rs.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/hr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/si.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ba.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/me.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/it.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/de.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/es.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pt.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gb.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ie.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ch.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/at.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/be.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pl.svg" width="44" height="44" loading="lazy" alt="" /></li></ul>
+                    <ul class="flag-row"><li><img src="/flags/se.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/no.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/dk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fi.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/tr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/br.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ar.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mx.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/us.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ca.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/jp.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/kr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/in.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cn.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/au.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ng.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/eg.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/za.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ma.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/se.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/no.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/dk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fi.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/tr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/br.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ar.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mx.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/us.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ca.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/jp.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/kr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/in.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cn.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/au.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ng.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/eg.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/za.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ma.svg" width="44" height="44" loading="lazy" alt="" /></li></ul>
+                  </div>
+                  <ul class="region-chips">
+                    <li>Everywhere</li>
+                    <li>Europe</li>
+                    <li>The Balkans</li>
+                    <li>The Americas</li>
+                    <li>Asia</li>
+                    <li>Africa</li>
+                    <li>Oceania</li>
+                  </ul>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>It ends on a comeback</h4>
+                <p>In four battles out of five, the winner holds fewer strings than a rival for most of the way and takes the lead only near the end, so the numbers never give it away.</p>
+                <!-- Two flags' strings over a battle: the one behind most of the way takes it late. A drawing, not a battle. -->
+                <div class="fviz viz-comeback" aria-hidden="true">
+                  <svg viewBox="0 0 320 150">
+                    <path class="cb-grid" d="M0 37.5h320M0 75h320M0 112.5h320" />
+                    <path class="cb-line cb-rival" d="M0 75C50 60 110 36 170 34S240 42 262 70 300 140 320 146" />
+                    <path class="cb-line cb-winner" d="M0 75C45 92 95 116 150 112S225 88 262 70 300 40 320 30" />
+                    <circle class="cb-dot" cx="262" cy="70" r="6" />
+                  </svg>
+                  <p class="cb-legend"><span class="cb-key cb-rival">ahead most of the way</span><span class="cb-key cb-winner">wins</span></p>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>Slow motion, and a heartbeat</h4>
+                <p>The last outs play in slow motion. A flag down to its last ten strings turns red, its count beating like a heart, and the sound beats with it.</p>
+                <div class="fviz viz-danger" aria-hidden="true">
+                  <span class="danger-ball"><img src="/flags/br.svg" width="96" height="96" loading="lazy" alt="" /></span>
+                  <b class="danger-count">8</b>
+                  <span class="slow-tag"><i></i>SLOW MOTION</span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="fgroup" aria-labelledby="group-both">
+            <header class="fgroup-head">
+              <h3 id="group-both">In both games</h3>
+              <p>A narrator who asks for a pick, a follow button, and a library that remembers how each video was made.</p>
+            </header>
+            <div class="fbento">
+              <article class="fcard fcard-big">
+                <h4>A narrator who asks for a pick</h4>
+                <p>It names the players, says in a line what each does or what the rule is, and ends by asking viewers to pick: the answer goes in the comments. The narrator comes with the paid plans; every plan records music only or silence.</p>
+                <!-- The classic's real opening (src/audio/narration.ts autoScript), and Kokoro saying it in Heart, loaded only on a press. -->
+                <div class="fviz viz-voice" id="voice">
+                  <p class="quote">“Fibonacci Ball versus Slow Factorial Ball! Fibonacci adds up its last two hits. Slow Factorial multiplies by the next number. By its twentieth hit, Factorial deals over two quintillion. Which one are you betting on?”</p>
+                  <div class="player">
+                    <button class="play" id="voice-play" type="button" aria-pressed="false" aria-label="Hear the opening, in the Heart voice">
+                      <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                      <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                    </button>
+                    <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                    <span class="voice-name">Heart</span>
+                  </div>
+                  <audio id="voice-audio" preload="none" data-src="/voice/opening-heart.m4a"></audio>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>A follow button in the video</h4>
+                <p>It pops up once while the game plays and again under the winner card, a hand taps it, and the narrator says “Follow for more!” On the paid plans.</p>
+                <div class="fviz viz-follow" aria-hidden="true">
+                  <span class="follow-pill"><b>+</b>FOLLOW</span>
+                  <img class="follow-hand" src="/hand/pointing-up.png" width="72" height="72" loading="lazy" alt="" />
+                </div>
+              </article>
+              <article class="fcard">
                 <h4>A library of your videos</h4>
                 <p>Each recording is listed with its settings and, once you paste them, its YouTube, TikTok and Instagram links. Open one in the studio and it plays out again, frame for frame.</p>
                 <div class="fviz viz-library" aria-hidden="true">
@@ -498,30 +514,6 @@
                   <span class="lib-row">
                     <img src="/looks/night.webp" width="480" height="416" loading="lazy" alt="" />
                     <span class="lib-text"><b>Doubling Ball vs Fibonacci Ball</b><span class="pills"><i class="on">YouTube</i><i>TikTok</i><i>Instagram</i></span></span>
-                  </span>
-                </div>
-              </article>
-              <article class="fcard">
-                <h4>Clear of the buttons</h4>
-                <p>The names, the top race and the VS stay clear of the apps' top bar and side buttons; only the bottom card's last layers run under the caption, as on the format's biggest channels.</p>
-                <!-- Where TikTok, Reels and Shorts put their own buttons: the zones of the studio's #safe-zones (src/style.css .zone). -->
-                <div class="fviz viz-zones" aria-hidden="true">
-                  <span class="zones-frame">
-                    <img src="/hero/first-frame-4.webp" width="540" height="960" loading="lazy" alt="" />
-                    <i class="zone-top"></i>
-                    <i class="zone-side"></i>
-                    <i class="zone-bottom"></i>
-                  </span>
-                </div>
-              </article>
-              <article class="fcard">
-                <h4>1080×1920 at 60 fps</h4>
-                <p>An MP4 with H.264 video and AAC sound, which Shorts, TikTok and Reels take as it&nbsp;is.</p>
-                <div class="fviz viz-specs" aria-hidden="true">
-                  <span class="phone-frame">
-                    <img src="/hero/first-frame-4.webp" width="540" height="960" loading="lazy" alt="" />
-                    <span class="dim dim-w">1080</span>
-                    <span class="dim dim-h">1920</span>
                   </span>
                 </div>
               </article>
@@ -547,55 +539,39 @@
         </header>
         <div class="faq">
           <div class="faq-col">
-            <details>
+            <details id="browsers">
               <summary>Which browsers does the studio run in?</summary>
-              <p>Chrome or Edge on a computer: they record the MP4 (H.264 video, AAC sound) that Shorts, TikTok and Reels take as it is. Firefox records WebM, which TikTok and Instagram want converted first. Safari is not tested yet. The studio shows which format your browser writes, beside Record.</p>
-            </details>
-            <details>
-              <summary>Can I make videos on my phone?</summary>
-              <p>Not yet: the studio needs a computer. The videos are made for phones, though: vertical and full size, ready to post from wherever you post.</p>
+              <p>Chrome or Edge on a computer: they record the MP4 (H.264 video, AAC sound) that Shorts, TikTok and Reels take as it is. Firefox records WebM, which TikTok and Instagram want converted first. Safari is not tested yet, and phones and tablets cannot record yet. The studio shows which format your browser writes, beside Record.</p>
             </details>
             <details>
               <summary>Do I have to edit the video?</summary>
-              <p>No. Each recording comes out at the length you set, with the race, the winner card and the fade back to the first frame. Upload the file as it is.</p>
+              <p>No. Each recording comes out at the length you set, with the game, the winner card and the fade back to the first frame. Upload the file as it is.</p>
             </details>
             <details>
               <summary>How close are the races?</summary>
               <p>As close as you ask. A photo finish puts the loser 0.15 to 1.1 seconds behind the winner; or pick a gap of 1 to 10 seconds. Either way the speeds are set so the video comes out at the length you chose.</p>
             </details>
             <details>
-              <summary>Is there a watermark?</summary>
-              <p>On the free plan, a small BounceReel watermark, the mark and the site's address, sits between the two cards of every video. The paid plans have none.</p>
-            </details>
-            <details>
-              <summary>Can I use my own sound?</summary>
-              <p>Yes. Record with music only or silent, then add a sound in TikTok, Instagram or YouTube when you post.</p>
+              <summary>Can I choose who wins an Arena Clash?</summary>
+              <p>Yes: pick the winner in the battle's card, or leave it to the arena. Either way the battle is balanced to end at the length you set, with its flags going out along the way rather than all at once.</p>
             </details>
           </div>
           <div class="faq-col">
             <details>
-              <summary>What does the narrator cost?</summary>
-              <p>It comes with the paid plans, at no extra cost: the narrator is Kokoro, a free voice that runs in your browser, so what it says is made on your computer. The first time, your browser downloads the voice once.</p>
+              <summary>Is there a watermark?</summary>
+              <p>On the free plan, a small BounceReel watermark, the mark and the site's address: between the two cards of a race, under the arena of a battle. The paid plans have none.</p>
             </details>
             <details>
-              <summary>Can I hear the voices first?</summary>
-              <p>Yes. The studio's Voice tab plays each voice saying your matchup, on every plan.</p>
+              <summary>What does the narrator cost?</summary>
+              <p>It comes with the paid plans, at no extra cost: the narrator is Kokoro, a free voice that runs in your browser, so what it says is made on your computer. The first time, your browser downloads the voice once. Or record with music only or silent, and add a sound when you post.</p>
             </details>
             <details>
               <summary>Can I make the same video again?</summary>
-              <p>Yes. Every race comes from a seed, and your library keeps each video's settings: open one in the studio and it plays out again, frame for frame.</p>
+              <p>Yes. Every game comes from a seed, and your library keeps each video's settings: open one in the studio and it plays out again, frame for frame.</p>
             </details>
             <details>
               <summary>Where are my videos stored?</summary>
               <p>The MP4 downloads to your computer. Your library keeps each video's settings and links, not the file: the settings are enough to make the same video again.</p>
-            </details>
-            <details>
-              <summary>What happens when my library is full?</summary>
-              <p>A recording still downloads; it is just not added to your library until you delete one there, or move to a plan that keeps more.</p>
-            </details>
-            <details>
-              <summary>How do I delete my account?</summary>
-              <p>On your account page. The account, its videos and their links are deleted at once.</p>
             </details>
           </div>
         </div>
@@ -603,7 +579,7 @@
 
       <section class="shell close" aria-labelledby="close-title">
         <div class="stage close-stage">
-          <h2 id="close-title">Your first race is a dice roll away.</h2>
+          <h2 id="close-title">Your first video is a dice roll away.</h2>
           <p>Free to start, no card needed.</p>
           <div class="actions">
             <a class="btn btn-primary" href="/signup" data-guest data-signups="open">Start free</a>

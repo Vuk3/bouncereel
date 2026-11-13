@@ -12,72 +12,176 @@
     <!-- site:header -->
 
     <main id="main">
-      <section class="shell page-top" aria-labelledby="games-title">
-        <header class="section-head">
-          <h1 id="games-title" class="page-title">Two games, one studio</h1>
-          <p>
-            Every BounceReel video is a game played out on screen and balanced to end at the length you pick. Pick the game at the top of the
-            studio: the length, the sound, the narrator, recording and your library work the same in both.
-          </p>
-        </header>
+      <!-- The page's stage: what the games are, and a way to each (docs/website.md §4). -->
+      <section class="shell hero" aria-labelledby="games-title">
+        <div class="stage games-stage">
+          <div class="games-intro">
+            <p class="eyebrow">The games</p>
+            <h1 id="games-title">Two games, one studio</h1>
+            <p class="lede">
+              Every BounceReel video is a game played out on screen, worked out before it plays and balanced to end at the length you pick. Pick
+              one at the top of the studio: the length, the sound, the narrator, recording and your library work the same in both.
+            </p>
+          </div>
+          <nav class="game-jump" aria-label="The games">
+            <a href="#ball-race">
+              <!-- game:icon ball-race -->
+              <span><b>Ball Race</b><small data-game-plans="ball-race">Every plan</small></span>
+              <svg class="jump-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+            </a>
+            <a href="#arena-clash">
+              <!-- game:icon arena-clash -->
+              <span><b>Arena Clash</b><small data-game-plans="arena-clash">Paid plans</small></span>
+              <svg class="jump-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+            </a>
+          </nav>
+        </div>
+      </section>
 
-        <!-- One card per game (docs/website.md §4): its frame, icon, name, which plans make it, what it is. The plans are filled in from GET /api/plans (src/site/games-page.ts). -->
-        <ul class="game-list game-list-wide">
-          <li class="game-card" id="ball-race">
-            <div class="game-shot">
-              <img
-                src="/games/ball-race.webp"
-                srcset="/games/ball-race-270.webp 270w, /games/ball-race.webp 540w"
-                sizes="(min-width: 1046px) 216px, calc(22vw - 14px)"
-                width="540"
-                height="960"
-                alt="A Ball Race in the night look: two balls, each in its own card, breaking layers of big numbers."
-              />
+      <!--
+        A section a game: the game itself playing in a phone (src/site/games-page.ts: the studio's own
+        engine, as on the home page), and beside it how it plays, its numbers and what you choose.
+        Which plans make it is filled in from GET /api/plans.
+      -->
+      <section class="shell section game-feature game-race" id="ball-race" aria-labelledby="race-title">
+        <div class="stage game-demo">
+          <div class="phone" id="race-phone">
+            <img
+              src="/hero/first-frame-4.webp"
+              width="540"
+              height="960"
+              alt="The first frame of a Ball Race in the night look: Fibonacci Ball in the top card, Slow Factorial Ball in the bottom one, each above three layers of numbers to break."
+            />
+            <canvas aria-hidden="true"></canvas>
+          </div>
+          <p class="game-demo-note" id="race-note" aria-live="polite">Night look, Fibonacci against Factorial</p>
+        </div>
+        <div class="game-body">
+          <div class="game-head">
+            <!-- game:icon ball-race -->
+            <div>
+              <h2 class="game-name" id="race-title">Ball Race</h2>
+              <p class="game-plans" data-game-plans="ball-race">Every plan</p>
             </div>
-            <div class="game-body">
-              <div class="game-head">
-                <!-- game:icon ball-race -->
-                <div>
-                  <h2 class="game-name">Ball Race</h2>
-                  <p class="game-plans" data-game-plans="ball-race">Every plan</p>
-                </div>
-              </div>
-              <p class="game-pitch">Two balls race through layers of ever bigger numbers: Fibonacci against factorial, primes against squares.</p>
-              <ul class="game-points">
-                <li>Each ball hits the floor with the numbers of its sequence, and the first to break every layer reaches the line.</li>
-                <li>Balanced to end close at the length you pick, down to a photo finish.</li>
-                <li>A new matchup every roll of the dice: fourteen sequences, 65 pairings, and powers for a twist on the paid plans.</li>
-                <li>Three looks: paper, night and cards.</li>
-              </ul>
+          </div>
+          <p class="game-lede">Two balls race through layers of ever bigger numbers: Fibonacci against factorial, primes against squares.</p>
+          <h3 class="game-sub">How it plays</h3>
+          <ol class="game-rules">
+            <li><b>Every floor hit deals a number</b>Each ball hits with the next number of its sequence: 1, 1, 2, 3, 5… against 1, 2, 6, 24, 120…</li>
+            <li><b>Break every layer</b>A layer breaks once its number has been dealt, and the first ball through its last one reaches the line.</li>
+            <li><b>Close to the very end</b>Speeds are set so it ends close, a photo finish or a gap of 1 to 10 s that you pick, at the length you pick.</li>
+          </ol>
+          <ul class="game-stats">
+            <li><b>15</b><span>number sequences</span></li>
+            <li><b>79</b><span>pairings for the dice</span></li>
+            <li><b>3</b><span>looks</span></li>
+            <li><b>4</b><span>powers</span></li>
+          </ul>
+          <h3 class="game-sub">What you choose</h3>
+          <ul class="game-chips">
+            <li>Two sequences, or a roll of the dice</li>
+            <li>A photo finish or a gap</li>
+            <li>Paper, night or cards</li>
+            <li>A power: speeds up, slows down, grows or splits</li>
+            <li>A crowd of balls against one</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="shell section game-feature game-arena" id="arena-clash" aria-labelledby="arena-title">
+        <div class="stage game-demo">
+          <div class="phone" id="arena-phone">
+            <img
+              src="/games/arena-clash.webp"
+              srcset="/games/arena-clash-270.webp 270w, /games/arena-clash.webp 540w"
+              sizes="270px"
+              width="540"
+              height="960"
+              loading="lazy"
+              alt="An Arena Clash on its black stage: China, India, the United States and Russia in a round arena, each tied to the ring by a fan of strings in its colour."
+            />
+            <canvas aria-hidden="true"></canvas>
+          </div>
+          <p class="game-demo-note" id="arena-note" aria-live="polite">China vs India vs United States vs Russia</p>
+        </div>
+        <div class="game-body">
+          <div class="game-head">
+            <!-- game:icon arena-clash -->
+            <div>
+              <h2 class="game-name" id="arena-title">Arena Clash</h2>
+              <p class="game-plans" data-game-plans="arena-clash">Paid plans</p>
             </div>
+          </div>
+          <p class="game-lede">Flags in one round arena, each tied to the ring by a fan of strings. Cut theirs, keep yours: the last flag standing wins.</p>
+          <h3 class="game-sub">How it plays</h3>
+          <ol class="game-rules">
+            <li><b>Every bounce ties ten strings</b>Off the ring, where the ball hit it, however many it already holds.</li>
+            <li><b>A touch cuts</b>A ball that touches a rival's strings cuts every one it touches, at once. Its own it passes through.</li>
+            <li><b>The last flag standing wins</b>A flag with no strings left is out. The balls speed up as it goes, and the last outs play in slow motion.</li>
+          </ol>
+          <ul class="game-stats">
+            <li><b>199</b><span>flags</span></li>
+            <li><b>2–12</b><span>flags a battle</span></li>
+            <li><b>6</b><span>regions for the dice</span></li>
+            <li><b>4 in 5</b><span>end on a comeback</span></li>
+          </ul>
+          <h3 class="game-sub">What you choose</h3>
+          <ul class="game-chips">
+            <li>Every flag, or a roll of the dice</li>
+            <li>A region: Europe, the Balkans, the Americas, Asia, Africa or Oceania</li>
+            <li>The winner, or let the arena decide</li>
+            <li>From 2 flags to 12, made for 3 or 4</li>
+          </ul>
+        </div>
+        <!-- Some of the flags, running past in two rows (still under reduced motion). -->
+        <div class="flag-wall game-flags" aria-hidden="true">
+          <ul class="flag-row">
+            <li><img src="/flags/rs.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/hr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/si.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ba.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/me.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/it.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/de.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/es.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pt.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gb.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ie.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/se.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/no.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/dk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fi.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pl.svg" width="44" height="44" loading="lazy" alt="" /></li>
+            <li><img src="/flags/rs.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/hr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/si.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ba.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/me.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/it.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/de.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/es.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pt.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gb.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ie.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/se.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/no.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/dk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fi.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pl.svg" width="44" height="44" loading="lazy" alt="" /></li>
+          </ul>
+          <ul class="flag-row">
+            <li><img src="/flags/tr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/br.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ar.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mx.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/us.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ca.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/jp.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/kr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/in.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cn.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/au.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ng.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/eg.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/za.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ma.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ke.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/sa.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ch.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/at.svg" width="44" height="44" loading="lazy" alt="" /></li>
+            <li><img src="/flags/tr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/br.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ar.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mx.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/us.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ca.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/jp.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/kr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/in.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cn.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/au.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ng.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/eg.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/za.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ma.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ke.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/sa.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ch.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/at.svg" width="44" height="44" loading="lazy" alt="" /></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- What every video gets, whichever game: each a fact the code keeps (docs/website.md §4, The facts). -->
+      <section class="shell section" aria-labelledby="both-title">
+        <header class="section-head">
+          <h2 id="both-title">In both games</h2>
+          <p>Whichever game you pick, the video around it is made the same way, and comes out ready to post.</p>
+        </header>
+        <ul class="both-grid">
+          <li class="tile">
+            <span class="both-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2.5M9.5 2.5h5" /></svg></span>
+            <h3>The length you pick</h3>
+            <p>From 20 to 90 seconds, each game balanced to end on it, to a tenth of a second.</p>
           </li>
-          <li class="game-card" id="arena-clash">
-            <div class="game-shot">
-              <img
-                src="/games/arena-clash.webp"
-                srcset="/games/arena-clash-270.webp 270w, /games/arena-clash.webp 540w"
-                sizes="(min-width: 1046px) 216px, calc(22vw - 14px)"
-                width="540"
-                height="960"
-                alt="An Arena Clash on its black stage: China, India, the United States and Russia in a round arena, each tied to the ring by a fan of strings in its colour."
-              />
-            </div>
-            <div class="game-body">
-              <div class="game-head">
-                <!-- game:icon arena-clash -->
-                <div>
-                  <h2 class="game-name">Arena Clash</h2>
-                  <p class="game-plans" data-game-plans="arena-clash">Paid plans</p>
-                </div>
-              </div>
-              <p class="game-pitch">Flags in one round arena, each tied to the ring by a fan of strings. Cut theirs, keep yours: the last flag standing wins.</p>
-              <ul class="game-points">
-                <li>Every bounce off the ring ties ten new strings, and a flag that touches a rival's strings cuts them.</li>
-                <li>A flag with no strings left is out. The balls speed up as it goes, and the last outs play in slow motion.</li>
-                <li>Made for three or four flags, from 199 countries; pick the winner yourself, or let the arena decide.</li>
-                <li>Balanced to end at the length you pick, on a black stage made for the feed.</li>
-              </ul>
-            </div>
+          <li class="tile">
+            <span class="both-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" /></svg></span>
+            <h3>A narrator</h3>
+            <p>It opens the video with a question for the comments and calls the winner at the end. On the paid plans; every plan records music only or silence.</p>
+          </li>
+          <li class="tile">
+            <span class="both-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="4" /><path d="M3 20a7 7 0 0 1 11.5-5.4M18 14v6M15 17h6" /></svg></span>
+            <h3>A follow button</h3>
+            <p>Once while the game plays and again under the winner card, tapped by a hand. On the paid plans.</p>
+          </li>
+          <li class="tile">
+            <span class="both-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1M19.5 12a7.5 7.5 0 0 1-13 5.1M17.5 3v4h-4M6.5 21v-4h4" /></svg></span>
+            <h3>A loop with no cut</h3>
+            <p>The last half second fades into the first frame, so the replay has no seam.</p>
+          </li>
+          <li class="tile">
+            <span class="both-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5" /><path d="M3.5 9h17M8 13h8M8 16.5h5" /></svg></span>
+            <h3>Your library</h3>
+            <p>Every recording with its settings and links. Open one in the studio and it plays out again, frame for frame.</p>
+          </li>
+          <li class="tile">
+            <span class="both-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5" /><path d="M10.5 18.5h3" /></svg></span>
+            <h3>Ready to post</h3>
+            <p>An MP4 at 1080×1920 and 60 fps, laid out around the apps' buttons, for Shorts, TikTok and Reels as it is.</p>
           </li>
         </ul>
       </section>

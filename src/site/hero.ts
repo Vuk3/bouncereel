@@ -327,15 +327,8 @@ export interface Facts {
   balls: { name: string; color: string; terms: string }[];
   /** Empty when nobody finishes. */
   winner: string;
-  /** Which ball wins, 0 the top one, 1 the bottom; -1 when nobody finishes. */
-  first: number;
   /** Seconds between the winner and the loser touching the line, as the studio measures it (app.ts measureMargin). */
   margin: number;
-  /** Seconds of race to the win, on the race's own clock (slow motion stretches the last of it in the video). */
-  race: number;
-  /** How far the loser had got when the winner touched the line, 0..1. */
-  runnerUp: number;
-  video: number;
 }
 
 /** `outcome`, when the phone has just worked it out (Hero.show), saves running the race once more. */
@@ -344,11 +337,7 @@ export function factsOf(cfg: Config, outcome: Outcome = predict(cfg)): Facts {
   return {
     balls: [cfg.a, cfg.b].map((ball) => ({ name: ball.name, color: ball.color, terms: SEQUENCES[ball.sequence].hint })),
     winner: outcome.timedOut ? '' : outcome.winnerName,
-    first: outcome.timedOut || outcome.winner === null ? -1 : outcome.winner,
     margin: Math.abs(finish[0] - finish[1]),
-    race: outcome.time,
-    runnerUp: outcome.runnerUp,
-    video: cfg.timing.video,
   };
 }
 

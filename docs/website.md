@@ -33,7 +33,7 @@ Vite, and its address is the file's path without `.html` (Workers Assets'
 | --- | --- | --- |
 | `/` | everyone | [index.html](../index.html) |
 | `/pricing` | everyone | [pricing.html](../pricing.html) |
-| `/games` | everyone | [games.html](../games.html): the games, a card each |
+| `/games` | everyone | [games.html](../games.html): the games, a section each with the game playing |
 | `/signup`, `/login` | signed out (the Worker sends a signed-in visitor on) | [signup.html](../signup.html), [login.html](../login.html) |
 | `/forgot`, `/reset?token=`, `/verify?token=` | everyone | [forgot.html](../forgot.html), [reset.html](../reset.html), [verify.html](../verify.html) |
 | `/terms`, `/privacy`, `/refunds` | everyone | the three legal pages |
@@ -82,7 +82,7 @@ its own script where it has one.
 
 ## 3. The look
 
-A product site, quiet around one thing: the live race on a dark stage. The identity is its own,
+A product site, quiet around one thing: the games playing live on a dark stage. The identity is its own,
 modern and plain, so the videos (which have looks of their own) are what stands out:
 
 - **The ground** is cool paper grey (`#eff1f5`) with **white tiles** (22 px corners, a 1 px
@@ -112,9 +112,10 @@ it before first paint, and the theme toggle with the theme
 
 The pieces, each used where it carries information:
 
-- **the phones**: the live race in a dark bezel. The hero's has the two balls' light behind it
-  (violet above, sky below) and two facts floating at its edges on wide screens (the length it
-  is balanced to, a photo finish); the one beside How it works plays what the steps set;
+- **the phones**: a game playing live in a dark bezel. The hero has two side by side, a race and
+  an Arena Clash (the arena's a little lower from 920 px, so the pair reads as two), in the balls'
+  light (violet above, sky below), each with its game's icon, name and what it plays under it;
+  the one beside How it works plays what the steps set; each section of /games has its game's;
 - **pieces of the studio** in the step tiles, each a small screen with an edge and the accent's
   light from above, and real (section 4): the dice with the matchup it rolled and how it ends;
   Length, Finish gap, Look and Sound; the video as it will be posted, its first frame under an
@@ -122,14 +123,13 @@ The pieces, each used where it carries information:
 - **the gallery**: three real recordings in phones, one per look, each playing while it is half
   on screen, a button in its corner to pause it;
 - **the cards on the stage**, under their words, and the ones that look like a control are one
-  (section 4): the race board, two lanes racing to a checkered line on the race's own seconds,
-  each ball glowing at the end of its bar, beside the Length and Finish gap that set it; the
-  four power tags, each picking a small sketch of what it does; the narrator's real opening and a
-  player that says it; the dice's fourteen sequences with their first numbers; and drawings, HTML and
-  CSS with the site's own images, `aria-hidden` where the card's words say the same: the video's
-  real first frame twice, first and last, around a loop arrow, under the zones the apps' buttons
-  take, and in a phone with its two sizes; library rows with a thumbnail and, as a dot filled or
-  not, which links are pasted;
+  (section 4): the four power tags, each picking a small sketch of what it does; the narrator's
+  real opening and a player that says it; the dice's fifteen sequences with their first numbers;
+  and drawings, HTML and CSS with the site's own images, `aria-hidden` where the card's words say
+  the same: flags running past in two rows over the dice's regions; two flags' strings over a
+  battle, the winner under its rival until late; a flag with its count red and beating and the
+  slow motion tag; the video's red follow button and the hand that taps it; library rows with a
+  thumbnail and, as a dot filled or not, which links are pasted;
 - **the three looks** side by side, as the renderer draws them, each opening larger, playing.
 
 Every colour is a token on `:root`, redefined under `html[data-theme='dark']` (the toggle,
@@ -138,87 +138,91 @@ keeps the name, Sign in (or Studio) and the theme below 480 px (How it works and
 720 px are in the footer, Start free is the hero's first button). Nothing scrolls sideways at
 360 px. Focus is a visible 2 px outline; under `prefers-reduced-motion`, nothing moves.
 
-**Motion** (the end of [site.css](../src/site/site.css)) is a system in four registers, as on
-vukcvetkovic-web, in CSS, with one IntersectionObserver for the stories:
+**Motion** (the end of [site.css](../src/site/site.css)) is a system in three registers, as on
+vukcvetkovic-web, in CSS:
 
 | Register | What moves |
 | --- | --- |
-| arrive | the hero's words rise in one after another at load, the phone settles into place (moved, never faded: its still frame is the LCP) |
+| arrive | the hero's words rise in one after another at load, the phones settle into place (moved, never faded: the race's still frame is the LCP) |
 | scroll | on `view()` and `scroll()` timelines: a line under the header fills as the page goes down and the header lifts off it; the hero steps back (smaller) as it leaves; headings, feature cards, plans, questions and the close rise in as they arrive, from their top 85 % of the way down the screen to the middle, side by side a step apart; the looks rise, library rows and the matchup's rows in step 1 slide in |
-| story | a drawing that tells something plays once, on its own clock, when its card is half in view: the race lanes run to the line. Scrubbed by the scroll, a story had finished before the reader got to it. `playStories` in [home.ts](../src/site/home.ts) arms them (`data-stories` on `<html>`) and marks a card (`data-story`) `.played` |
 | answer | the violet button lifts under the pointer; an answer in the questions opens to its height instead of jumping (`::details-content`) |
 
-And the drawings at work, small and composited: a voice's wave, the loop arrow turning, the
-phone and the hero's chips floating; the voice's wave moves only while the opening plays. The
-gallery's videos play while half on screen, but not under reduced motion, where only their
+And the drawings at work, small and composited: a voice's wave, the flags running past, a
+count beating, the hand tapping the follow button; the voice's wave moves only while the
+opening plays. The gallery's videos play while half on screen, but not under reduced motion, where only their
 button starts one.
 
 - **Nothing is hidden by default.** Every rule is inside `prefers-reduced-motion:
-  no-preference`, the scroll-driven ones inside `@supports (animation-timeline: view())` too,
-  and a story waits on its first frame only once the script has armed it, so Firefox, a page
-  without JS, or a reader who asked for less motion sees the whole page, still. (Firefox with JS
-  plays the stories: they need no scroll timeline.)
+  no-preference`, the scroll-driven ones inside `@supports (animation-timeline: view())` too, so
+  Firefox, a page without JS, or a reader who asked for less motion sees the whole page, still.
 - ⚠️ **`overflow: clip`, never `hidden`, around anything animated on the scroll.** `hidden` makes
   a scroll container, the element's `view()` timeline measures against that box instead of the
-  page, and the animation never moves: hence `clip` on `.features`, `.piece` and `.lane`.
+  page, and the animation never moves: hence `clip` on `.features` and `.piece`.
 - Keyframes use `translate`, `scale` and `rotate`, never `transform`. A rise's range is in
   `cover` svh, so it lands at the same place on any screen and for any height: from
   `cover 15svh` (its top 85 % of the way down) to `cover min(50svh, 640px)` (its top at the
   middle). The 640 px is the foot: the least page under the close's top is 757 px (at 1920 wide),
   and a range that ends past the page leaves the element half-way. Measured at 1440×900,
   1280×720 and 1920×1200: every rise starts at 0.84–0.85 of the screen's height and ends at
-  0.49–0.50, and each story plays with its card 0.50–0.53 in view. LCP 2.08 s and CLS 0 on a
+  0.49–0.50. LCP 2.08 s and CLS 0 on a
   slowed phone with it all running.
 
 ## 4. The home page
 
-In order: the hero on its stage (the headline **"Ball race videos, ready to post."**, what it
-is in two sentences: two balls racing through ever bigger numbers, balanced to end close at the
-length you pick, recorded as a vertical MP4 with nothing to edit; Start free, a line saying it
-records in Chrome or Edge on a computer, three specs, the live race); **the browser note** right
-under the stage; **the games** (`#games`), a card for each game BounceReel makes: its frame in a
-small phone, its icon and name, which plans make it, a line on what it is and a link to its part
-of /games; **how it works**, a small working studio (below): three steps (roll a matchup →
-choose length, look, sound and narrator → post it as it is), each a card with its words beside
-the piece of the studio it is about, and the phone that plays what they set; **the gallery**,
-three recordings from the studio (below); what the studio does, **on the stage, in three groups
-that say why the videos work**, each with its name and a line over one card across the width
-(the group's main drawing) and two side by side under it: **watched to the end** (close to the
-very end: the race board; a narrator who asks for a pick; a loop with no cut), **a new video
-every day** (the three looks; fourteen sequences, 65 pairings; powers, for a twist) and **ready to
-post** (the library; clear of the buttons; 1080×1920 at 60 fps); the plans (from
-`GET /api/plans`); questions, under their heading in two columns of their own (one list on a
-phone); the last call to action on the stage; the footer. What only a paid plan makes is said
-where it comes up: the narrator's and the powers' cards say "the paid plans", never a plan's
-name, and step 2's line says what the free plan makes.
+In order, each thing said once: the hero on its stage (the headline **"Game videos, ready to
+post."**, what they are in two sentences: balls racing through ever bigger numbers and flags
+cutting each other's strings, balanced to end at the length you pick, recorded as a vertical MP4
+with nothing to edit; Start free and See the games, a line saying it records in Chrome or Edge
+on a computer, whose Why opens that answer in the questions, three specs, and **both games
+playing**, a phone each, with one dice for both); **the games** (`#games`) in words, a card each
+(below); **how it works**, a small working studio shown with a race (below): three steps (roll a
+matchup → choose length, look, sound and narrator → post it as it is), each a card with its
+words beside the piece of the studio it is about, and the phone that plays what they set; **the
+gallery**, three recordings from the studio (below); what the studio does, **on the stage, in
+three groups**, each under its name (a game's under its icon) and a line, one card across the
+width (the group's main drawing) and two side by side under it: **Ball Race** (the three looks;
+fifteen sequences, 79 pairings; powers, for a twist), **Arena Clash** (199 flags, any matchup:
+flags running past and the dice's regions; it ends on a comeback; slow motion and a heartbeat)
+and **in both games** (a narrator who asks for a pick; a follow button in the video; the
+library); the plans (from `GET /api/plans`); questions, eight, under their heading in two columns
+of their own (one list on a phone); the last call to action on the stage; the footer. What only a
+paid plan makes is said where it comes up: the narrator's, the follow button's and the powers'
+cards say "the paid plans", never a plan's name, and step 2's line says what the free plan makes.
+The length, the loop, the file and the apps' buttons are step 3's alone; no card says them again.
 
-**A game card** (`.game-card` in [site.css](../src/site/site.css)) is the same on the home page
-and on [/games](../games.html), where they stand one under the other and each says more (its
-frame larger, four lines on how it plays). Its icon is [public/games/](../public/games/)`<id>.svg`
-written into the page at build time (`<!-- game:icon <id> -->`, `gameIcon` in
-[vite.config.ts](../vite.config.ts)), so it needs no request and scales with its box; the Videos
-page and anything else that builds its markup in a script shows the same file in an `<img>`.
-Which plans make a game is written in the card ("Every plan", "Paid plans") and filled in from
-`GET /api/plans` once it answers (`fillGamePlans` in [pricing.ts](../src/site/pricing.ts),
-`gamePlans` in [shared/features.ts](../shared/features.ts)): "With Champion", so it follows what
-the admin area sets. A new game is a card in both places, its icon, its frame (§5) and its line
-in `GAMES`.
+**A game card** (`.game-card` in [site.css](../src/site/site.css)), on the home page, is the
+game in words, with no picture (the hero's phones are a screen above): its icon and name, which
+plans make it, a line on what it is, its three rules numbered (what happens in bold, how under
+it), and the way to its part of /games, under a strip in its own colours (the race's two balls,
+the arena's strings). On [/games](../games.html) each game has a section instead: its phone
+playing it ([src/site/games-page.ts](../src/site/games-page.ts): `Hero` from hero.ts for the
+race, `ArenaDemo` from arena.ts for the arena) on a stage of its own in its colours, beside its
+icon, name and plans, a line on what it is, **how it plays** (the three rules, each on a tile),
+four numbers (the race: 15 sequences, 79 pairings, 3 looks, 4 powers; the arena: 199 flags, 2–12
+a battle, 6 regions for the dice, 4 in 5 on a comeback) and **what you choose**, as chips; the
+arena's the other way round, with its flags running past under both. The page opens on its stage
+(what the games are, a tile linking to each) and ends on **in both games**, six tiles (the length
+you pick, a narrator, a follow button, a loop with no cut, the library, ready to post), then the
+close. A game's icon is [public/games/](../public/games/)`<id>.svg` written into the page at
+build time (`<!-- game:icon <id> -->`, `gameIcon` in [vite.config.ts](../vite.config.ts)), so it
+needs no request and scales with its box; the Videos page and anything else that builds its
+markup in a script shows the same file in an `<img>`. Which plans make a game is written in the
+page ("Every plan", "Paid plans") and filled in from `GET /api/plans` once it answers
+(`fillGamePlans` in [pricing.ts](../src/site/pricing.ts), `gamePlans` in
+[shared/features.ts](../shared/features.ts)): "With Champion", so it follows what the admin area
+sets. A new game is a card on the home page, a section on /games, a phone in the hero, its icon,
+its frame (§5) and its line in `GAMES`.
 
 **A feature card** (`.fcard` in [site.css](../src/site/site.css)) sits on the stage in the balls'
 light, lit along its top edge: its title and a line or two first, then its drawing filling the
 rest. Nine things in one grid read as a pile, and a group's name in a column of its own left a
 hole under it; a tall card beside two short ones left one above its drawing. So every group has
 the same shape, and a drawing gets the width it needs (the three looks at a third of the stage
-each).
+each, the flags the whole card).
 
 **The cards that look like controls are controls** ([src/site/home.ts](../src/site/home.ts)),
 working on the steps' matchup where they share something with the steps:
 
-- **The race board** has the steps' Length and Finish gap again, in step with them (moving one
-  moves the other): the winner's lane runs to the line, the loser's as far as it had got when the
-  winner touched it (`runnerUp`), "0.3 s behind", on a ruler in the race's own seconds, under
-  "22.9 s of a 30 s video" (the rest of the video is the hold, slow motion, the winner card and
-  the loop). New lanes replay the lanes' story once the card has played it.
 - **The three looks** are buttons: one opens a dialog (`#look-dialog`, under the sections) with a
   phone playing the steps' matchup in that look, and the next or previous look; only that phone
   plays while it is open. Escape, Close or a press outside closes it.
@@ -251,32 +255,32 @@ would not play there at all. A blob URL needs no ranges. The opening's first pre
 `play()` before the file has arrived: Safari lets an element play outside a press only once it
 was asked to inside one.
 
-**The format is "ball race videos"**, in every heading and description: two balls racing
-through layers of numbers. The numbers (Fibonacci, factorial…) are what each ball deals, said
-in the lede, not a word in the name of the format.
+**The site makes "game videos"**, in its headings and descriptions: two games, a race of balls
+through layers of numbers and an arena of flags tied by strings, each named in the lede. The
+numbers (Fibonacci, factorial…) are what a ball deals, not a word in the name of a game.
 
-⚠️ **The browser note** (`.browser-note`, "Record in Chrome or Edge, on a computer") stays
-where every visitor sees it before signing up: only those two write the MP4 the platforms take
-as it is ([recording and export](./recording-and-export.md#3-the-file)). The hero's line links
-to it, the first question repeats it, and the studio warns again in a browser that cannot
-write MP4.
+⚠️ **Which browsers record** stays where every visitor sees it before signing up: the hero's
+line, by its buttons, "Records in Chrome or Edge on a computer", whose Why opens the first
+question (`#browsers`, `data-open` in home.ts): only those two write the MP4 the platforms take as
+it is ([recording and export](./recording-and-export.md#3-the-file)). The studio warns again in a
+browser that cannot write MP4.
 
 **The hero is the real engine, not a video file.** [src/site/hero.ts](../src/site/hero.ts) runs
-the studio's own simulation and renderer, muted, in the phone, and plays a race the way a
+the studio's own simulation and renderer, muted, in the race's phone, and plays a race the way a
 recorded video goes: the hold, the race, slow motion into the win, the winner card, the fade
 into the first frame; then it fades into the next built-in matchup **in the next look**
 (`HERO_LOOKS`: night, paper, cards). **Roll a new matchup** calls the studio's dice
 (`randomMatchup`, balanced like any roll). Both stay without powers: the hero plays only the
 built-in matchups that have none (nor a crowd), and rolls with powers and crowds off, so it shows the format itself,
 sequence against sequence, with nothing the opening would have to explain. Under the phone,
-the two names and the look.
+the look and the two sequences.
 
 - **The first paint is a still frame** ([public/hero/first-frame-4.webp](../public/hero/first-frame-4.webp),
   540×960, ~34 KB, the night look, the video's opening title over it), an `<img>` with `fetchpriority="high"`: the LCP. The engine loads after the
   page has (`requestIdleCallback`), waits for Rubik (a canvas never loads a web font itself),
   draws the same first frame over the still and fades it in, so the swap does not show.
-- It draws **at half the video's size** (540×960 under a 0.5 scale): the phone shows it at most
-  300 px wide (less on a short screen), and a quarter of the pixels is a quarter of the fill work. Nothing in
+- It draws **at half the video's size** (540×960 under a 0.5 scale): the hero's phones show it at
+  most 232 px wide, /games' 270 (less on a short screen), and a quarter of the pixels is a quarter of the fill work. Nothing in
   [src/render](../src/render/) or [src/sim](../src/sim/) changes for it; nothing had to be
   extracted from the studio's [app.ts](../src/app.ts), which drives the same renderer.
 - It runs **only while the phone is on screen and the tab is visible** (an
@@ -290,6 +294,18 @@ the two names and the look.
   phone), median 9 ms, worst 43 ms over 30 rolls. Under 50 ms, it is not a long task and no
   pause shows, so the hero rolls the dice rather than cycling the built-in matchups. A frame of
   the race at 4× stayed under 9 ms.
+
+**The hero's Arena Clash is the real engine too** ([src/site/arena.ts](../src/site/arena.ts),
+`ArenaDemo`): the studio's battle simulation and renderer, muted, at half size, played the way a
+recorded battle goes (its last outs and its win in slow motion, the winner card, the fade into the
+next battle's first frame). It plays four battles in turn (`SHOWCASES`): China, India, the United
+States and Russia (public/games/arena-clash.webp is a frame of the same battle, its first paint,
+which the live battle fades in over), then the Balkans, the Americas and Scandinavia, so the title
+names a region; the hero's dice gives it three or four new flags from a region (`randomBattle`). A
+battle is balanced as the studio balances it, a seed at a time, 8 ms a frame (`balanceSoon`), and
+the next one while the one on screen plays, so it never holds the page. It plays when the hero's
+race does (`share` in home.ts), loads with it, and never under reduced motion; under the phone,
+its flags, the region first when they share one (`describeBattle`).
 
 **How it works is a working studio, not pictures of one** ([src/site/home.ts](../src/site/home.ts),
 the engine's side in [src/site/hero.ts](../src/site/hero.ts)). The steps set a matchup and the
@@ -320,10 +336,12 @@ phone beside them plays it, replaying it until the steps change it:
 
 **The facts are the code's**: 1080×1920 at 60 fps, MP4 with H.264 and AAC; balanced to the
 length to a tenth of a second; a photo finish (0.15–1.1 s between the two) or a 1–10 s gap; the
-dice's fourteen sequences and 65 pairings (`SEQUENCES` has sixteen: "Always 1" and "Digits of pi" only by hand); the
+dice's fifteen sequences and 79 pairings (`SEQUENCES` has seventeen: "Always the same" and "Digits of pi" only by hand); the
 narrator, on the paid plans, ending on a call to pick a winner (`QUESTIONS`); three looks; the
 loop; music only or silence; the library and its links (the settings, not the file); any video
-replayed exactly. Check a claim against [recording and export](./recording-and-export.md) and
+replayed exactly; an Arena Clash's 199 flags, 2 to 12 a battle, six regions for the dice (and
+everywhere), ten strings a bounce, four battles in five a comeback (`COMEBACK` in
+battle-balance.ts), the last outs in slow motion and a heartbeat at ten strings or fewer. Check a claim against [recording and export](./recording-and-export.md) and
 [matchups and balancing](./matchups-and-balancing.md) before changing it.
 
 **The plans** come from `GET /api/plans` ([src/site/pricing.ts](../src/site/pricing.ts)), so the
@@ -535,3 +553,4 @@ used for.
 - 2026-11-12 - /games, a card for each game (Ball Race, Arena Clash), and the same cards on the home page under the hero; Games in the header and the footer, and in the sitemap; each game's icon (public/games/, `<!-- game:icon -->`) and frame (stills.ts); which plans make a game filled in from the plans (`fillGamePlans`).
 - 2026-11-12 - the games' frames at 540 and 270 px, halved step by step, picked by the cards' `srcset`: the Arena Clash frame's strings made waves when a 540 px image was scaled to a 122 px card.
 - 2026-11-12 - the Arena Clash card's frame made again: the arena drawn at 92 %, and a moment with no number in the air (`QUIET` in stills.ts).
+- 2026-11-13 - the home page for both games and each thing said once: the hero plays a race and an Arena Clash side by side (arena.ts) under "Game videos, ready to post.", one dice for both; the browser note under the stage gone (the hero's Why opens the first question); the games in words, three rules each, no picture; the stage's groups are Ball Race, Arena Clash (flags, a comeback, slow motion and a heartbeat) and both games (narrator, follow button, library), without the race board, the loop, the buttons' zones and the specs, which step 3 says; eight questions, one on choosing an Arena Clash's winner. /games remade: a stage, then a section a game with it playing, its rules, numbers and choices, the arena's flags running past, and six tiles for both games. Fifteen sequences and 79 pairings, as the dice has them.
