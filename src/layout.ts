@@ -67,8 +67,8 @@ export const VS_Y = cardBottom(TOP) + BETWEEN / 2;
 //
 // One round arena filling the frame's width but 55 px a side, the flags bouncing inside it. This
 // is the simulation's arena, where every battle is worked out and replayed: the picture is drawn
-// at 92 % of its size round its centre and 80 px lower (SCALE and DROP in src/render/battle.ts),
-// the ring from y 549 to 1441 and 94 px from the frame's sides, with the battle's title over it
+// at 92 % of its size round its centre and 120 px lower (SCALE and DROP in src/render/battle.ts),
+// the ring from y 589 to 1481 and 94 px from the frame's sides, with the battle's title over it
 // and, under it in the middle, a line for the follow button or the slow motion tag and the free
 // plan's watermark. The side buttons' column (x 940 on, from y 902) crosses the ring's right edge:
 // a circle this big cannot keep out of it, and the balls are rarely there.

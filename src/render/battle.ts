@@ -41,13 +41,15 @@ const PANEL = '#12162a';
 const MUTED = '#9aa3b5';
 /**
  * px the whole picture sits below the simulation's arena (layout.ts ARENA): the ring is drawn
- * centred at y 995, not 915. Moved in the drawing alone, since a battle's every px is worked out
+ * centred at y 1035, not 915. Moved in the drawing alone, since a battle's every px is worked out
  * from where the arena is, and a battle recorded before must open again in the studio exactly as
  * it played. Measured on the three apps on a 6.1" phone, where the video fills the screen's
  * height: TikTok's search bar reaches y 247 and Instagram's profile grid shows only y 240–1680
- * (3:4), so the names at 244 were cut and the black under the ring was a third of the frame.
+ * (3:4), so the names at 244 were cut and the black under the ring was a third of the frame. At
+ * 80 a reel on an iPhone still had the region just under the top buttons and some 250 px of black
+ * under the ring; 120 is as low as TikTok's caption (from y 1620) leaves the watermark room.
  */
-const DROP = 80;
+const DROP = 120;
 /**
  * How big the arena is drawn, of the simulation's, round its centre: 892 px across, not 970. At
  * full size the ring came within 55 px of the frame's sides, and Instagram on an iPhone, filling
@@ -56,16 +58,19 @@ const DROP = 80;
  * are smaller by as much. The drawing alone, as DROP is.
  */
 const SCALE = 0.92;
-/** Where the arena's centre is drawn on the frame, and its ring's lowest point (y 1441). */
+/** Where the arena's centre is drawn on the frame, and its ring's lowest point (y 1481). */
 const CENTRE_Y = ARENA.y + DROP;
 const RING_BOTTOM = CENTRE_Y + ARENA.r * SCALE;
-/** The title block, by the middle of each line: under TikTok's search bar (to y 247) and the profile grid's top (240), over the ring (from 549). */
+/** The title block, by the middle of each line: under TikTok's search bar (to y 247) and the profile grid's top (240), over the ring (from 589). */
 const REGION_Y = 196 + DROP;
 const KICKER_Y = 244 + DROP;
 const HEADLINE_Y = 308 + DROP;
 const STATUS_Y = 388 + DROP;
-/** The widest a line of the title may be: 60 px a side. */
-const TITLE_W = 960;
+/**
+ * The widest a line of the title may be: 80 px a side. Instagram on an iPhone crops a reel by up to
+ * 55 px a side (measured on a screenshot), so a question fitted to 960 ran to the screen's edge.
+ */
+const TITLE_W = 920;
 /** The smallest the names over the title are set: under 28 px a name is not read on a phone, and the line says how many flags instead. */
 const KICKER_MIN = 28;
 /** Seconds "CROATIA OUT" stays in place of the count: time to read a name, and gone before the next flag goes. */
