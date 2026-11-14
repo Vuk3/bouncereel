@@ -240,8 +240,10 @@ address, redirects here. It shows the signed-in account's videos only.
     path of the video's thumbnail, which it saves beside the clip it finds by the file name (in
     Downloads, Desktop, Movies or Documents): the first frame as `<name>-thumbnail.jpg`, under
     YouTube's 2 MB, to upload where a platform asks for a cover file.
-  - The section shows the video's texts platform by platform, each field with Copy, and under
-    each platform what is the same for every video (the first frame as cover and thumbnail, not
+  - The section shows the video's texts platform by platform, each field with Copy, each
+    platform in its own colours so the three read apart at a glance (YouTube a red tint, TikTok
+    black with its cyan and pink, Instagram its gradient; `.text-group.youtube` and the rest in
+    [console.css](../src/console.css)), and under each platform what is the same for every video (the first frame as cover and thumbnail, not
     made for kids, no altered content, Entertainment, the video's own sound), so the skill leaves
     it out. Without texts it gives the three steps. Pasting the answer in its box saves it for
     that video, replacing any before; an answer naming another video is refused.
@@ -308,3 +310,4 @@ variant, its column and its line in `parseNewVideo` the same way.
 - 2026-11-12 - the game's icon on each thumbnail (public/games/); Flag Battle is called Arena Clash (`arena-clash`).
 - 2026-11-12 - each game's statistics under its name and icon; Arena Clash's: how many battles had how many flags, and every flag played, in how many battles and how many it won.
 - 2026-11-12 - an Arena Clash thumbnail shows its game's icon whole, over its corner like a race's: the thumbnail is `.thumb.clash`, since the studio card's `.battle` (overflow: hidden) clipped it.
+- 2026-11-14 - each platform's texts in the drawer in its own colours: YouTube a red tint, TikTok black with cyan and pink, Instagram its gradient.

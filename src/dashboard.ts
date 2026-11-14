@@ -636,7 +636,8 @@ function textsSection(video: VideoSummary | null, texts: VideoTexts | null, deta
 }
 
 function textsGroup(video: VideoSummary, platform: Platform, fields: [string, string][]): HTMLElement {
-  const group = el('div', 'text-group');
+  // The platform's class gives the group its colours (console.css), so the three read apart at a glance.
+  const group = el('div', `text-group ${platform}`);
   const head = el('div', 'text-group-head');
   const name = el('span', 'platform-name');
   name.append(icon(ICONS[platform]), SHOWN_AS[platform]);

@@ -1850,6 +1850,55 @@
   border: 1px solid var(--line);
   border-radius: 16px;
 }
+/*
+ * Each platform's texts in its own colours, so the one being posted to is found without reading
+ * a heading: YouTube a red tint, TikTok its black with the cyan and pink of its logo,
+ * Instagram its gradient, pale on the light theme and dark on the dark one. Each re-declares the
+ * tokens its fields, Copy and Posted are drawn with, as the plan tiles do, so they stay legible.
+ */
+.text-group.youtube {
+  --line: light-dark(rgb(255 0 51 / 0.2), rgb(255 90 110 / 0.24));
+  --sunken: light-dark(rgb(255 255 255 / 0.78), rgb(255 255 255 / 0.06));
+  --accent-text: light-dark(#c8102e, #ff8593);
+  --accent-soft: light-dark(rgb(255 0 51 / 0.1), rgb(255 90 110 / 0.16));
+  --focus: var(--accent-text);
+  background: linear-gradient(160deg, light-dark(#ffe8eb, #2c0f15), light-dark(#fff6f7, #170b0e));
+}
+.text-group.youtube .platform-name svg {
+  color: #ff0033;
+}
+/* Black on both themes, as the app is: the scheme set dark so whatever inherits reads right. */
+.text-group.tiktok {
+  color-scheme: dark;
+  --ink: #f4f5f7;
+  --muted: #a4a7ae;
+  --line: rgb(255 255 255 / 0.1);
+  --sunken: rgb(255 255 255 / 0.07);
+  --accent-text: #25f4ee;
+  --accent-soft: rgb(37 244 238 / 0.14);
+  --focus: #25f4ee;
+  border-color: light-dark(transparent, rgb(255 255 255 / 0.1));
+  background:
+    radial-gradient(80% 55% at 0% 0%, rgb(37 244 238 / 0.13), transparent 70%),
+    radial-gradient(80% 55% at 100% 100%, rgb(254 44 85 / 0.16), transparent 70%),
+    #0b0b0f;
+  color: var(--ink);
+}
+/* The gradient is the frame (border-box) and, faded, the ground (padding-box). */
+.text-group.instagram {
+  --line: light-dark(rgb(214 41 118 / 0.18), rgb(255 255 255 / 0.1));
+  --sunken: light-dark(rgb(255 255 255 / 0.74), rgb(255 255 255 / 0.06));
+  --accent-text: light-dark(#bf1763, #ff8cc4);
+  --accent-soft: light-dark(rgb(214 41 118 / 0.12), rgb(255 140 196 / 0.16));
+  --focus: var(--accent-text);
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(135deg, light-dark(#fff2df, #2a1a0d), light-dark(#ffe6ef, #2b0f22) 50%, light-dark(#eee6ff, #1a1534)) padding-box,
+    linear-gradient(135deg, #feda75, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5) border-box;
+}
+.text-group.instagram .platform-name svg {
+  color: light-dark(#d62976, #ff6fb0);
+}
 .text-group-head {
   display: flex;
   align-items: center;
