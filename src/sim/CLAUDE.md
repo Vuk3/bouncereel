@@ -17,6 +17,8 @@ determinism) · [matchups and balancing](../../docs/matchups-and-balancing.md).
 | events the page reacts to | [types.ts](./types.ts): `SimEvent` |
 | Arena Clash: strings, cuts, bundles, the speed-up, ball sizes; its events, `predictBattle` and the stretches played in slow motion | [battle.ts](./battle.ts) ([arena-clash](../../docs/arena-clash.md)) |
 | fitting an Arena Clash to the video length (the seed, then the starting speed, exactly), the spread of its outs, its comebacks, a chosen winner, its dice | [battle-balance.ts](./battle-balance.ts) |
+| Goal Rush: the pitch, the spinning goal, goals and posts, the kick-off, half time, full time and golden goal; its events and `predictMatch` | [match.ts](./match.ts) ([goal-rush](../../docs/goal-rush.md)) |
+| fitting a Goal Rush to the video (each side's length, then the seed), its goals, its stories, a chosen winner, its dice | [match-balance.ts](./match-balance.ts) |
 
 ## Rules
 
@@ -44,6 +46,9 @@ determinism) · [matchups and balancing](../../docs/matchups-and-balancing.md).
   bounce ties ten, however many the ball holds; no string appears or goes any other way: a
   viewer who sees a string looks for its bounce, one who sees a bounce for its strings. What
   ends a long battle is the balls speeding up (`pace`), never a rule of its own.
+- **A Goal Rush steps by time and its length is its clock's** (`match.seconds`): balancing chooses
+  the seed alone. Its world may depend on the length (half time turns the goal back), which is why
+  a seed is run at each side's own length.
 - **After a change here, run `npm run tune`.** It must still balance every preset at
   30, 40 and 60 s and keep the random generator at 0 off-length matchups, and balance every
   Arena Clash it tries, within 0.1 s of its length and with the chosen winner.

@@ -12,3 +12,7 @@ dist
 .dev.vars*
 .env*
 !.env.example
+
+# Goal Rush's real crests and photos (scripts/pictures.ts): fetched to this computer and put into the
+# private bucket for the superadmin alone; never in git, never in the site's public files.
+/pictures/

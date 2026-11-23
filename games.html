@@ -5,7 +5,7 @@
     <title>Games · BounceReel</title>
     <meta
       name="description"
-      content="The games BounceReel makes videos of: Ball Race, two balls racing through ever bigger numbers, and Arena Clash, flags cutting each other's strings until one is left. Both balanced to the length you pick."
+      content="The games BounceReel makes videos of: Ball Race, two balls racing through ever bigger numbers; Arena Clash, flags cutting each other's strings until one is left; and Goal Rush, a football match with a spinning goal. Each balanced to the length you pick."
     />
   </head>
   <body>
@@ -17,10 +17,10 @@
         <div class="stage games-stage">
           <div class="games-intro">
             <p class="eyebrow">The games</p>
-            <h1 id="games-title">Two games, one studio</h1>
+            <h1 id="games-title">Three games, one studio</h1>
             <p class="lede">
               Every BounceReel video is a game played out on screen, worked out before it plays and balanced to end at the length you pick. Pick
-              one at the top of the studio: the length, the sound, the narrator, recording and your library work the same in both.
+              one at the top of the studio: the length, the sound, the narrator, recording and your library work the same in every one.
             </p>
           </div>
           <nav class="game-jump" aria-label="The games">
@@ -32,6 +32,11 @@
             <a href="#arena-clash">
               <!-- game:icon arena-clash -->
               <span><b>Arena Clash</b><small data-game-plans="arena-clash">Paid plans</small></span>
+              <svg class="jump-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+            </a>
+            <a href="#goal-rush">
+              <!-- game:icon goal-rush -->
+              <span><b>Goal Rush</b><small data-game-plans="goal-rush">Paid plans</small></span>
               <svg class="jump-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
             </a>
           </nav>
@@ -146,10 +151,63 @@
         </div>
       </section>
 
+      <section class="shell section game-feature game-goal" id="goal-rush" aria-labelledby="goal-title">
+        <div class="stage game-demo">
+          <div class="phone" id="pitch-phone">
+            <img
+              src="/games/goal-rush.webp"
+              srcset="/games/goal-rush-270.webp 270w, /games/goal-rush.webp 540w"
+              sizes="270px"
+              width="540"
+              height="960"
+              loading="lazy"
+              alt="A Goal Rush on its black stage: Real Madrid against Barcelona in a round pitch, the goal and its net turning round the ring, a scoreboard over it."
+            />
+            <canvas aria-hidden="true"></canvas>
+          </div>
+          <p class="game-demo-note" id="pitch-note" aria-live="polite">El Clásico: Real Madrid vs Barcelona</p>
+        </div>
+        <div class="game-body">
+          <div class="game-head">
+            <!-- game:icon goal-rush -->
+            <div>
+              <h2 class="game-name" id="goal-title">Goal Rush</h2>
+              <p class="game-plans" data-game-plans="goal-rush">Paid plans</p>
+            </div>
+          </div>
+          <p class="game-lede">A football match of ninety minutes in one round pitch, two clubs or two players, and a goal that spins round the ring. Fly through it to score.</p>
+          <h3 class="game-sub">How it plays</h3>
+          <ol class="game-rules">
+            <li><b>The goal spins</b>Its mouth turns round the ring all match, the other way from half time, as the sides change ends.</li>
+            <li><b>Through it is a goal</b>A ball that flies through the mouth scores: GOAL!, the scorer in the net, the board pops, and both kick off again. One that clips a post bounces off it.</li>
+            <li><b>Ninety minutes</b>The clock runs over your video. At full time the side with more goals wins, and the match is set so it is never a draw.</li>
+          </ol>
+          <ul class="game-stats">
+            <li><b>157</b><span>clubs</span></li>
+            <li><b>453</b><span>players, stars and legends</span></li>
+            <li><b>201</b><span>classic matches</span></li>
+            <li><b>4 in 5</b><span>a comeback or a late winner</span></li>
+          </ul>
+          <h3 class="game-sub">What you choose</h3>
+          <ul class="game-chips">
+            <li>Clubs or players</li>
+            <li>Any two, found by typing a few letters</li>
+            <li>A classic: El Clásico, the Eternal Derby, Messi against Ronaldo…</li>
+            <li>The winner, or let the match decide</li>
+          </ul>
+          <p class="game-note">Clubs and players are drawn as balls in their colours: a club's shirt with its letters, a player's national shirt and number. No crests or photos.</p>
+        </div>
+        <!-- Some of the clubs as their balls are drawn, running past in two rows (still under reduced motion). -->
+        <div class="flag-wall kit-wall game-flags" aria-hidden="true">
+          <ul class="flag-row"><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #febe10; --dark: #febe10; --light: #ffffff; --ink: #1b1b2f"><b>RMA</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #a50044; --c2: #004d98; --dark: #004d98; --light: #a50044; --ink: #ffffff"><b>BAR</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #e2001a; --c2: #ffffff; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>CZV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>PAR</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #dc052d; --c2: #ffffff; --dark: #dc052d; --light: #ffffff; --ink: #ffffff"><b>BAY</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #c8102e; --c2: #ffffff; --dark: #c8102e; --light: #ffffff; --ink: #ffffff"><b>LIV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>JUV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #0068a8; --c2: #111111; --dark: #111111; --light: #0068a8; --ink: #ffffff"><b>INT</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fb090b; --c2: #111111; --dark: #111111; --light: #fb090b; --ink: #ffffff"><b>MIL</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #004170; --c2: #da291c; --dark: #004170; --light: #da291c; --ink: #ffffff"><b>PSG</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #6cabdd; --c2: #ffffff; --dark: #6cabdd; --light: #ffffff; --ink: #1b1b2f"><b>MCI</b></span></li><li><span class="kit-ball" data-p="sleeves" style="--c1: #ef0107; --c2: #ffffff; --dark: #ef0107; --light: #ffffff; --ink: #ffffff"><b>ARS</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #fde100; --c2: #111111; --dark: #111111; --light: #fde100; --ink: #ffffff"><b>BVB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #cb3524; --c2: #ffffff; --dark: #cb3524; --light: #ffffff; --ink: #ffffff"><b>ATM</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #ffffff; --c2: #d2122e; --dark: #d2122e; --light: #ffffff; --ink: #ffffff"><b>AJX</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #018749; --c2: #ffffff; --dark: #018749; --light: #ffffff; --ink: #ffffff"><b>CEL</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #febe10; --dark: #febe10; --light: #ffffff; --ink: #1b1b2f"><b>RMA</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #a50044; --c2: #004d98; --dark: #004d98; --light: #a50044; --ink: #ffffff"><b>BAR</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #e2001a; --c2: #ffffff; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>CZV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>PAR</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #dc052d; --c2: #ffffff; --dark: #dc052d; --light: #ffffff; --ink: #ffffff"><b>BAY</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #c8102e; --c2: #ffffff; --dark: #c8102e; --light: #ffffff; --ink: #ffffff"><b>LIV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>JUV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #0068a8; --c2: #111111; --dark: #111111; --light: #0068a8; --ink: #ffffff"><b>INT</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fb090b; --c2: #111111; --dark: #111111; --light: #fb090b; --ink: #ffffff"><b>MIL</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #004170; --c2: #da291c; --dark: #004170; --light: #da291c; --ink: #ffffff"><b>PSG</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #6cabdd; --c2: #ffffff; --dark: #6cabdd; --light: #ffffff; --ink: #1b1b2f"><b>MCI</b></span></li><li><span class="kit-ball" data-p="sleeves" style="--c1: #ef0107; --c2: #ffffff; --dark: #ef0107; --light: #ffffff; --ink: #ffffff"><b>ARS</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #fde100; --c2: #111111; --dark: #111111; --light: #fde100; --ink: #ffffff"><b>BVB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #cb3524; --c2: #ffffff; --dark: #cb3524; --light: #ffffff; --ink: #ffffff"><b>ATM</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #ffffff; --c2: #d2122e; --dark: #d2122e; --light: #ffffff; --ink: #ffffff"><b>AJX</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #018749; --c2: #ffffff; --dark: #018749; --light: #ffffff; --ink: #ffffff"><b>CEL</b></span></li></ul>
+          <ul class="flag-row"><li><span class="kit-ball" data-p="solid" style="--c1: #da291c; --c2: #111111; --dark: #111111; --light: #da291c; --ink: #ffffff"><b>MUN</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #034694; --c2: #ffffff; --dark: #034694; --light: #ffffff; --ink: #ffffff"><b>CHE</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #12a0d7; --c2: #ffffff; --dark: #12a0d7; --light: #ffffff; --ink: #1b1b2f"><b>NAP</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #e83030; --c2: #ffffff; --dark: #e83030; --light: #ffffff; --ink: #ffffff"><b>SLB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #00428c; --c2: #ffffff; --dark: #00428c; --light: #ffffff; --ink: #ffffff"><b>FCP</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #008057; --c2: #ffffff; --dark: #008057; --light: #ffffff; --ink: #ffffff"><b>SCP</b></span></li><li><span class="kit-ball" data-p="halves" style="--c1: #a90432; --c2: #fdb912; --dark: #a90432; --light: #fdb912; --ink: #ffffff"><b>GS</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fdcd02; --c2: #002d72; --dark: #002d72; --light: #fdcd02; --ink: #ffffff"><b>FB</b></span></li><li><span class="kit-ball" data-p="bar" style="--c1: #003da5; --c2: #fdd800; --dark: #003da5; --light: #fdd800; --ink: #ffffff"><b>BOC</b></span></li><li><span class="kit-ball" data-p="sash" style="--c1: #ffffff; --c2: #e2001a; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>RIV</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #e2001a; --c2: #111111; --dark: #111111; --light: #e2001a; --ink: #ffffff"><b>FLA</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #132257; --dark: #132257; --light: #ffffff; --ink: #ffffff"><b>TOT</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #8e1f2f; --c2: #f0bc42; --dark: #8e1f2f; --light: #f0bc42; --ink: #ffffff"><b>ROM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #2faee0; --dark: #2faee0; --light: #ffffff; --ink: #1b1b2f"><b>OM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #003da5; --dark: #003da5; --light: #ffffff; --ink: #ffffff"><b>HAJ</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #0033a0; --c2: #ffffff; --dark: #0033a0; --light: #ffffff; --ink: #ffffff"><b>DZG</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #da291c; --c2: #111111; --dark: #111111; --light: #da291c; --ink: #ffffff"><b>MUN</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #034694; --c2: #ffffff; --dark: #034694; --light: #ffffff; --ink: #ffffff"><b>CHE</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #12a0d7; --c2: #ffffff; --dark: #12a0d7; --light: #ffffff; --ink: #1b1b2f"><b>NAP</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #e83030; --c2: #ffffff; --dark: #e83030; --light: #ffffff; --ink: #ffffff"><b>SLB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #00428c; --c2: #ffffff; --dark: #00428c; --light: #ffffff; --ink: #ffffff"><b>FCP</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #008057; --c2: #ffffff; --dark: #008057; --light: #ffffff; --ink: #ffffff"><b>SCP</b></span></li><li><span class="kit-ball" data-p="halves" style="--c1: #a90432; --c2: #fdb912; --dark: #a90432; --light: #fdb912; --ink: #ffffff"><b>GS</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fdcd02; --c2: #002d72; --dark: #002d72; --light: #fdcd02; --ink: #ffffff"><b>FB</b></span></li><li><span class="kit-ball" data-p="bar" style="--c1: #003da5; --c2: #fdd800; --dark: #003da5; --light: #fdd800; --ink: #ffffff"><b>BOC</b></span></li><li><span class="kit-ball" data-p="sash" style="--c1: #ffffff; --c2: #e2001a; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>RIV</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #e2001a; --c2: #111111; --dark: #111111; --light: #e2001a; --ink: #ffffff"><b>FLA</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #132257; --dark: #132257; --light: #ffffff; --ink: #ffffff"><b>TOT</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #8e1f2f; --c2: #f0bc42; --dark: #8e1f2f; --light: #f0bc42; --ink: #ffffff"><b>ROM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #2faee0; --dark: #2faee0; --light: #ffffff; --ink: #1b1b2f"><b>OM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #003da5; --dark: #003da5; --light: #ffffff; --ink: #ffffff"><b>HAJ</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #0033a0; --c2: #ffffff; --dark: #0033a0; --light: #ffffff; --ink: #ffffff"><b>DZG</b></span></li></ul>
+        </div>
+      </section>
+
       <!-- What every video gets, whichever game: each a fact the code keeps (docs/website.md §4, The facts). -->
       <section class="shell section" aria-labelledby="both-title">
         <header class="section-head">
-          <h2 id="both-title">In both games</h2>
+          <h2 id="both-title">In every game</h2>
           <p>Whichever game you pick, the video around it is made the same way, and comes out ready to post.</p>
         </header>
         <ul class="both-grid">

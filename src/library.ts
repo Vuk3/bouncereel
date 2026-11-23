@@ -1,9 +1,10 @@
-import type { AccountResponse, BattleSummary, CreatedResponse, NewVideo, RaceSide, RaceSummary, VideoSummary } from '../shared/api.ts';
+import type { AccountResponse, BattleSummary, CreatedResponse, MatchSummary, NewVideo, RaceSide, RaceSummary, VideoSummary } from '../shared/api.ts';
 import { LOOK_LABELS, SOUND_LABELS } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
 import { openingQuestion } from './audio/opening.ts';
 import { flagName, sharedRegion } from './battle/countries.ts';
 import { FOLLOW_LINE, type Config, type Contestant } from './config.ts';
+import { derby, groupLabel, nationName, side, sideName } from './football/teams.ts';
 import { SEQUENCES, formatBig, type SequenceId } from './sim/sequences.ts';
 
 // Every finished recording goes into the account's video library (the Worker's D1). A save that
@@ -31,10 +32,11 @@ const POWERS: Record<string, string> = { faster: 'speeds up', slower: 'slows dow
  * the writer, who keeps it out of what viewers see first.
  */
 export function postPrompt(
-  video: Pick<VideoSummary, 'title' | 'fileName' | 'videoLength' | 'seed'> & { race?: RaceSummary | null; battle?: BattleSummary | null; id?: number | null },
+  video: Pick<VideoSummary, 'title' | 'fileName' | 'videoLength' | 'seed'> & { race?: RaceSummary | null; battle?: BattleSummary | null; match?: MatchSummary | null; id?: number | null },
   cfg?: Config,
 ): string {
   if (video.battle) return battlePrompt(video, video.battle, cfg);
+  if (video.match) return matchPrompt(video, video.match, cfg);
   const lines = [`BounceReel ball race: ${video.title}`];
   const race = video.race;
   if (race) {
@@ -80,6 +82,34 @@ function battlePrompt(video: Pick<VideoSummary, 'title' | 'fileName' | 'videoLen
     lines.push(`On screen all through: ${who}, the title "${openingQuestion(cfg).toUpperCase().replace(/\.$/, '')}", how many flags are left, and each flag's strings counted under it`);
     if (cfg.look.cta.trim()) lines.push(`Last line on the winner card: "${cfg.look.cta.trim()}"`);
     if (cfg.look.follow) lines.push(`Asks viewers to follow: a follow button once in the battle and under the winner card, and the narrator's "${FOLLOW_LINE}"`);
+  } else lines.push(`Video: ${video.videoLength} s`);
+  lines.push(`Seed: ${video.seed}`, `File: ${video.fileName}`);
+  if (video.id) lines.push(`Library id: ${video.id}`);
+  return lines.join('\n');
+}
+
+/**
+ * The same for a Goal Rush: the two sides, what each is (a club's league or country, a player's
+ * country and whether he is a legend), the derby if they make one, the score and every goal by its
+ * minute, the length and sound, and what is on screen.
+ */
+function matchPrompt(video: Pick<VideoSummary, 'title' | 'fileName' | 'videoLength' | 'seed'> & { id?: number | null }, match: MatchSummary, cfg?: Config): string {
+  const about = (id: string) => {
+    const s = side(id);
+    if (!s) return sideName(id);
+    return s.mode === 'clubs' ? `${s.name} (${groupLabel(s)})` : `${s.name} (${nationName(s)}${s.groups.includes('legends') ? ', a legend' : ''}${s.mark ? `, number ${s.mark}` : ''})`;
+  };
+  const lines = [`BounceReel goal rush: ${video.title}`, `${match.mode === 'clubs' ? 'Clubs' : 'Players'}: ${about(match.home)} at home, ${about(match.away)} away`];
+  const named = derby(match.home, match.away);
+  if (named) lines.push(`The match is ${named}`);
+  const winner = match.winner === 'home' ? match.home : match.winner === 'away' ? match.away : null;
+  lines.push(`Score: ${sideName(match.home)} ${match.score[0]}–${match.score[1]} ${sideName(match.away)}${winner ? `; ${sideName(winner)} wins` : ''}`);
+  if (match.goals.length) lines.push(`Goals, by minute: ${match.goals.map((g) => `${g.minute}' ${sideName(g.side === 'home' ? match.home : match.away)}`).join(', ')}`);
+  if (cfg) {
+    lines.push(`Video: ${video.videoLength} s, ninety minutes on the clock, a spinning goal in a round pitch on a black stage, ${SOUND_LABELS[cfg.sound.track].toLowerCase()}`);
+    lines.push(`On screen all through: ${named ? `"${named.replace(/^the /, '').toUpperCase()}" over ` : ''}the title "${openingQuestion(cfg).toUpperCase().replace(/\.$/, '')}", a scoreboard with both sides and the clock, and a timeline of the goals under the pitch`);
+    if (cfg.look.cta.trim()) lines.push(`Last line on the winner card: "${cfg.look.cta.trim()}"`);
+    if (cfg.look.follow) lines.push(`Asks viewers to follow: a follow button once in the match and under the winner card, and the narrator's "${FOLLOW_LINE}"`);
   } else lines.push(`Video: ${video.videoLength} s`);
   lines.push(`Seed: ${video.seed}`, `File: ${video.fileName}`);
   if (video.id) lines.push(`Library id: ${video.id}`);

@@ -1,5 +1,5 @@
 import { PLATFORM_LABELS, type CreatedResponse, type NewVideo, type PostResponse, type PostTexts, type TextsResponse, type VideoResponse, type VideosResponse } from '../../shared/api.ts';
-import { gameAllowed, SOUNDS, soundAllowed, type Features, type Look, type Sound } from '../../shared/features.ts';
+import { GAME_LABELS, gameAllowed, SOUNDS, soundAllowed, type Features, type Look, type Sound } from '../../shared/features.ts';
 import { parsePostLink } from '../../shared/links.ts';
 import { parseTexts } from '../../shared/texts.ts';
 import { HttpError, json, noContent, readJsonObject } from '../lib/http.ts';
@@ -36,7 +36,7 @@ function soundOf(video: NewVideo): Sound {
  */
 function checkPlan(video: NewVideo, features: Features): void {
   const config = video.config as { timing?: { video?: unknown }; look?: { skin?: unknown; follow?: unknown }; a?: Ball; b?: Ball };
-  if (!gameAllowed(features, video.game)) throw notInPlan('Your plan does not include Arena Clash.');
+  if (!gameAllowed(features, video.game)) throw notInPlan(`Your plan does not include ${GAME_LABELS[video.game]}.`);
   const length = config.timing?.video;
   if (video.videoLength > features.maxSeconds || (typeof length === 'number' && length > features.maxSeconds)) {
     throw notInPlan(`Your plan makes videos up to ${features.maxSeconds} s.`);

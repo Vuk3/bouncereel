@@ -1,10 +1,10 @@
-import { DICE_REGIONS, flagName, sharedRegion } from '../battle/countries.ts';
+import { DICE_REGIONS, country, flagName, sharedRegion } from '../battle/countries.ts';
 import { loadFlags } from '../battle/flags.ts';
 import { mergeConfig, PRESETS, switchGame, type Config } from '../config.ts';
 import { H, W } from '../layout.ts';
 import { END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL } from '../pacing.ts';
 import { BattleRenderer } from '../render/battle.ts';
-import { randomBattle, searchBattle } from '../sim/battle-balance.ts';
+import { searchBattle } from '../sim/battle-balance.ts';
 import { BattleWorld, STRIDE, predictBattle, type BattleOutcome } from '../sim/battle.ts';
 
 // The site's Arena Clashes: real battles, muted, in a phone, drawn by the studio's own simulation
@@ -22,11 +22,26 @@ import { BattleWorld, STRIDE, predictBattle, type BattleOutcome } from '../sim/b
  * site's still frame, public/games/arena-clash.webp, made from the same battle), then three or four
  * flags of one region each, so the title over them names it.
  */
-const SHOWCASES: { flags: string[]; question?: string; seed?: string }[] = [
+export const SHOWCASES: { flags: string[]; question?: string; seed?: string }[] = [
   { flags: ['cn', 'in', 'us', 'ru'], question: 'Which flag survives?', seed: '7' },
   { flags: ['rs', 'hr', 'si'] },
   { flags: ['br', 'ar', 'mx'] },
   { flags: ['se', 'no', 'dk'] },
+];
+
+/**
+ * The countries the site's dice deal from, in groups whose flags share a region (so the title names
+ * it) and one of the world's best known: countries anyone knows, never four from deep in the list
+ * (the owner's call: a visitor rolling Nauru against Kiribati reads the game as filler). The
+ * studio's dice still deal from every country.
+ */
+const KNOWN: string[][] = [
+  ['us', 'cn', 'in', 'ru', 'br', 'gb', 'fr', 'de', 'jp', 'it', 'es', 'ar', 'mx', 'ca', 'kr', 'au'],
+  ['gb', 'fr', 'de', 'it', 'es', 'pt', 'nl', 'be', 'ch', 'se', 'no', 'dk', 'pl', 'ua', 'ie', 'at', 'ru'],
+  ['rs', 'hr', 'gr', 'si', 'ba', 'bg', 'ro', 'al'],
+  ['us', 'ca', 'mx', 'br', 'ar', 'co', 'cl', 'uy'],
+  ['cn', 'in', 'jp', 'kr', 'sa', 'id', 'tr', 'ir', 'ae', 'qa'],
+  ['eg', 'ng', 'za', 'ma', 'sn', 'gh', 'cm', 'dz'],
 ];
 
 /** Drawn at half the video's size, as the race's phones are (hero.ts SCALE): the phone shows it at most 250 px wide. */
@@ -38,14 +53,14 @@ const BUDGET = 8;
 
 type Phase = 'race' | 'slowmo' | 'winner' | 'done';
 
-/** A battle as the site plays it: silent, no follow button, the free plan's length. */
-function battleConfig(flags: string[], seed: string, question = ''): Config {
+/** A battle as the site plays it: silent, no follow button, the free plan's length unless a step sets another, any flag to win unless it sets one. */
+export function battleConfig(flags: string[], seed: string, question = '', winner = '', video = SECONDS): Config {
   const base = switchGame(PRESETS[0].config, 'arena-clash');
   return mergeConfig(base, {
     seed,
-    battle: { flags, winner: '' },
+    battle: { flags, winner },
     sound: { track: 'silent' },
-    timing: { video: SECONDS },
+    timing: { video },
     look: { follow: false, question },
   });
 }
@@ -79,6 +94,8 @@ export class ArenaDemo {
   private next: Config | null = null;
   /** The showcase the next battle comes from (SHOWCASES). */
   private showcase = 0;
+  /** Set by show(): the battle it was given plays on a loop. */
+  private replay = false;
   /** Bumped by a roll: a battle still being balanced for an older one is dropped. */
   private rolls = 0;
   private world!: BattleWorld;
@@ -94,7 +111,9 @@ export class ArenaDemo {
   private allowed = true;
   private readonly reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
-  constructor(canvas: HTMLCanvasElement, onBattle: (cfg: Config) => void) {
+  /** `first`: the showcase it opens on, so phones side by side on a page each play their own. */
+  constructor(canvas: HTMLCanvasElement, onBattle: (cfg: Config) => void, first = 0) {
+    this.showcase = first;
     this.canvas = canvas;
     this.onBattle = onBattle;
     this.renderer = new BattleRenderer(canvas);
@@ -107,7 +126,9 @@ export class ArenaDemo {
     }).observe(canvas);
     document.addEventListener('visibilitychange', () => this.update());
     this.reducedMotion.addEventListener('change', () => this.update());
-    void this.prepare().then((cfg) => cfg && this.load(cfg));
+    // A show() that came first wins: the opening showcase is dropped if one has taken its place.
+    const token = this.rolls;
+    void this.prepare().then((cfg) => cfg && token === this.rolls && this.load(cfg));
   }
 
   /** Whether the page lets this phone play. */
@@ -116,20 +137,32 @@ export class ArenaDemo {
     this.update();
   }
 
-  /** New flags from the dice, three or four from one of its regions (or everywhere), balanced like the studio's. */
+  /** New flags from the dice: three or four of KNOWN's countries from one of its groups, balanced like the studio's. */
   roll(): void {
     const token = ++this.rolls;
     const seed = String(1 + Math.floor(Math.random() * 999_999));
-    const region = DICE_REGIONS[Math.floor(Math.random() * DICE_REGIONS.length)].id;
-    // A base with flags: a config's list takes only items of its default's type, and an empty one has none to go by.
-    const flags = randomBattle(seed, battleConfig(SHOWCASES[0].flags, seed), 3 + Math.floor(Math.random() * 2), region).battle.flags;
-    void this.ready(battleConfig(flags, seed)).then((cfg) => {
+    void this.ready(battleConfig(dealFlags(3 + Math.floor(Math.random() * 2)), seed)).then((cfg) => {
       if (cfg && token === this.rolls) this.load(cfg);
     });
   }
 
   /** The next showcase, balanced, its flags loaded. */
+  /**
+   * This battle from now on, balanced as the studio balances it, played again and again rather than
+   * moving on to the showcases (the home page's steps set it); resolves to it, or to null when no
+   * seed lands or a newer one took its place.
+   */
+  async show(cfg: Config): Promise<Config | null> {
+    const token = ++this.rolls;
+    this.replay = true;
+    const balanced = await this.ready(cfg);
+    if (!balanced || token !== this.rolls) return null;
+    this.load(balanced);
+    return balanced;
+  }
+
   private prepare(): Promise<Config | null> {
+    if (this.replay && this.cfg) return Promise.resolve(this.cfg);
     const show = SHOWCASES[this.showcase++ % SHOWCASES.length];
     return this.ready(battleConfig(show.flags, show.seed ?? String(1 + Math.floor(Math.random() * 999_999)), show.question));
   }
@@ -248,4 +281,21 @@ export class ArenaDemo {
     const events = world.drain();
     if (events.length) this.renderer.handle(events, world, this.cfg!);
   }
+}
+
+/** `n` flags from one of KNOWN's groups, as the site's dice deals them. */
+export function dealFlags(n: number): string[] {
+  const pool = [...KNOWN[Math.floor(Math.random() * KNOWN.length)]];
+  const flags: string[] = [];
+  for (let k = Math.min(n, pool.length); k > 0; k--) flags.push(...pool.splice(Math.floor(Math.random() * pool.length), 1));
+  return flags;
+}
+
+/** The steps' words for a battle: each flag's name and region, and how it ends ("United States, the last flag standing at 23.7 s"). */
+export function battleFacts(cfg: Config): { flags: { code: string; name: string; from: string }[]; verdict: string } {
+  const outcome = predictBattle(cfg);
+  return {
+    flags: cfg.battle.flags.map((code) => ({ code, name: flagName(code), from: DICE_REGIONS.find((r) => r.id === country(code)?.region)?.label ?? '' })),
+    verdict: `${outcome.winnerName}, the last flag standing at ${outcome.time.toFixed(1)} s`,
+  };
 }

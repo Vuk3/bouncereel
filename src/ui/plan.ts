@@ -37,7 +37,7 @@ export function planChips(f: Features): { text: string; included: boolean }[] {
     { text: looks, included: true },
     { text: narrator ? 'Narrator' : 'No narrator', included: narrator },
     { text: f.powers ? 'Powers' : 'No powers', included: f.powers },
-    { text: f.allGames ? 'Arena Clash' : 'No Arena Clash', included: f.allGames },
+    { text: f.allGames ? 'Arena Clash and Goal Rush' : 'No Arena Clash or Goal Rush', included: f.allGames },
     { text: f.watermark ? 'With watermark' : 'No watermark', included: !f.watermark },
     { text: f.follow ? 'Follow button' : 'No follow button', included: f.follow },
     { text: f.library === null ? 'Every video kept' : `${f.library} video${f.library === 1 ? '' : 's'} kept`, included: true },

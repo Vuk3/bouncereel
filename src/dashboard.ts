@@ -21,6 +21,8 @@ import { api, ApiError } from './api.ts';
 import { flagName } from './battle/countries.ts';
 import { flagSrc } from './battle/flags.ts';
 import { savedConfig } from './config.ts';
+import { kitIcon } from './football/kits.ts';
+import { side, sideName } from './football/teams.ts';
 import { postPrompt, retryPending } from './library.ts';
 import { loadAccount, toLogin } from './session.ts';
 import { SEQUENCES, type SequenceId } from './sim/sequences.ts';
@@ -106,18 +108,27 @@ function sequenceLabel(id: string): string {
   return SEQUENCES[id as SequenceId]?.label ?? id;
 }
 
-/** "Fibonacci vs Factorial (speeds up)", or "Arena Clash, 3 flags": the line under a video's title. */
+/** "Fibonacci vs Factorial (speeds up)", "Arena Clash, 3 flags" or "Goal Rush, clubs": the line under a video's title. */
 function matchupLine(video: VideoSummary): string {
   if (video.battle) return `Arena Clash, ${video.battle.flags.length} flags`;
+  if (video.match) return `Goal Rush, ${video.match.mode}`;
   const race = video.race;
   if (!race) return video.game;
   const side = (s: { sequence: string; special: string }) => sequenceLabel(s.sequence) + (SPECIALS[s.special] ? ` (${SPECIALS[s.special]})` : '');
   return `${side(race.a)} vs ${side(race.b)}`;
 }
 
-/** "Fibonacci Ball by 0.3 s", "Serbia survives", or null for a game that is neither. */
+/** A match's score, the winner's goals first. */
+function scoreLine(m: NonNullable<VideoSummary['match']>): string {
+  const [h, a] = m.score;
+  return m.winner === 'away' ? `${a}–${h}` : `${h}–${a}`;
+}
+
+/** "Fibonacci Ball by 0.3 s", "Serbia survives", "Real Madrid wins 3–2", or null for a game that is none of them. */
 function finishLine(video: VideoSummary): string | null {
   if (video.battle?.winner) return `${flagName(video.battle.winner)} survives`;
+  const m = video.match;
+  if (m?.winner) return `${sideName(m.winner === 'home' ? m.home : m.away)} wins ${scoreLine(m)}`;
   const race = video.race;
   if (!race) return null;
   const winner = race.winner === 'a' ? race.a.name : race.winner === 'b' ? race.b.name : 'Nobody';
@@ -135,12 +146,15 @@ function color(value: string | undefined, fallback: string): string {
 
 /**
  * The two balls on the dark stage, top then bottom: the video's two cards in small. An Arena Clash
- * is its one arena with the winner's flag in it. Either way the game's icon sits on its corner.
+ * is its one arena with the winner's flag in it, a Goal Rush the same with the winner's kit. Either
+ * way the game's icon sits on its corner.
  */
 function paintThumb(thumb: HTMLElement, video: VideoSummary): void {
   const flag = video.battle?.winner ?? video.battle?.flags[0];
-  thumb.classList.toggle('clash', !!flag);
-  thumb.style.setProperty('--flag', flag ? `url("${flagSrc(flag)}")` : 'none');
+  const m = video.match;
+  const kit = m ? kitIcon(side(m.winner === 'away' ? m.away : m.home), 96) : null;
+  thumb.classList.toggle('clash', !!flag || !!kit);
+  thumb.style.setProperty('--flag', flag ? `url("${flagSrc(flag)}")` : kit ? `url("${kit}")` : 'none');
   thumb.style.setProperty('--a', color(video.colors?.a, 'var(--team-a)'));
   thumb.style.setProperty('--b', color(video.colors?.b, 'var(--team-b)'));
   // The game's icon in a corner, so a list of both games reads at a glance (public/games/).
@@ -191,6 +205,7 @@ function renderSummary(): void {
   $('#coverage').replaceChildren(...PLATFORMS.map((p) => meter(p, videos.filter((v) => postOn(v, p)).length, total)));
   renderBalls();
   renderClash();
+  renderRush();
 }
 
 /**
@@ -239,6 +254,31 @@ function renderClash(): void {
   // Most played first, then most won, then by name.
   const order = [...played].sort((a, b) => b[1] - a[1] || (won.get(b[0]) ?? 0) - (won.get(a[0]) ?? 0) || flagName(a[0]).localeCompare(flagName(b[0])));
   $('#flags').replaceChildren(...order.map(([code, count]) => ballMeter(flagName(code), count, won.get(code) ?? 0, battles.length, flagSrc(code))));
+}
+
+/**
+ * A Goal Rush's the same way: home or away wins, and how many were won by one goal; then every
+ * club and player that has played, in how many matches and how many it won, most played first,
+ * each with its kit.
+ */
+function renderRush(): void {
+  const matches = videos.flatMap((v) => (v.match ? [v.match] : []));
+  $('#rush-stats').hidden = !matches.length;
+  const close = matches.filter((m) => Math.abs(m.score[0] - m.score[1]) === 1).length;
+  $('#ends').replaceChildren(
+    winMeter('Home', matches.filter((m) => m.winner === 'home').length, matches.length),
+    winMeter('Away', matches.filter((m) => m.winner === 'away').length, matches.length),
+    winMeter('By one goal', close, matches.length),
+  );
+  const played = new Map<string, number>();
+  const won = new Map<string, number>();
+  for (const m of matches) {
+    for (const id of [m.home, m.away]) played.set(id, (played.get(id) ?? 0) + 1);
+    const winner = m.winner === 'home' ? m.home : m.winner === 'away' ? m.away : null;
+    if (winner) won.set(winner, (won.get(winner) ?? 0) + 1);
+  }
+  const order = [...played].sort((a, b) => b[1] - a[1] || (won.get(b[0]) ?? 0) - (won.get(a[0]) ?? 0) || sideName(a[0]).localeCompare(sideName(b[0])));
+  $('#sides').replaceChildren(...order.map(([id, count]) => ballMeter(sideName(id), count, won.get(id) ?? 0, matches.length, kitIcon(side(id), 36))));
 }
 
 function winMeter(label: string, wins: number, races: number): HTMLElement {
@@ -577,6 +617,12 @@ function factsSection(video: VideoSummary): HTMLElement {
   if (battle) {
     pairs.push(['Flags', battle.flags.map(flagName).join(', ')]);
     if (battle.winner) pairs.push(['Winner', `${finishLine(video)}${battle.out.length ? `; out first to last: ${battle.out.map(flagName).join(', ')}` : ''}`]);
+  }
+  const m = video.match;
+  if (m) {
+    pairs.push(['Match', `${sideName(m.home)} ${m.score[0]}–${m.score[1]} ${sideName(m.away)}`]);
+    const minutes = (s: 'home' | 'away') => m.goals.filter((g) => g.side === s).map((g) => `${g.minute}'`).join(', ') || 'none';
+    if (m.goals.length) pairs.push(['Goals', `${sideName(m.home)} ${minutes('home')}; ${sideName(m.away)} ${minutes('away')}`]);
   }
   pairs.push(['Seed', video.seed], ['File', video.fileName], ['Format', `${video.format}, BounceReel ${video.appVersion}`]);
   for (const [term, value] of pairs) facts.append(el('dt', '', term), el('dd', '', value));

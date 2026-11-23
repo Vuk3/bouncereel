@@ -1,38 +1,46 @@
-import type { AccountResponse, DayResponse, NewVideo, PublicPlan, VideoResponse } from '../shared/api.ts';
+import type { AccountResponse, DayResponse, MatchSummary, NewVideo, PublicPlan, VideoResponse, VideosResponse } from '../shared/api.ts';
 import { gameAllowed, LOOK_LABELS, soundAllowed, SOUND_LABELS, type Features, type Game, type Sound } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
 import { AudioEngine } from './audio/engine.ts';
 import { Music } from './audio/music.ts';
-import { VOICES, VoiceCache, introLine, outroLine, plannedLines, previewLine, voiceOf } from './audio/narration.ts';
+import { VOICES, VoiceCache, introLine, plannedLines, previewLine, voiceOf, winnerLine } from './audio/narration.ts';
 import { Sonifier } from './audio/sonify.ts';
-import { COUNTRIES, DICE_REGIONS, flagName, type DiceRegion } from './battle/countries.ts';
+import { ALSO_CALLED, COUNTRIES, DICE_REGIONS, flagName, type DiceRegion } from './battle/countries.ts';
 import { flagSrc, lineColors, loadFlags } from './battle/flags.ts';
-import { DEFAULT_CONFIG, PRESETS, SKINS, asksToFollow, mergeConfig, savedConfig, switchGame, type Battle, type Config, type Contestant, type Skin, type Special } from './config.ts';
+import { DEFAULT_CONFIG, MODES, PRESETS, SKINS, asksToFollow, mergeConfig, savedConfig, switchGame, type Battle, type Config, type Contestant, type Mode, type Skin, type Special } from './config.ts';
+import { classicsOf, pairKey } from './football/classics.ts';
+import { kitIcon, sideColors } from './football/kits.ts';
+import { loadSideIndex, loadSidePictures, sideKind, sideSrc } from './football/pictures.ts';
+import { MATCH_POOLS, groupLabel, side, sideName, sidesOf } from './football/teams.ts';
 import { addToLibrary, APP_VERSION, postPrompt, retryPending, type Saved } from './library.ts';
 import { download, describeType, pickType, Recorder } from './record/recorder.ts';
 import { BattleRenderer, battleFollowAt, type BattleOverlay } from './render/battle.ts';
 import type { Overlay } from './render/draw.ts';
+import { MatchRenderer, matchFollowAt } from './render/match.ts';
 import { Renderer, followAt, type RaceOverlay } from './render/renderer.ts';
-import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_LEAD, SLOWMO_TAIL, cardHold, lineLead, narrated, openingShown, spokenSeconds, videoSeconds } from './pacing.ts';
+import { AFTER_OUTRO, END_PAD, SLOWMO, SLOWMO_TAIL, cardHold, leadSlow, lineLead, narrated, openingShown, spokenSeconds, videoSeconds } from './pacing.ts';
 import { BattleWorld, MAX_FLAGS, MIN_FLAGS, STRIDE, predictBattle, type BattleOutcome } from './sim/battle.ts';
 import { balanceBattle, randomBattle, searchBattle, slowExtra } from './sim/battle-balance.ts';
+import { MATCH_STEP, MatchWorld, predictMatch, type MatchOutcome } from './sim/match.ts';
+import { balanceMatch, randomMatch, searchMatch } from './sim/match-balance.ts';
 import { KEEP_ALL, balance, balanceProblem, diceName, keptWhole, plainName, randomMatchup, relayer, sizeFor, type Keep } from './sim/balance.ts';
 import { SEQUENCES, formatBig } from './sim/sequences.ts';
 import { STEP } from './sim/types.ts';
 import { createWorld, finishTimes, predict, type Outcome, type World } from './sim/world.ts';
 import type { Field } from './ui/fields.ts';
 import { Panel } from './ui/panel.ts';
+import { Picker, type PickerItem } from './ui/picker.ts';
 import { bindAccountChrome, dayLine, nextVideoAt, paidTag, planChips, planHoldsBack, planInvite, upgradeLink } from './ui/plan.ts';
 import { bindThemeToggle } from './ui/theme.ts';
 
-// The page: one run at a time, driven by requestAnimationFrame. A run is a ball race or a Flag
-// Battle (`cfg.game`): each has its world, prediction and renderer, and everything around them
-// (phases, narration, recording, the library, the plan) is the same for both.
+// The page: one run at a time, driven by requestAnimationFrame. A run is a ball race, an Arena
+// Clash or a Goal Rush (`cfg.game`): each has its world, prediction and renderer, and everything
+// around them (phases, narration, recording, the library, the plan) is the same for all three.
 //
 //   intro ─▶ race ─▶ slowmo ─▶ winner ─▶ done
 //
 // The simulation advances in fixed steps whatever the frame rate (the race's STEP of time, the
-// battle's of distance, `BattleWorld.nextStep` seconds each); a phase only changes how much simulated
+// battle's of distance, `BattleWorld.nextStep` seconds each, the match's MATCH_STEP); a phase only changes how much simulated
 // time a frame gets (slow motion is fewer steps per frame, never a different step), so slowing
 // down cannot change the outcome.
 // The same determinism lets the page know the whole run in advance: when the
@@ -52,6 +60,10 @@ const THUMB = { x: 60, y: 168, w: 960, h: 832 };
 /** A power as the matchup card names it. */
 /** The lock's icon, open or closed by its checkbox (style.css): beside each ball in the matchup card, and under its Balls and Hit strength. */
 const LOCK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" /><path class="open" d="M8.5 10.5V7.5a3.5 3.5 0 0 1 6.8-1.2" /><path class="closed" d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" /></svg>';
+
+/** A die, for the battle card's and the match card's rows. */
+const DIE_ICON =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" /><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" stroke="none" /></svg>';
 
 const POWER_WORDS: Record<Special, (amount: number) => string> = {
   none: () => '',
@@ -92,8 +104,8 @@ export class App {
   /** What the account's plan includes; anything else stays visible but disabled (applyPlan). */
   private readonly features: Features;
   private cfg: Config;
-  private world: World | BattleWorld;
-  private outcome: Outcome | BattleOutcome;
+  private world: World | BattleWorld | MatchWorld;
+  private outcome: Outcome | BattleOutcome | MatchOutcome;
   private readonly canvas = $<HTMLCanvasElement>('#canvas');
   private readonly renderer: Renderer;
   /** Draws an Arena Clash, on the same canvas: one game at a time has it. */
@@ -102,11 +114,25 @@ export class App {
   private readonly still = new Renderer(document.createElement('canvas'));
   /** The same for an Arena Clash, on the same canvas, so `still.canvas` is the first frame either way. */
   private readonly stillArena = new BattleRenderer(this.still.canvas);
+  /** Draws a Goal Rush, on the same canvas. */
+  private readonly pitch: MatchRenderer;
+  private readonly stillPitch = new MatchRenderer(this.still.canvas);
   /** Where the dice picks flags from: the dice's own setting, kept with `powers` (loadDice). */
   private region: DiceRegion = 'world';
+  /** Where the dice picks a Goal Rush's clubs and players from (MATCH_POOLS), kept with the region. */
+  private pools: Record<Mode, string> = { clubs: 'big', players: 'stars' };
   /**
-   * An Arena Clash being balanced between frames (searchBattle), and its number: an edit made
-   * meanwhile starts a new one and the old one stops. The battle card shows `pending` until it is done.
+   * Every Goal Rush this account has made, by pair (classics.ts pairKey): how many times, and how
+   * many each side won. From the library once the studio opens, and counted on as recordings are
+   * saved; empty until the list has loaded.
+   */
+  private played = new Map<string, { count: number; wins: Map<string, number> }>();
+  /** The battle card's flag pickers and the match card's two, home first (src/ui/picker.ts). */
+  private flagPickers: Picker[] = [];
+  private sidePickers: Picker[] = [];
+  /**
+   * An Arena Clash or a Goal Rush being balanced between frames (searchGame), and its number: an
+   * edit made meanwhile starts a new one and the old one stops. The card shows `pending` until it is done.
    */
   private searchJob = 0;
   private pending: Config | null = null;
@@ -205,19 +231,22 @@ export class App {
     this.plans = plans;
     this.cfg = this.fitPlan(this.load());
     this.before = { a: structuredClone(this.cfg.a), b: structuredClone(this.cfg.b) };
-    ({ powers: this.powers, region: this.region } = this.loadDice());
+    ({ powers: this.powers, region: this.region, pools: this.pools } = this.loadDice());
     this.world = this.createWorld();
     this.outcome = this.predictRun();
     this.margin = this.measureMargin();
     this.followTime = this.planFollow();
     this.renderer = new Renderer(this.canvas);
     this.arena = new BattleRenderer(this.canvas);
+    this.pitch = new MatchRenderer(this.canvas);
     this.renderer.reset(this.cfg);
     this.arena.reset(this.cfg);
+    this.pitch.reset(this.cfg);
     this.panel = new Panel($('#sections'), () => this.cfg, (field) => this.changed(field));
     this.panel.body('files').append($('#files'));
     this.buildPresetBlock();
     this.buildBattleBlock();
+    this.buildMatchBlock();
     this.buildLookBlock();
     this.buildSoundBlock();
     this.buildFollowSwitch();
@@ -256,6 +285,14 @@ export class App {
     // thumbnails drawn before it are drawn again in Rubik.
     void Promise.all([600, 700, 800, 900].map((w) => document.fonts.load(`${w} 40px Rubik`))).then(() => this.drawStills());
     if (this.cfg.game === 'arena-clash') this.loadBattleFlags();
+    // A superadmin's real crests and photos (src/football/pictures.ts): the list, then this match's two.
+    if (account.account.role === 'superadmin') {
+      void loadSideIndex().then(() => {
+        this.syncMatch();
+        this.loadMatchPictures();
+      });
+    }
+    void this.loadRecord();
     requestAnimationFrame((t) => this.frame(t));
     void this.openFromLibrary();
     void retryPending(account).then((added) => {
@@ -304,6 +341,10 @@ export class App {
       this.arena.draw(this.world, this.cfg, dt, battle);
       return;
     }
+    if (this.world instanceof MatchWorld) {
+      this.pitch.draw(this.world, this.cfg, dt, { ...overlay, ahead: this.acc });
+      return;
+    }
     const race: RaceOverlay = {
       ...overlay,
       opening: openingShown(this.raceAt === null ? null : this.elapsed - this.raceAt),
@@ -349,12 +390,14 @@ export class App {
 
   /**
    * Whether the run is at a moment the prediction marked for slow motion: the last SLOWMO_LEAD
-   * before the win, and in a battle the outs among its last flags (BattleOutcome.slow).
+   * before the win (none in a match, pacing.ts leadSlow), and in a battle the outs among its last
+   * flags (BattleOutcome.slow).
    */
   private slowed(): boolean {
     const o = this.outcome;
     const t = this.world.time;
-    if (!o.timedOut && t > o.time - SLOWMO_LEAD) return true;
+    const lead = leadSlow(this.cfg);
+    if (lead > 0 && !o.timedOut && t > o.time - lead) return true;
     return 'slow' in o && o.slow.some(([from, to]) => t >= from && t < to);
   }
 
@@ -373,6 +416,19 @@ export class App {
       const events = world.drain();
       if (events.length) this.arena.handle(events, world, this.cfg);
       if (this.cfg.sound.track !== 'silent') this.sonifier?.battle(events, this.cfg, world);
+      return;
+    }
+    if (world instanceof MatchWorld) {
+      let steps = 0;
+      while (this.acc >= MATCH_STEP && steps < 480) {
+        world.step();
+        this.acc -= MATCH_STEP;
+        steps++;
+      }
+      if (steps === 480) this.acc = 0;
+      const events = world.drain();
+      if (events.length) this.pitch.handle(events, world, this.cfg);
+      if (this.cfg.sound.track !== 'silent' && events.length) this.sonifier?.match(events, this.cfg, world);
       return;
     }
     let steps = 0;
@@ -398,6 +454,7 @@ export class App {
     if (phase === 'winner') {
       this.winnerAge = 0;
       if (this.world instanceof BattleWorld) this.arena.celebrate(this.world, this.cfg);
+      else if (this.world instanceof MatchWorld) this.pitch.celebrate(this.world, this.cfg);
       else this.renderer.celebrate(this.world);
     }
     // A battle's line at the win, over the slow motion; a race's, and a battle's that ran out of time (no slow motion), with the card.
@@ -418,6 +475,7 @@ export class App {
     this.followTime = this.planFollow();
     this.renderer.reset(this.cfg);
     this.arena.reset(this.cfg);
+    this.pitch.reset(this.cfg);
     this.sonifier?.reset(this.cfg, 'leads' in this.outcome ? this.outcome.leads : []);
     this.acc = 0;
     this.elapsed = 0;
@@ -445,15 +503,16 @@ export class App {
     const t = this.cfg.timing;
     const o = this.outcome;
     // A battle's outs in slow motion are part of the battle: only the win's own is the slow motion here.
-    const race = (o.timedOut ? o.time : Math.max(0, o.time - SLOWMO_LEAD)) + ('slow' in o ? slowExtra(o) : 0);
-    const slow = o.timedOut ? 0 : SLOWMO_LEAD / SLOWMO + SLOWMO_TAIL;
+    const lead = leadSlow(this.cfg);
+    const race = (o.timedOut ? o.time : Math.max(0, o.time - lead)) + ('slow' in o ? slowExtra(o) : 0);
+    const slow = o.timedOut ? 0 : lead / SLOWMO + SLOWMO_TAIL;
     const card = t.startDelay + race + slow;
     const shown = Math.max(1.5, cardHold(this.cfg), this.lineSeconds() + AFTER_OUTRO - (o.timedOut ? 0 : lineLead(this.cfg)));
     this.timelineEnd = card + shown + END_PAD;
     const phases: [string, string, number][] = [
       ['hold', 'Hold', t.startDelay],
-      ['race', this.cfg.game === 'arena-clash' ? 'Battle' : 'Race', race],
-      ['slow', 'Slow motion', slow],
+      ['race', this.cfg.game === 'arena-clash' ? 'Battle' : this.cfg.game === 'goal-rush' ? 'Match' : 'Race', race],
+      ['slow', this.cfg.game === 'goal-rush' ? 'Full time' : 'Slow motion', slow],
       ['card', 'Winner', shown],
       ['end', this.cfg.look.loop ? 'Loop' : 'End', END_PAD],
     ];
@@ -490,23 +549,24 @@ export class App {
     this.clock.classList.toggle('over', shown > video + 0.05);
   }
 
-  /** This config's world: the race's two boxes, or the battle's arena. */
-  private createWorld(cfg = this.cfg): World | BattleWorld {
-    return cfg.game === 'arena-clash' ? new BattleWorld(cfg) : createWorld(cfg);
+  /** This config's world: the race's two boxes, the battle's arena, or the match's pitch. */
+  private createWorld(cfg = this.cfg): World | BattleWorld | MatchWorld {
+    return cfg.game === 'arena-clash' ? new BattleWorld(cfg) : cfg.game === 'goal-rush' ? new MatchWorld(cfg) : createWorld(cfg);
   }
 
-  private predictRun(): Outcome | BattleOutcome {
-    return this.cfg.game === 'arena-clash' ? predictBattle(this.cfg) : predict(this.cfg);
+  private predictRun(): Outcome | BattleOutcome | MatchOutcome {
+    return this.cfg.game === 'arena-clash' ? predictBattle(this.cfg) : this.cfg.game === 'goal-rush' ? predictMatch(this.cfg) : predict(this.cfg);
   }
 
-  /** When in the race or the battle the follow button pops up (followAt, battleFollowAt); null for no room. */
+  /** When in the race, the battle or the match the follow button pops up (followAt, battleFollowAt, matchFollowAt); null for no room. */
   private planFollow(): number | null {
-    return 'leads' in this.outcome ? followAt(this.outcome.time, this.outcome.leads) : battleFollowAt(this.outcome);
+    const o = this.outcome;
+    return 'leads' in o ? followAt(o.time, o.leads) : 'goals' in o ? matchFollowAt(o) : battleFollowAt(o);
   }
 
-  /** Seconds between the winner and the loser touching the line, for the predicted race; a battle has no line. */
+  /** Seconds between the winner and the loser touching the line, for the predicted race; a battle or a match has no line. */
   private measureMargin(): number {
-    if (this.cfg.game === 'arena-clash') return 0;
+    if (this.cfg.game !== 'ball-race') return 0;
     const finish = finishTimes(this.cfg, this.outcome.time + 30);
     return Math.abs(finish[0] - finish[1]);
   }
@@ -544,8 +604,9 @@ export class App {
       if (fromStart) this.paused = true;
       await this.unlock();
       if (fromStart) this.restart();
-      // A battle starts with every flag drawn: a recording must never open on a blank ball.
+      // A battle starts with every flag drawn, a match with its pictures: a recording must never open on a blank ball.
       if (this.cfg.game === 'arena-clash') await loadFlags(this.cfg.battle.flags);
+      if (this.cfg.game === 'goal-rush') await loadSidePictures([this.cfg.match.home, this.cfg.match.away]);
       if (this.narrating()) await this.prepareVoice();
       if (ready && !(await ready())) return false;
       this.paused = false;
@@ -562,7 +623,7 @@ export class App {
     }
     if (this.starting) return;
     if (this.pending) {
-      this.flash('The battle is still being balanced: Record once it says who wins.');
+      this.flash(`The ${this.pending.game === 'goal-rush' ? 'match' : 'battle'} is still being balanced: Record once it says who wins.`);
       return;
     }
     const day = this.account.day;
@@ -725,6 +786,10 @@ export class App {
     const entry = this.libraryEntry(name, rec.type, seconds, stoppedEarly);
     const saved = await addToLibrary(entry, this.account.account.id);
     if (saved.added) this.account.library.count++;
+    if (saved.added && entry.game === 'goal-rush') {
+      this.count(entry.match);
+      this.syncMatch();
+    }
     // What the video is about, to write its posts from: a superadmin's tool (docs/video-library.md §6).
     const admin = this.account.account.role === 'superadmin';
     $('.finished-prompt').hidden = !admin;
@@ -852,9 +917,12 @@ export class App {
     $('#plan-card').hidden = false;
   }
 
-  /** "Fibonacci Ball vs Doubling Ball", "Serbia vs Croatia vs Slovenia": the video's title and file name. */
+  /** "Fibonacci Ball vs Doubling Ball", "Serbia vs Croatia vs Slovenia", "Real Madrid vs Barcelona": the video's title and file name. */
   private title(): string {
-    return this.cfg.game === 'arena-clash' ? this.cfg.battle.flags.map(flagName).join(' vs ') : `${this.cfg.a.name} vs ${this.cfg.b.name}`;
+    const c = this.cfg;
+    if (c.game === 'arena-clash') return c.battle.flags.map(flagName).join(' vs ');
+    if (c.game === 'goal-rush') return `${sideName(c.match.home)} vs ${sideName(c.match.away)}`;
+    return `${c.a.name} vs ${c.b.name}`;
   }
 
   /** What the library keeps of this run: the config replays it; the rest is for sorting and grouping. */
@@ -873,6 +941,22 @@ export class App {
       config: structuredClone(this.cfg) as unknown as Record<string, unknown>,
     };
     const o = this.outcome;
+    if ('goals' in o) {
+      const m = this.cfg.match;
+      const at = (s: 0 | 1) => (s === 0 ? 'home' : 'away');
+      return {
+        ...common,
+        game: 'goal-rush',
+        match: {
+          mode: m.mode,
+          home: m.home,
+          away: m.away,
+          score: [o.score[0], o.score[1]],
+          winner: o.winner === null ? null : at(o.winner),
+          goals: o.goals.map((g) => ({ side: at(g.side), minute: g.minute })),
+        },
+      };
+    }
     if ('outs' in o) {
       const flags = this.cfg.battle.flags;
       return {
@@ -985,7 +1069,7 @@ export class App {
   private sayOutroWhenFree(): void {
     if (!this.outroPending || this.busy()) return;
     this.outroPending = false;
-    this.outroEnds = this.cardAge() + this.say(outroLine(this.cfg, this.outcome.winnerName, this.world.winTime));
+    this.outroEnds = this.cardAge() + this.say(winnerLine(this.cfg, this.outcome));
   }
 
   /** Seconds of the winner card: below 0 in the slow motion before it, where a battle's winner line starts. */
@@ -998,8 +1082,7 @@ export class App {
    * which a run without the narrator keeps too; 0 when the video has no narrator or no line.
    */
   private lineSeconds(): number {
-    const o = this.outcome;
-    const text = narrated(this.cfg) && o.winner !== null ? outroLine(this.cfg, o.winnerName, o.time) : '';
+    const text = narrated(this.cfg) ? winnerLine(this.cfg, this.outcome) : '';
     if (!text) return 0;
     const clip = this.narrating() ? this.voices.get(voiceOf(this.cfg), text) : undefined;
     return clip?.duration ?? spokenSeconds(text);
@@ -1076,7 +1159,9 @@ export class App {
     this.searchJob++;
     $('#balance-note').hidden = true;
     $('#battle-note').hidden = true;
+    $('#match-note').hidden = true;
     if (cfg.game === 'arena-clash') this.loadBattleFlags();
+    if (cfg.game === 'goal-rush') this.loadMatchPictures(cfg);
     this.save();
     this.panel.refresh();
     this.syncTopBlock();
@@ -1100,7 +1185,8 @@ export class App {
     for (const input of document.querySelectorAll<HTMLInputElement>('.games input')) input.checked = input.value === this.cfg.game;
     // A race's dice says what a roll will do with its locks (syncDice, from syncMatchup).
     if (this.cfg.game === 'arena-clash') $('#dice').title = 'New flags from where the dice picks, balanced to the video length';
-    $('#reroll').title = this.cfg.game === 'arena-clash' ? 'The same flags, a new battle' : 'Same matchup, a new race';
+    if (this.cfg.game === 'goal-rush') $('#dice').title = 'Two new sides from where the dice picks, a match balanced to the video length';
+    $('#reroll').title = this.cfg.game === 'arena-clash' ? 'The same flags, a new battle' : this.cfg.game === 'goal-rush' ? 'The same two sides, a new match' : 'Same matchup, a new race';
     $<HTMLInputElement>('#seed').value = this.cfg.seed;
     $<HTMLInputElement>('#video').value = String(this.cfg.timing.video);
     $('#video-out').textContent = `${this.cfg.timing.video} s`;
@@ -1144,14 +1230,14 @@ export class App {
       cfg.timing.video = f.maxSeconds;
       retime = true;
     }
-    return retime ? ((cfg.game === 'arena-clash' ? balanceBattle(cfg) : balance(cfg)) ?? cfg) : cfg;
+    return retime ? ((cfg.game === 'arena-clash' ? balanceBattle(cfg) : cfg.game === 'goal-rush' ? balanceMatch(cfg) : balance(cfg)) ?? cfg) : cfg;
   }
 
   /** Why the plan does not let this config be recorded, or null when it does. */
   private planProblem(): string | null {
     const f = this.features;
     const c = this.cfg;
-    if (!gameAllowed(f, c.game)) return 'Arena Clash is not in your plan: switch back to Ball race at the top.';
+    if (!gameAllowed(f, c.game)) return `${c.game === 'goal-rush' ? 'Goal Rush' : 'Arena Clash'} is not in your plan: switch back to Ball race at the top.`;
     if (c.timing.video > f.maxSeconds) return `Your plan makes videos up to ${f.maxSeconds} s: set a shorter length under Video.`;
     if (!f.looks.includes(c.look.skin)) return 'That look is not in your plan: pick another under Video.';
     if (!soundAllowed(f, c.sound.track)) return `${SOUND_LABELS[c.sound.track]} is not in your plan: pick another sound under Video.`;
@@ -1175,14 +1261,16 @@ export class App {
     const gate = (after: Element, has: (plan: Features) => boolean, invite: string, plain: string) => after.after(planInvite(invite, onPaid(has), plain));
 
     if (!gameAllowed(f, 'arena-clash')) {
-      const input = $<HTMLInputElement>('.games input[value="arena-clash"]');
-      input.disabled = true;
-      const label = input.closest('label');
-      label?.classList.add('locked');
-      label?.querySelector('span')?.append(paidTag(onPaid((plan) => plan.allGames)));
-      // Which plans have it, by what they are called: only some of the paid ones do.
+      for (const game of ['arena-clash', 'goal-rush']) {
+        const input = $<HTMLInputElement>(`.games input[value="${game}"]`);
+        input.disabled = true;
+        const label = input.closest('label');
+        label?.classList.add('locked');
+        label?.querySelector('span')?.append(paidTag(onPaid((plan) => plan.allGames)));
+      }
+      // Which plans have them, by what they are called: only some of the paid ones do.
       const having = paid.filter((p) => p.features.allGames).map((p) => p.name);
-      const which = having.length ? `Arena Clash comes with ${having.join(' and ')}.` : 'Arena Clash is not in your plan.';
+      const which = having.length ? `Arena Clash and Goal Rush come with ${having.join(' and ')}.` : 'Arena Clash and Goal Rush are not in your plan.';
       gate($('.games'), (plan) => plan.allGames, which, which);
     }
     if (f.maxSeconds < Number($<HTMLInputElement>('#video').max)) {
@@ -1302,8 +1390,13 @@ export class App {
 
   /** The matchup card: each ball's name, colour, numbers and power, and its speed against the slower one. Or the battle's card. */
   private syncMatchup(): void {
-    if (this.cfg.game === 'arena-clash' || this.pending) {
+    const game = (this.pending ?? this.cfg).game;
+    if (game === 'arena-clash') {
       this.syncBattle();
+      return;
+    }
+    if (game === 'goal-rush') {
+      this.syncMatch();
       return;
     }
     const slower = Math.max(1, Math.min(this.cfg.a.speed, this.cfg.b.speed));
@@ -1338,6 +1431,11 @@ export class App {
     if (this.cfg.game === 'arena-clash') {
       this.stillArena.reset(this.cfg);
       this.stillArena.draw(new BattleWorld(this.cfg), this.cfg, 0, { winner: 0, age: 0 });
+      return;
+    }
+    if (this.cfg.game === 'goal-rush') {
+      this.stillPitch.reset(this.cfg);
+      this.stillPitch.draw(new MatchWorld(this.cfg), this.cfg, 0, { winner: 0, age: 0 });
       return;
     }
     const first = (cfg: Config, overlay: RaceOverlay) => {
@@ -1394,12 +1492,13 @@ export class App {
    * What the dice may do lives under its own key, not in the config: loading a classic, a
    * file or a video from the library replaces the config, and must not change the next roll.
    */
-  private loadDice(): { powers: boolean; region: DiceRegion } {
-    const none = { powers: false, region: 'world' as DiceRegion };
+  private loadDice(): { powers: boolean; region: DiceRegion; pools: Record<Mode, string> } {
+    const none = { powers: false, region: 'world' as DiceRegion, pools: { clubs: 'big', players: 'stars' } };
     try {
-      const dice = mergeConfig<{ powers: boolean; region: string }>(none, JSON.parse(localStorage.getItem(DICE_KEY) ?? '{}'));
+      const dice = mergeConfig<{ powers: boolean; region: string; pools: Record<Mode, string> }>(none, JSON.parse(localStorage.getItem(DICE_KEY) ?? '{}'));
       const region = DICE_REGIONS.find((r) => r.id === dice.region)?.id ?? 'world';
-      return { powers: dice.powers, region };
+      const pools = Object.fromEntries(MODES.map((m) => [m, MATCH_POOLS[m].some((p) => p.id === dice.pools[m]) ? dice.pools[m] : none.pools[m]])) as Record<Mode, string>;
+      return { powers: dice.powers, region, pools };
     } catch {
       return none;
     }
@@ -1407,7 +1506,7 @@ export class App {
 
   private saveDice(): void {
     try {
-      localStorage.setItem(DICE_KEY, JSON.stringify({ powers: this.powers, region: this.region }));
+      localStorage.setItem(DICE_KEY, JSON.stringify({ powers: this.powers, region: this.region, pools: this.pools }));
     } catch {
       // Storage unavailable: the choice lasts until reload.
     }
@@ -1417,8 +1516,8 @@ export class App {
 
   /** Balances a matchup to the video length and shows it; says why when it cannot fit. A battle is balanced between frames. */
   private loadMatchup(cfg: Config): void {
-    if (cfg.game === 'arena-clash') {
-      this.searchBattle(cfg);
+    if (cfg.game !== 'ball-race') {
+      this.searchGame(cfg);
       return;
     }
     const balanced = balance(cfg);
@@ -1540,9 +1639,14 @@ export class App {
    * get new layers and a new race. Says why when nothing fits the locked balls.
    */
   private randomize(): void {
-    if (this.cfg.game === 'arena-clash') {
-      const base = this.pending ?? this.cfg;
-      this.loadMatchup(randomBattle(String(1 + Math.floor(Math.random() * 999_999)), base, base.battle.flags.length, this.region));
+    const current = this.pending ?? this.cfg;
+    if (current.game === 'arena-clash') {
+      this.loadMatchup(randomBattle(String(1 + Math.floor(Math.random() * 999_999)), current, current.battle.flags.length, this.region));
+      return;
+    }
+    if (current.game === 'goal-rush') {
+      const mode = current.match.mode;
+      this.loadMatchup(randomMatch(String(1 + Math.floor(Math.random() * 999_999)), current, mode, this.pools[mode]));
       return;
     }
     const keep = structuredClone(this.locks);
@@ -1565,7 +1669,7 @@ export class App {
 
   /** Same matchup, a new race: new angles from a new seed, balanced again. */
   private reroll(): void {
-    if (this.cfg.game === 'arena-clash') {
+    if (this.cfg.game !== 'ball-race') {
       this.loadMatchup({ ...(this.pending ?? this.cfg), seed: String(1 + Math.floor(Math.random() * 999_999)) });
       return;
     }
@@ -1583,6 +1687,10 @@ export class App {
     const o = this.outcome;
     if ('outs' in o) {
       this.showBattlePrediction(o);
+      return;
+    }
+    if ('goals' in o) {
+      this.showMatchPrediction(o);
       return;
     }
     const video = videoSeconds(this.cfg, o.time, o.winnerName);
@@ -1647,25 +1755,22 @@ export class App {
     const winner = $<HTMLSelectElement>('#battle-winner');
     // The same battle if it already ends that way: balancing tries the current seed first.
     winner.addEventListener('change', () => this.editBattle((b) => (b.winner = winner.value), false));
-    const list = $('#flag-list');
-    list.addEventListener('change', (e) => {
-      const select = (e.target as HTMLElement).closest('select');
-      if (!select) return;
-      const i = Number(select.dataset.index);
-      this.editBattle((b) => {
-        // A flag already in the battle swaps places with the one it replaces.
-        const other = b.flags.indexOf(select.value);
-        if (other >= 0) b.flags[other] = b.flags[i];
-        b.flags[i] = select.value;
-      });
-    });
-    list.addEventListener('click', (e) => {
+    $('#flag-list').addEventListener('click', (e) => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-index]');
       if (button) this.editBattle((b) => (b.flags[Number(button.dataset.index)] = this.randomFlag(b.flags)));
     });
   }
 
-  /** Ball race or Arena Clash: the settings both share stay (switchGame), and the other game is balanced to them. */
+  /** A flag picked in row `i`: one already in the battle swaps places with the one it replaces. */
+  private pickFlag(i: number, code: string): void {
+    this.editBattle((b) => {
+      const other = b.flags.indexOf(code);
+      if (other >= 0) b.flags[other] = b.flags[i];
+      b.flags[i] = code;
+    });
+  }
+
+  /** Ball race, Arena Clash or Goal Rush: the settings all share stay (switchGame), and the other game is balanced to them. */
   private setGame(game: Game): void {
     const current = this.pending ?? this.cfg;
     if (game === current.game) return;
@@ -1691,21 +1796,22 @@ export class App {
   }
 
   /**
-   * Balances a battle a seed at a time between frames (searchBattle), the card showing its flags
-   * and "Balancing" meanwhile; the run on screen goes on until the new one is ready. An edit made
-   * meanwhile starts over from it.
+   * Balances a battle or a match a seed at a time between frames (searchBattle, searchMatch), the
+   * card showing its sides and "Balancing" meanwhile; the run on screen goes on until the new one
+   * is ready. An edit made meanwhile starts over from it.
    */
-  private searchBattle(cfg: Config): void {
+  private searchGame(cfg: Config): void {
     const job = ++this.searchJob;
     this.pending = cfg;
     document.body.dataset.game = cfg.game;
     $('#battle-note').hidden = true;
-    this.syncBattle();
-    this.loadBattleFlags(cfg);
-    const search = searchBattle(cfg);
+    $('#match-note').hidden = true;
+    this.syncMatchup();
+    if (cfg.game === 'arena-clash') this.loadBattleFlags(cfg);
+    const search = cfg.game === 'goal-rush' ? searchMatch(cfg) : searchBattle(cfg);
     const slice = () => {
       if (job !== this.searchJob) return;
-      // A dozen milliseconds a slice: the preview keeps its frames while a hard battle takes a second.
+      // A dozen milliseconds a slice: the preview keeps its frames while a hard one takes a second.
       const until = performance.now() + 12;
       let step = search.next();
       while (!step.done && performance.now() < until) step = search.next();
@@ -1714,7 +1820,10 @@ export class App {
         return;
       }
       this.setConfig(step.value ?? cfg);
-      if (!step.value) this.explainBattle(cfg);
+      if (!step.value) {
+        if (cfg.game === 'goal-rush') this.explainMatch(cfg);
+        else this.explainBattle(cfg);
+      }
     };
     window.setTimeout(slice, 0);
   }
@@ -1739,19 +1848,19 @@ export class App {
     });
   }
 
-  /** The battle card: a row per flag (its flag in its strings' colour, its country, a die), how many, and the winner. */
+  /** The battle card: a row per flag (a picker with its flag in its strings' colour, a die), how many, and the winner. */
   private syncBattle(): void {
     const { flags, winner } = (this.pending ?? this.cfg).battle;
     const colors = lineColors(flags);
     const list = $('#flag-list');
     while (list.children.length < flags.length) list.append(this.flagRow(list.children.length));
-    while (list.children.length > flags.length) list.lastElementChild?.remove();
+    while (list.children.length > flags.length) {
+      list.lastElementChild?.remove();
+      this.flagPickers.pop();
+    }
     flags.forEach((code, i) => {
-      const row = list.children[i] as HTMLElement;
-      row.style.setProperty('--line', colors[i]);
-      const img = row.querySelector('img')!;
-      if (img.getAttribute('src') !== flagSrc(code)) img.src = flagSrc(code);
-      row.querySelector('select')!.value = code;
+      (list.children[i] as HTMLElement).style.setProperty('--line', colors[i]);
+      this.flagPickers[i].value = code;
     });
     setText($('#flags-count'), String(flags.length));
     $<HTMLButtonElement>('#flags-less').disabled = flags.length <= MIN_FLAGS;
@@ -1759,26 +1868,26 @@ export class App {
     const select = $<HTMLSelectElement>('#battle-winner');
     select.replaceChildren(new Option('Random', ''), ...flags.map((c) => new Option(flagName(c), c)));
     select.value = winner;
-    if (this.pending) {
+    if (this.pending?.game === 'arena-clash') {
       $('#battle-verdict').classList.remove('warn');
       $('#battle-prediction').textContent = 'Balancing the battle…';
     }
   }
 
-  /** One flag's row in the card: its flag, every country to pick from, and a die for a random one. */
+  /** Every country as the flag pickers offer it: its flag, its name, and its other names for the search. */
+  private static readonly FLAG_ITEMS: PickerItem[] = COUNTRIES.map((c) => ({ id: c.code, label: c.name, icon: flagSrc(c.code), keys: [c.short, c.code, ALSO_CALLED[c.code] ?? ''] }));
+
+  /** One flag's row in the card: a picker of every country (type to search) and a die for a random one. */
   private flagRow(i: number): HTMLLIElement {
     const row = document.createElement('li');
-    const img = Object.assign(document.createElement('img'), { alt: '', width: 26, height: 26, decoding: 'async' });
-    const select = document.createElement('select');
-    select.dataset.index = String(i);
-    select.setAttribute('aria-label', `Flag ${i + 1}`);
-    select.append(...COUNTRIES.map((c) => new Option(c.name, c.code)));
+    const picker = new Picker(`Flag ${i + 1}`, (code) => this.pickFlag(i, code));
+    picker.setItems(App.FLAG_ITEMS);
+    this.flagPickers[i] = picker;
     const dice = Object.assign(document.createElement('button'), { type: 'button', className: 'icon-button small', title: 'A random flag here' });
     dice.dataset.index = String(i);
     dice.setAttribute('aria-label', `A random flag in place ${i + 1}`);
-    dice.innerHTML =
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" /><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" stroke="none" /></svg>';
-    row.append(img, select, dice);
+    dice.innerHTML = DIE_ICON;
+    row.append(picker.el, dice);
     return row;
   }
 
@@ -1794,6 +1903,213 @@ export class App {
     });
     $('#battle-prediction').replaceChildren(winner, ` ${o.timedOut ? 'leads' : 'wins'} after ${o.time.toFixed(1)} s`, detail);
     this.syncPrimary();
+  }
+
+  // ── Goal Rush ────────────────────────────────────────────────────────────
+
+  /** Counts the account's Goal Rush videos by pair, from its library, for the match card. */
+  private async loadRecord(): Promise<void> {
+    try {
+      const { videos } = await api<VideosResponse>('GET', '/api/videos');
+      this.played = new Map();
+      for (const v of videos) if (v.match) this.count(v.match);
+      this.syncMatch();
+    } catch {
+      // The library did not answer: the card shows no counts, as for an account with no matches.
+    }
+  }
+
+  /** One more match of this pair, and its winner. */
+  private count(m: MatchSummary): void {
+    const key = pairKey(m.home, m.away);
+    const entry = this.played.get(key) ?? { count: 0, wins: new Map<string, number>() };
+    entry.count++;
+    const winner = m.winner === 'home' ? m.home : m.winner === 'away' ? m.away : null;
+    if (winner) entry.wins.set(winner, (entry.wins.get(winner) ?? 0) + 1);
+    this.played.set(key, entry);
+  }
+
+  /** "3× · 2–1": how many times this pair was made, and the wins, `a`'s first; '' for never. */
+  private recordLine(a: string, b: string): string {
+    const r = this.played.get(pairKey(a, b));
+    return r ? `${r.count}× · ${r.wins.get(a) ?? 0}–${r.wins.get(b) ?? 0}` : '';
+  }
+
+  /** Loads the match's two real pictures, where the account has them, then shows them: in the card and the first frames. */
+  private loadMatchPictures(cfg = this.cfg): void {
+    void loadSidePictures([cfg.match.home, cfg.match.away]).then(() => {
+      if (this.cfg.game !== 'goal-rush') return;
+      this.syncMatch();
+      this.drawStills();
+    });
+  }
+
+  /** The match card's controls: clubs or players, the two sides' pickers and dice, where the dice picks from, the winner. */
+  private buildMatchBlock(): void {
+    for (const input of document.querySelectorAll<HTMLInputElement>('.modes input')) {
+      input.addEventListener('change', () => {
+        if (!input.checked) return;
+        // Two sides of the other kind, from where the dice picks them.
+        const mode = input.value as Mode;
+        const current = this.pending ?? this.cfg;
+        if (mode !== current.match.mode) this.loadMatchup(randomMatch(String(1 + Math.floor(Math.random() * 999_999)), current, mode, this.pools[mode]));
+      });
+    }
+    const list = $('#side-list');
+    for (const [i, label] of ['Home', 'Away'].entries()) {
+      const picker = new Picker(label, (id) => this.pickSide(i as 0 | 1, id));
+      this.sidePickers.push(picker);
+      const row = document.createElement('li');
+      const dice = Object.assign(document.createElement('button'), { type: 'button', className: 'icon-button small', title: `A random ${label.toLowerCase()} side from where the dice picks` });
+      dice.setAttribute('aria-label', `A random ${label.toLowerCase()} side`);
+      dice.innerHTML = DIE_ICON;
+      dice.addEventListener('click', () => this.pickSide(i as 0 | 1, this.randomSide(i as 0 | 1)));
+      row.append(picker.el, dice);
+      if (i) list.append(Object.assign(document.createElement('li'), { className: 'side-vs', textContent: 'vs' }));
+      list.append(row);
+    }
+    const classic = $<HTMLSelectElement>('#match-classic');
+    classic.addEventListener('change', () => {
+      const [mode, home, away] = classic.value.split('|');
+      classic.value = '';
+      if (!home || !away) return;
+      // A classic brings its two sides; the rest (length, sound, voice, follow) stays, and the match is new.
+      const next = structuredClone(this.pending ?? this.cfg);
+      next.match = { ...next.match, mode: mode as Mode, home, away, winner: '' };
+      next.seed = String(1 + Math.floor(Math.random() * 999_999));
+      next.voice.script = '';
+      this.loadMatchup(next);
+    });
+    const pool = $<HTMLSelectElement>('#match-pool');
+    pool.addEventListener('change', () => {
+      this.pools[(this.pending ?? this.cfg).match.mode] = pool.value;
+      this.saveDice();
+    });
+    const winner = $<HTMLSelectElement>('#match-winner');
+    // The same match if it already ends that way: balancing tries the current seed first.
+    winner.addEventListener('change', () => this.editMatch((m) => (m.winner = winner.value), false));
+  }
+
+  /** A side picked for home (0) or away (1); the other side picked swaps the two. */
+  private pickSide(i: 0 | 1, id: string): void {
+    this.editMatch((m) => {
+      const other = i ? m.home : m.away;
+      if (other === id) [m.home, m.away] = [m.away, m.home];
+      else if (i) m.away = id;
+      else m.home = id;
+    });
+  }
+
+  /** A side for place `i` from where the dice picks, not the other one. */
+  private randomSide(i: 0 | 1): string {
+    const m = (this.pending ?? this.cfg).match;
+    const pick = randomMatch(String(1 + Math.floor(Math.random() * 999_999)), this.pending ?? this.cfg, m.mode, this.pools[m.mode] === 'derbies' ? 'all' : this.pools[m.mode]).match;
+    const other = i ? m.home : m.away;
+    const id = pick.home !== other ? pick.home : pick.away;
+    return id;
+  }
+
+  /** A change to the match's sides or winner, balanced as a new match (a new seed, unless `reseed` is off). */
+  private editMatch(change: (m: Config['match']) => void, reseed = true): void {
+    const next = structuredClone(this.pending ?? this.cfg);
+    change(next.match);
+    if (next.match.winner !== next.match.home && next.match.winner !== next.match.away) next.match.winner = '';
+    if (reseed) next.seed = String(1 + Math.floor(Math.random() * 999_999));
+    next.voice.script = '';
+    this.loadMatchup(next);
+  }
+
+  /** The match card: clubs or players, the two pickers with their kits in their colours, where the dice picks from, the winner. */
+  private syncMatch(): void {
+    const m = (this.pending ?? this.cfg).match;
+    for (const input of document.querySelectorAll<HTMLInputElement>('.modes input')) input.checked = input.value === m.mode;
+    // A real crest or photo where the account has one (a superadmin's), else the kit.
+    const items: PickerItem[] = sidesOf(m.mode).map((s) => ({
+      id: s.id,
+      label: s.name,
+      icon: sideSrc(s.id) ?? kitIcon(s),
+      fit: sideKind(s.id) === 'crest' ? 'contain' : undefined,
+      hint: groupLabel(s),
+      keys: [s.short, s.mark, ...s.keys],
+    }));
+    const colors = sideColors(side(m.home), side(m.away));
+    const rows = $('#side-list').querySelectorAll<HTMLElement>('li:not(.side-vs)');
+    [m.home, m.away].forEach((id, i) => {
+      this.sidePickers[i].setItems(items);
+      this.sidePickers[i].value = id;
+      rows[i]?.style.setProperty('--line', colors[i]);
+      // The fixture: the side's ball big, in its colour, and its name.
+      const box = $(i ? '#fixture-away' : '#fixture-home');
+      box.style.setProperty('--line', colors[i]);
+      const item = items.find((it) => it.id === id);
+      const img = box.querySelector('img')!;
+      const src = item?.icon ?? kitIcon(side(id), 96);
+      if (img.getAttribute('src') !== src) img.src = src;
+      img.classList.toggle('contain', item?.fit === 'contain');
+      setText(box.querySelector('b')!, side(id)?.short ?? id);
+    });
+    setText($('#fixture-record'), this.recordLine(m.home, m.away) || 'First time');
+    // The classics, each with how often it was made and who won how many, as the fixture says it.
+    const classic = $<HTMLSelectElement>('#match-classic');
+    const listed = `${m.mode}|${[...this.played.entries()].map(([k, r]) => `${k}:${r.count}`).join(',')}`;
+    if (classic.dataset.listed !== listed) {
+      classic.dataset.listed = listed;
+      classic.replaceChildren(
+        new Option('Classic matches…', ''),
+        ...classicsOf(m.mode).map((group) => {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = group.label;
+          optgroup.append(
+            ...group.matches.map((c) => {
+              const made = this.recordLine(c.home, c.away);
+              return new Option(`${sideName(c.home)} – ${sideName(c.away)}${made ? `   ${made}` : ''}`, `${c.mode}|${c.home}|${c.away}`);
+            }),
+          );
+          return optgroup;
+        }),
+      );
+    }
+    const pool = $<HTMLSelectElement>('#match-pool');
+    const pools = MATCH_POOLS[m.mode];
+    if (pool.dataset.mode !== m.mode) {
+      pool.replaceChildren(...pools.map((p) => new Option(p.label, p.id)));
+      pool.dataset.mode = m.mode;
+    }
+    pool.value = this.pools[m.mode];
+    const select = $<HTMLSelectElement>('#match-winner');
+    select.replaceChildren(new Option('Random', ''), new Option(sideName(m.home), m.home), new Option(sideName(m.away), m.away));
+    select.value = m.winner;
+    if (this.pending?.game === 'goal-rush') {
+      $('#match-verdict').classList.remove('warn');
+      $('#match-prediction').textContent = 'Balancing the match…';
+    }
+  }
+
+  /** Who wins and the score, how long the video runs and how many goals; warned when it no longer lands on the length. */
+  private showMatchPrediction(o: MatchOutcome): void {
+    const video = videoSeconds(this.cfg, o.time, o.winnerName);
+    this.uneven = o.timedOut || o.golden || Math.abs(video - this.cfg.timing.video) > 1.5;
+    $('#match-verdict').classList.toggle('warn', this.uneven);
+    const w = o.winner ?? 0;
+    const winner = Object.assign(document.createElement('strong'), { textContent: o.winnerName });
+    const goals = o.goals.length;
+    const detail = Object.assign(document.createElement('span'), {
+      textContent: o.golden ? 'Level after 90 minutes: the next goal wins, so the video runs long' : `The video runs ${Math.round(video)} s · ${goals} goal${goals === 1 ? '' : 's'}`,
+    });
+    $('#match-prediction').replaceChildren(winner, ` wins ${o.score[w]}–${o.score[w ? 0 : 1]}${o.golden ? ' in golden goal' : ''}`, detail);
+    this.syncPrimary();
+  }
+
+  /** Why a match did not balance, under its card until it changes, and in a message. */
+  private explainMatch(cfg: Config): void {
+    const winner = cfg.match.winner ? sideName(cfg.match.winner) : '';
+    const text = winner
+      ? `No match of these two ended with ${winner} winning in a ${cfg.timing.video} s video. Try another length, or Random as the winner.`
+      : `These two did not make a match for a ${cfg.timing.video} s video. Try another length, or New match.`;
+    const note = $('#match-note');
+    note.textContent = text;
+    note.hidden = false;
+    this.flash(text);
   }
 
   // ── Panel extras ─────────────────────────────────────────────────────────
@@ -2080,7 +2396,7 @@ export class App {
         ? `REC ${((performance.now() - this.recorder.startedAt) / 1000).toFixed(1)} s`
         : this.paused
           ? `Paused · ${time} s`
-          : `${this.phase === 'race' ? (this.cfg.game === 'arena-clash' ? 'Fighting' : 'Racing') : this.phase === 'intro' ? 'Starting' : this.phase === 'slowmo' ? 'Slow motion' : 'Finished'}${this.cfg.sound.track === 'silent' ? ' · silent' : this.narrating() ? '' : ' · no voice'} · ${time} s`;
+          : `${this.phase === 'race' ? (this.cfg.game === 'arena-clash' ? 'Fighting' : this.cfg.game === 'goal-rush' ? 'Playing' : 'Racing') : this.phase === 'intro' ? 'Starting' : this.phase === 'slowmo' ? (this.cfg.game === 'goal-rush' ? 'Full time' : 'Slow motion') : 'Finished'}${this.cfg.sound.track === 'silent' ? ' · silent' : this.narrating() ? '' : ' · no voice'} · ${time} s`;
     setText($('#status'), status);
   }
 

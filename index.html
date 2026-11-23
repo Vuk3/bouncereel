@@ -3,7 +3,7 @@
   <head>
     <!-- site:head / -->
     <title>BounceReel: game videos for Shorts, TikTok and Reels</title>
-    <meta name="description" content="Ball races and arena clashes for Shorts, TikTok and Reels: every video balanced to end at the length you pick, ready to post as a 1080×1920 MP4. Free to start." />
+    <meta name="description" content="Ball races, arena clashes and football matches with a spinning goal, for Shorts, TikTok and Reels: every video balanced to end at the length you pick, ready to post as a 1080×1920 MP4. Free to start." />
     <!-- Who BounceReel is, for search engines: the name the results show, the logo, and its own
          accounts (sameAs, from SOCIAL in shared/site.ts). The home page only: it is about the site. -->
     <script type="application/ld+json">
@@ -35,14 +35,14 @@
     <!-- site:header -->
 
     <main id="main">
-      <!-- The hero: a dark stage with both games live, a phone each. The still frames are the first paint; src/site/hero.ts and src/site/arena.ts draw the games over them. -->
+      <!-- The hero: a dark stage with the three games live, a phone each. The still frames are the first paint; src/site/hero.ts, arena.ts and pitch.ts draw the games over them. -->
       <section class="shell hero" aria-labelledby="hero-title">
         <div class="stage hero-stage">
           <div class="hero-copy">
             <h1 id="hero-title">Game videos, ready to post.</h1>
             <p class="lede">
-              Balls racing through ever bigger numbers, and flags cutting each other's strings until one is left. Every game is balanced to end
-              at the length you pick, and BounceReel records it as a vertical MP4 for Shorts, TikTok and Reels: a new one every roll, nothing to edit.
+              Balls racing through ever bigger numbers, flags cutting each other's strings until one is left, and football matches with a spinning
+              goal. Every game is balanced to end at the length you pick, and BounceReel records it as a vertical MP4 for Shorts, TikTok and Reels: a new one every roll, nothing to edit.
             </p>
             <div class="actions">
               <a class="btn btn-primary" href="/signup" data-guest data-signups="open">Start free</a>
@@ -79,6 +79,23 @@
                   <span class="hero-game-note" id="matchup-note" aria-live="polite">Night look, Fibonacci against Factorial</span>
                 </figcaption>
               </figure>
+              <figure class="hero-game hero-game-goal">
+                <div class="phone" id="pitch-phone">
+                  <img
+                    src="/games/goal-rush.webp"
+                    srcset="/games/goal-rush-270.webp 270w, /games/goal-rush.webp 540w"
+                    sizes="232px"
+                    width="540"
+                    height="960"
+                    alt="A Goal Rush on its black stage: Real Madrid against Barcelona in a round pitch, the goal and its net turning round the ring, a scoreboard over it."
+                  />
+                  <canvas aria-hidden="true"></canvas>
+                </div>
+                <figcaption>
+                  <span class="hero-game-name"><!-- game:icon goal-rush -->Goal Rush</span>
+                  <span class="hero-game-note" id="match-note" aria-live="polite">El Clásico: Real Madrid vs Barcelona</span>
+                </figcaption>
+              </figure>
               <figure class="hero-game hero-game-arena">
                 <div class="phone" id="arena-phone">
                   <img
@@ -104,7 +121,7 @@
                 <circle cx="12" cy="12" r="1.5" fill="currentColor" />
                 <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" />
               </svg>
-              Roll the dice for both
+              Roll the dice for all three
             </button>
           </div>
         </div>
@@ -113,8 +130,8 @@
       <!-- The games in words, right under the hero that shows them: how each plays, which plans make it, and the way to its part of /games. -->
       <section class="shell section" id="games" aria-labelledby="games-title">
         <header class="section-head">
-          <h2 id="games-title">Two games, one studio</h2>
-          <p>Pick the game at the top of the studio. The length, the sound, the narrator, recording and your library work the same in both. <a href="/games">More about the games</a></p>
+          <h2 id="games-title">Three games, one studio</h2>
+          <p>Pick the game at the top of the studio. The length, the sound, the narrator, recording and your library work the same in every one. <a href="/games">More about the games</a></p>
         </header>
         <ul class="game-list">
           <li class="game-card game-race">
@@ -131,7 +148,7 @@
               <li><b>Break every layer</b>The first ball through its last layer reaches the line.</li>
               <li><b>Close to the very end</b>A photo finish, or a gap of 1 to 10 s that you pick.</li>
             </ol>
-            <a class="game-more" href="/games#ball-race">How it plays</a>
+            <a class="game-more" href="/games/ball-race">Everything about it</a>
           </li>
           <li class="game-card game-arena">
             <div class="game-head">
@@ -147,7 +164,24 @@
               <li><b>A touch cuts</b>A ball cuts every rival string it touches, at once.</li>
               <li><b>No strings, out</b>The balls speed up as it goes, and the last outs play in slow motion.</li>
             </ol>
-            <a class="game-more" href="/games#arena-clash">How it plays</a>
+            <a class="game-more" href="/games/arena-clash">Everything about it</a>
+          </li>
+          <li class="game-card game-goal">
+            <div class="game-head">
+              <!-- game:icon goal-rush -->
+              <div>
+                <h3 class="game-name">Goal Rush</h3>
+                <p class="game-plans" data-game-plans="goal-rush">Paid plans</p>
+              </div>
+            </div>
+            <p class="game-pitch">A football match of ninety minutes in one round pitch: two clubs or two players, and a goal that never stands still.</p>
+            <ol class="game-rules">
+              <li><b>The goal spins</b>Round the ring, the other way from half time.</li>
+              <li><b>Through it is a goal</b>GOAL!, the scorer in the net, then both kick off again.</li>
+              <li><b>Ninety minutes</b>The clock runs over your video; more goals at full time wins.</li>
+            </ol>
+            <p class="game-note">Clubs and players are drawn in their colours, with their letters or numbers: no crests or photos.</p>
+            <a class="game-more" href="/games/goal-rush">Everything about it</a>
           </li>
         </ul>
       </section>
@@ -155,18 +189,27 @@
       <section class="shell section" id="how" aria-labelledby="how-title">
         <header class="section-head">
           <h2 id="how-title">From a dice roll to a finished video</h2>
-          <p>Three steps, all in your browser, shown here with a Ball Race; an Arena Clash is made the same way. The game is worked out before it plays, so what you see is what gets recorded.</p>
+          <p>Three steps, all in your browser, the same in every game: pick one below and try them. The game is worked out before it plays, so what you see is what gets recorded.</p>
         </header>
+        <!-- Which game the steps and the phone show (src/site/home.ts): each step has a version a game, marked data-how. -->
+        <fieldset class="choice how-games">
+          <legend class="sr-only">The game the steps show</legend>
+          <div class="choice-options segments">
+            <label><input type="radio" name="how-game" value="ball-race" checked /><span><!-- game:icon ball-race -->Ball Race</span></label>
+            <label><input type="radio" name="how-game" value="arena-clash" /><span><!-- game:icon arena-clash -->Arena Clash</span></label>
+            <label><input type="radio" name="how-game" value="goal-rush" /><span><!-- game:icon goal-rush -->Goal Rush</span></label>
+          </div>
+        </fieldset>
         <!-- A small working studio: the steps set a matchup, the phone beside them plays it (src/site/home.ts). Two lists, so the phone can come between them on a narrow screen. -->
         <div class="how-grid">
           <ol class="steps">
             <li class="tile step">
-              <div class="step-text">
+              <div class="step-text" data-how="ball-race">
                 <span class="step-num">1</span>
                 <h3>Roll a matchup</h3>
                 <p>The dice picks two of fifteen number sequences and balances the race at once: it ends close, and on time for your video.</p>
               </div>
-              <div class="piece piece-roll">
+              <div class="piece piece-roll" data-how="ball-race">
                 <button class="btn btn-primary btn-small" id="how-roll" type="button">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="2.2" />
@@ -182,14 +225,58 @@
                 </ul>
                 <p class="piece-verdict" id="how-verdict" aria-live="polite"><strong>Slow Factorial Ball</strong> wins by 0.3 s</p>
               </div>
+              <div class="step-text" data-how="arena-clash" hidden>
+                <span class="step-num">1</span>
+                <h3>Pick the flags</h3>
+                <p>Any of 199, typed in, or three or four from one region, dealt by the dice. The studio balances the battle at once: outs all through it, and the last flag standing on time.</p>
+              </div>
+              <div class="piece piece-roll" data-how="arena-clash" hidden>
+                <button class="btn btn-primary btn-small" id="how-roll-battle" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="2.2" />
+                    <circle cx="8.5" cy="8.5" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+                    <circle cx="15.5" cy="15.5" r="1.6" fill="currentColor" />
+                  </svg>
+                  Roll the dice
+                </button>
+                <ul class="piece-rows" id="how-flags" aria-label="This battle">
+                  <li class="piece-row"><img class="flag" src="/flags/cn.svg" width="22" height="22" alt="" /><b>China</b><em>Asia</em></li>
+                  <li class="piece-row"><img class="flag" src="/flags/in.svg" width="22" height="22" alt="" /><b>India</b><em>Asia</em></li>
+                  <li class="piece-row"><img class="flag" src="/flags/us.svg" width="22" height="22" alt="" /><b>United States</b><em>The Americas</em></li>
+                  <li class="piece-row"><img class="flag" src="/flags/ru.svg" width="22" height="22" alt="" /><b>Russia</b><em>Europe</em></li>
+                </ul>
+                <p class="piece-verdict" id="how-battle-verdict" aria-live="polite"><strong>United States</strong>, the last flag standing</p>
+              </div>
+              <div class="step-text" data-how="goal-rush" hidden>
+                <span class="step-num">1</span>
+                <h3>Pick a match</h3>
+                <p>Two clubs or two players, typed in or from 201 classics, or dealt by the dice. The studio balances the match at once: goals all through it, and the final whistle on time.</p>
+              </div>
+              <div class="piece piece-roll" data-how="goal-rush" hidden>
+                <button class="btn btn-primary btn-small" id="how-roll-match" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="2.2" />
+                    <circle cx="8.5" cy="8.5" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+                    <circle cx="15.5" cy="15.5" r="1.6" fill="currentColor" />
+                  </svg>
+                  Roll the dice
+                </button>
+                <ul class="piece-rows" id="how-sides" aria-label="This match">
+                  <li class="piece-row"><i class="ball" style="--c: #febe10"></i><b>Real Madrid</b><em>La Liga</em></li>
+                  <li class="piece-row"><i class="ball" style="--c: #e0357a"></i><b>Barcelona</b><em>La Liga</em></li>
+                </ul>
+                <p class="piece-verdict" id="how-match-verdict" aria-live="polite"><strong>El Clásico</strong>: Real Madrid wins 3–2</p>
+              </div>
             </li>
             <li class="tile step">
-              <div class="step-text">
+              <div class="step-text" data-how="ball-race">
                 <span class="step-num">2</span>
                 <h3>Choose length, look, sound and narrator</h3>
                 <p>From 20 to 90 seconds in the studio, a photo finish or a gap you pick, three looks, and a narrator, the music alone or silence.</p>
               </div>
-              <div class="piece piece-settings">
+              <div class="piece piece-settings" data-how="ball-race">
                 <div class="control">
                   <!-- The value is for the eye: the slider says it itself (aria-valuetext), and an output would say it twice. -->
                   <div class="control-label"><label for="how-length">Length</label><output id="how-length-out" for="how-length" aria-hidden="true">30 s</output></div>
@@ -218,6 +305,52 @@
                 </fieldset>
                 <p class="piece-note" id="how-free">The free plan makes up to 30 s in the paper look, with music or silence; the paid plans make all of this.</p>
               </div>
+              <div class="step-text" data-how="arena-clash" hidden>
+                <span class="step-num">2</span>
+                <h3>Choose length, flags and winner</h3>
+                <p>From 20 to 90 seconds in the studio, two flags to twelve, the flag that survives or let the arena decide, and a narrator, the strings' music alone or silence.</p>
+              </div>
+              <div class="piece piece-settings" data-how="arena-clash" hidden>
+                <div class="control">
+                  <div class="control-label"><label for="how-battle-length">Length</label><output id="how-battle-length-out" for="how-battle-length" aria-hidden="true">30 s</output></div>
+                  <input class="range" type="range" id="how-battle-length" min="30" max="90" step="5" value="30" aria-valuetext="30 seconds" />
+                </div>
+                <fieldset class="choice">
+                  <legend>Flags</legend>
+                  <div class="choice-options">
+                    <label><input type="radio" name="how-battle-count" value="3" /><span>3</span></label>
+                    <label><input type="radio" name="how-battle-count" value="4" checked /><span>4</span></label>
+                    <label><input type="radio" name="how-battle-count" value="6" /><span>6</span></label>
+                  </div>
+                </fieldset>
+                <fieldset class="choice">
+                  <legend>Winner</legend>
+                  <div class="choice-options" id="how-battle-winner">
+                    <label><input type="radio" name="how-battle-winner" value="" checked /><span>Let it play</span></label>
+                  </div>
+                </fieldset>
+                <p class="piece-note">Arena Clash is made on the paid plans, with the narrator, the music alone or silence.</p>
+              </div>
+              <div class="step-text" data-how="goal-rush" hidden>
+                <span class="step-num">2</span>
+                <h3>Choose length and winner</h3>
+                <p>From 20 to 90 seconds in the studio, the side that wins or let the match decide, and a narrator, the whistles and the crowd alone, or silence.</p>
+              </div>
+              <div class="piece piece-settings" data-how="goal-rush" hidden>
+                <div class="control">
+                  <div class="control-label"><label for="how-match-length">Length</label><output id="how-match-length-out" for="how-match-length" aria-hidden="true">30 s</output></div>
+                  <input class="range" type="range" id="how-match-length" min="30" max="90" step="5" value="30" aria-valuetext="30 seconds" />
+                </div>
+                <fieldset class="choice">
+                  <legend>Winner</legend>
+                  <div class="choice-options">
+                    <label><input type="radio" name="how-match-winner" value="" checked /><span>Let it play</span></label>
+                    <label><input type="radio" name="how-match-winner" value="home" /><span id="how-match-home">Real Madrid</span></label>
+                    <label><input type="radio" name="how-match-winner" value="away" /><span id="how-match-away">Barcelona</span></label>
+                  </div>
+                </fieldset>
+                <p class="piece-note">Goal Rush is made on the paid plans, with the narrator, the whistles and the crowd alone, or silence. Clubs and players are drawn in their colours, with no crests or photos.</p>
+              </div>
             </li>
           </ol>
 
@@ -232,6 +365,14 @@
               />
               <canvas aria-hidden="true"></canvas>
             </div>
+            <div class="phone" id="how-phone-arena" hidden>
+              <img src="/games/arena-clash.webp" srcset="/games/arena-clash-270.webp 270w, /games/arena-clash.webp 540w" sizes="300px" width="540" height="960" loading="lazy" alt="The battle the steps set, in a phone." />
+              <canvas aria-hidden="true"></canvas>
+            </div>
+            <div class="phone" id="how-phone-pitch" hidden>
+              <img src="/games/goal-rush.webp" srcset="/games/goal-rush-270.webp 270w, /games/goal-rush.webp 540w" sizes="300px" width="540" height="960" loading="lazy" alt="The match the steps set, in a phone." />
+              <canvas aria-hidden="true"></canvas>
+            </div>
             <p class="how-caption" id="how-caption">Fibonacci Ball vs Slow Factorial Ball, 30 s, night look, muted</p>
           </div>
 
@@ -243,7 +384,7 @@
                 <p>Record writes an MP4 at the length you set that ends on its first frame, so the replay has no cut. Upload it to Shorts, TikTok or Reels as it is.</p>
               </div>
               <div class="piece piece-post">
-                <div class="post-phone" id="how-post">
+                <div class="post-phone" id="how-post" data-game="ball-race">
                   <img src="/hero/first-frame-4.webp" width="540" height="960" loading="lazy" alt="The video's first frame under a platform's buttons: the names, the question and the top race clear of them." />
                   <canvas aria-hidden="true"></canvas>
                   <!-- Where the apps put their own buttons, drawn generically (no logos): the zones of the studio's #safe-zones (src/style.css .zone). -->
@@ -297,31 +438,31 @@
       <section class="shell section" aria-labelledby="gallery-title">
         <header class="section-head">
           <h2 id="gallery-title">Made in the studio</h2>
-          <p>Three recordings from the studio, one in each look, 30 seconds each, shown here smaller and muted.</p>
+          <p>A recording of each game from the studio, 30 seconds each, shown here smaller and muted. Each game's page has more.</p>
         </header>
         <ul class="gallery">
           <li>
             <figure>
               <div class="gallery-phone">
-                <video src="/gallery/primes-vs-squares-3.mp4" poster="/gallery/primes-vs-squares-3.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
-                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Prime Ball vs Square Ball" hidden>
+                <video src="/gallery/el-clasico.mp4" poster="/gallery/el-clasico.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play El Clásico: Real Madrid vs Barcelona" hidden>
                   <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
                   <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
                 </button>
               </div>
-              <figcaption><b>Prime Ball vs Square Ball</b><span>Paper look, 30 s</span></figcaption>
+              <figcaption><b>El Clásico</b><span>Goal Rush, 30 s · <a href="/games/goal-rush">More</a></span></figcaption>
             </figure>
           </li>
           <li>
             <figure>
               <div class="gallery-phone">
-                <video src="/gallery/doubling-vs-fibonacci-3.mp4" poster="/gallery/doubling-vs-fibonacci-3.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
-                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Doubling Ball vs Fibonacci Ball" hidden>
+                <video src="/gallery/four-biggest.mp4" poster="/gallery/four-biggest.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play China vs India vs United States vs Russia" hidden>
                   <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
                   <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
                 </button>
               </div>
-              <figcaption><b>Doubling Ball vs Fibonacci Ball</b><span>Cards look, 30 s</span></figcaption>
+              <figcaption><b>The four biggest countries</b><span>Arena Clash, 30 s · <a href="/games/arena-clash">More</a></span></figcaption>
             </figure>
           </li>
           <li>
@@ -333,12 +474,12 @@
                   <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
                 </button>
               </div>
-              <figcaption><b>Tribonacci Ball vs Tripling Ball</b><span>Night look, 30 s</span></figcaption>
+              <figcaption><b>Tribonacci vs Tripling</b><span>Ball Race, night look, 30 s · <a href="/games/ball-race">More</a></span></figcaption>
             </figure>
           </li>
         </ul>
         <div class="follow">
-          <p><b>Watch more races.</b> BounceReel posts its own on TikTok, Instagram and YouTube: pick a side in the comments.</p>
+          <p><b>Watch more.</b> BounceReel posts its own on TikTok, Instagram and YouTube: pick a side in the comments.</p>
           <!-- site:follow -->
         </div>
       </section>
@@ -350,10 +491,114 @@
             <p>What keeps people watching, done for every video, so you only pick and post.</p>
           </header>
 
+          <section class="fgroup" aria-labelledby="group-pitch">
+            <header class="fgroup-head">
+              <h3 id="group-pitch"><!-- game:icon goal-rush -->Goal Rush</h3>
+              <p>The clubs and players people argue about, the derbies they care about, and a goal worth shouting for. <a href="/games/goal-rush">Everything about it</a></p>
+            </header>
+            <div class="fbento">
+              <article class="fcard fcard-big">
+                <h4>157 clubs, 453 players</h4>
+                <p>Every club of Europe's five big leagues and the Champions League, Red Star and Partizan and the rest of the Balkans, South America's giants; today's stars and the legends, from Pelé to Yamal. Type a few letters to find one, or let the dice pick.</p>
+                <!-- Some of the clubs as their balls are drawn: their colours and pattern, their letters on a roundel (src/football/kits.ts, in CSS). Running past in two rows, still under reduced motion. -->
+                <div class="fviz viz-kits" aria-hidden="true">
+                  <div class="flag-wall kit-wall">
+                    <ul class="flag-row"><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #febe10; --dark: #febe10; --light: #ffffff; --ink: #1b1b2f"><b>RMA</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #a50044; --c2: #004d98; --dark: #004d98; --light: #a50044; --ink: #ffffff"><b>BAR</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #e2001a; --c2: #ffffff; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>CZV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>PAR</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #dc052d; --c2: #ffffff; --dark: #dc052d; --light: #ffffff; --ink: #ffffff"><b>BAY</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #c8102e; --c2: #ffffff; --dark: #c8102e; --light: #ffffff; --ink: #ffffff"><b>LIV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>JUV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #0068a8; --c2: #111111; --dark: #111111; --light: #0068a8; --ink: #ffffff"><b>INT</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fb090b; --c2: #111111; --dark: #111111; --light: #fb090b; --ink: #ffffff"><b>MIL</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #004170; --c2: #da291c; --dark: #004170; --light: #da291c; --ink: #ffffff"><b>PSG</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #6cabdd; --c2: #ffffff; --dark: #6cabdd; --light: #ffffff; --ink: #1b1b2f"><b>MCI</b></span></li><li><span class="kit-ball" data-p="sleeves" style="--c1: #ef0107; --c2: #ffffff; --dark: #ef0107; --light: #ffffff; --ink: #ffffff"><b>ARS</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #fde100; --c2: #111111; --dark: #111111; --light: #fde100; --ink: #ffffff"><b>BVB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #cb3524; --c2: #ffffff; --dark: #cb3524; --light: #ffffff; --ink: #ffffff"><b>ATM</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #ffffff; --c2: #d2122e; --dark: #d2122e; --light: #ffffff; --ink: #ffffff"><b>AJX</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #018749; --c2: #ffffff; --dark: #018749; --light: #ffffff; --ink: #ffffff"><b>CEL</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #febe10; --dark: #febe10; --light: #ffffff; --ink: #1b1b2f"><b>RMA</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #a50044; --c2: #004d98; --dark: #004d98; --light: #a50044; --ink: #ffffff"><b>BAR</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #e2001a; --c2: #ffffff; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>CZV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>PAR</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #dc052d; --c2: #ffffff; --dark: #dc052d; --light: #ffffff; --ink: #ffffff"><b>BAY</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #c8102e; --c2: #ffffff; --dark: #c8102e; --light: #ffffff; --ink: #ffffff"><b>LIV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>JUV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #0068a8; --c2: #111111; --dark: #111111; --light: #0068a8; --ink: #ffffff"><b>INT</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fb090b; --c2: #111111; --dark: #111111; --light: #fb090b; --ink: #ffffff"><b>MIL</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #004170; --c2: #da291c; --dark: #004170; --light: #da291c; --ink: #ffffff"><b>PSG</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #6cabdd; --c2: #ffffff; --dark: #6cabdd; --light: #ffffff; --ink: #1b1b2f"><b>MCI</b></span></li><li><span class="kit-ball" data-p="sleeves" style="--c1: #ef0107; --c2: #ffffff; --dark: #ef0107; --light: #ffffff; --ink: #ffffff"><b>ARS</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #fde100; --c2: #111111; --dark: #111111; --light: #fde100; --ink: #ffffff"><b>BVB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #cb3524; --c2: #ffffff; --dark: #cb3524; --light: #ffffff; --ink: #ffffff"><b>ATM</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #ffffff; --c2: #d2122e; --dark: #d2122e; --light: #ffffff; --ink: #ffffff"><b>AJX</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #018749; --c2: #ffffff; --dark: #018749; --light: #ffffff; --ink: #ffffff"><b>CEL</b></span></li></ul>
+                    <ul class="flag-row"><li><span class="kit-ball" data-p="solid" style="--c1: #da291c; --c2: #111111; --dark: #111111; --light: #da291c; --ink: #ffffff"><b>MUN</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #034694; --c2: #ffffff; --dark: #034694; --light: #ffffff; --ink: #ffffff"><b>CHE</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #12a0d7; --c2: #ffffff; --dark: #12a0d7; --light: #ffffff; --ink: #1b1b2f"><b>NAP</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #e83030; --c2: #ffffff; --dark: #e83030; --light: #ffffff; --ink: #ffffff"><b>SLB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #00428c; --c2: #ffffff; --dark: #00428c; --light: #ffffff; --ink: #ffffff"><b>FCP</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #008057; --c2: #ffffff; --dark: #008057; --light: #ffffff; --ink: #ffffff"><b>SCP</b></span></li><li><span class="kit-ball" data-p="halves" style="--c1: #a90432; --c2: #fdb912; --dark: #a90432; --light: #fdb912; --ink: #ffffff"><b>GS</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fdcd02; --c2: #002d72; --dark: #002d72; --light: #fdcd02; --ink: #ffffff"><b>FB</b></span></li><li><span class="kit-ball" data-p="bar" style="--c1: #003da5; --c2: #fdd800; --dark: #003da5; --light: #fdd800; --ink: #ffffff"><b>BOC</b></span></li><li><span class="kit-ball" data-p="sash" style="--c1: #ffffff; --c2: #e2001a; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>RIV</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #e2001a; --c2: #111111; --dark: #111111; --light: #e2001a; --ink: #ffffff"><b>FLA</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #132257; --dark: #132257; --light: #ffffff; --ink: #ffffff"><b>TOT</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #8e1f2f; --c2: #f0bc42; --dark: #8e1f2f; --light: #f0bc42; --ink: #ffffff"><b>ROM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #2faee0; --dark: #2faee0; --light: #ffffff; --ink: #1b1b2f"><b>OM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #003da5; --dark: #003da5; --light: #ffffff; --ink: #ffffff"><b>HAJ</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #0033a0; --c2: #ffffff; --dark: #0033a0; --light: #ffffff; --ink: #ffffff"><b>DZG</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #da291c; --c2: #111111; --dark: #111111; --light: #da291c; --ink: #ffffff"><b>MUN</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #034694; --c2: #ffffff; --dark: #034694; --light: #ffffff; --ink: #ffffff"><b>CHE</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #12a0d7; --c2: #ffffff; --dark: #12a0d7; --light: #ffffff; --ink: #1b1b2f"><b>NAP</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #e83030; --c2: #ffffff; --dark: #e83030; --light: #ffffff; --ink: #ffffff"><b>SLB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #00428c; --c2: #ffffff; --dark: #00428c; --light: #ffffff; --ink: #ffffff"><b>FCP</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #008057; --c2: #ffffff; --dark: #008057; --light: #ffffff; --ink: #ffffff"><b>SCP</b></span></li><li><span class="kit-ball" data-p="halves" style="--c1: #a90432; --c2: #fdb912; --dark: #a90432; --light: #fdb912; --ink: #ffffff"><b>GS</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fdcd02; --c2: #002d72; --dark: #002d72; --light: #fdcd02; --ink: #ffffff"><b>FB</b></span></li><li><span class="kit-ball" data-p="bar" style="--c1: #003da5; --c2: #fdd800; --dark: #003da5; --light: #fdd800; --ink: #ffffff"><b>BOC</b></span></li><li><span class="kit-ball" data-p="sash" style="--c1: #ffffff; --c2: #e2001a; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>RIV</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #e2001a; --c2: #111111; --dark: #111111; --light: #e2001a; --ink: #ffffff"><b>FLA</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #132257; --dark: #132257; --light: #ffffff; --ink: #ffffff"><b>TOT</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #8e1f2f; --c2: #f0bc42; --dark: #8e1f2f; --light: #f0bc42; --ink: #ffffff"><b>ROM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #2faee0; --dark: #2faee0; --light: #ffffff; --ink: #1b1b2f"><b>OM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #003da5; --dark: #003da5; --light: #ffffff; --ink: #ffffff"><b>HAJ</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #0033a0; --c2: #ffffff; --dark: #0033a0; --light: #ffffff; --ink: #ffffff"><b>DZG</b></span></li></ul>
+                  </div>
+                  <p class="kit-note">Drawn in their colours: no crests or photos.</p>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>Derbies and classics</h4>
+                <p>Two hundred matches ready to pick, each named as fans call it: the studio counts how often you have made each one, and who won.</p>
+                <div class="fviz viz-classics" aria-hidden="true">
+                  <ul class="classic-chips">
+                    <li><b>El Clásico</b>Real Madrid – Barcelona</li>
+                    <li><b>Eternal Derby</b>Red Star – Partizan</li>
+                    <li><b>GOAT debate</b>Messi – Ronaldo</li>
+                    <li><b>Der Klassiker</b>Bayern – Dortmund</li>
+                    <li><b>Old Firm</b>Celtic – Rangers</li>
+                  </ul>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>GOAL!, and a scoreboard</h4>
+                <p>The net bulges, the word fills the pitch, the scorer's number pops on the board, and the goal goes on the line of the ninety minutes. Players wear their country's shirt and number.</p>
+                <div class="fviz viz-goal" aria-hidden="true">
+                  <ul class="player-balls">
+                    <li><span class="kit-ball" data-p="stripes" style="--c1: #75aadb; --c2: #ffffff; --ink: #1b1b2f"><b class="kit-num">10</b></span><small>MESSI</small></li>
+                    <li><span class="kit-ball" data-p="solid" style="--c1: #c8102e; --c2: #046a38; --ink: #ffffff"><b class="kit-num">7</b></span><small>RONALDO</small></li>
+                    <li><span class="kit-ball" data-p="solid" style="--c1: #21304d; --c2: #ffffff; --ink: #ffffff"><b class="kit-num">10</b></span><small>MBAPPÉ</small></li>
+                    <li><span class="kit-ball" data-p="solid" style="--c1: #c8102e; --c2: #ffffff; --ink: #ffffff"><b class="kit-num">9</b></span><small>HAALAND</small></li>
+                    <li><span class="kit-ball" data-p="solid" style="--c1: #c60b1e; --c2: #ffc400; --ink: #ffffff"><b class="kit-num">19</b></span><small>YAMAL</small></li>
+                    <li><span class="kit-ball" data-p="checks" style="--c1: #ffffff; --c2: #e30613; --ink: #1b1b2f"><b class="kit-num">10</b></span><small>MODRIĆ</small></li>
+                    <li><span class="kit-ball" data-p="solid" style="--c1: #ffdc02; --c2: #009c3b; --ink: #1b1b2f"><b class="kit-num">10</b></span><small>PELÉ</small></li>
+                    <li><span class="kit-ball" data-p="stripes" style="--c1: #75aadb; --c2: #ffffff; --ink: #1b1b2f"><b class="kit-num">10</b></span><small>MARADONA</small></li>
+                  </ul>
+                  <span class="goal-word">GOAL!</span>
+                  <span class="mini-board"><b>3</b><i>–</i><b>2</b><small>90'</small></span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="fgroup" aria-labelledby="group-arena">
+            <header class="fgroup-head">
+              <h3 id="group-arena"><!-- game:icon arena-clash -->Arena Clash</h3>
+              <p>Any countries you like, a story that stays open to the end, and a finish viewers feel. <a href="/games/arena-clash">Everything about it</a></p>
+            </header>
+            <div class="fbento">
+              <article class="fcard fcard-big">
+                <h4>199 flags, any matchup</h4>
+                <p>Pick every flag yourself, or let the dice deal 2 to 12 from everywhere or from one region. When they all come from one, the title names it, as the format's most watched videos do.</p>
+                <!-- Some of the flags, running past in two rows (still under reduced motion), and the dice's regions. -->
+                <div class="fviz viz-flags" aria-hidden="true">
+                  <div class="flag-wall">
+                    <ul class="flag-row"><li><img src="/flags/rs.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/hr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/si.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ba.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/me.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/it.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/de.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/es.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pt.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gb.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ie.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ch.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/at.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/be.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/rs.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/hr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/si.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ba.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/me.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/it.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/de.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/es.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pt.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gb.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ie.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ch.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/at.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/be.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pl.svg" width="44" height="44" loading="lazy" alt="" /></li></ul>
+                    <ul class="flag-row"><li><img src="/flags/se.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/no.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/dk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fi.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/tr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/br.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ar.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mx.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/us.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ca.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/jp.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/kr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/in.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cn.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/au.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ng.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/eg.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/za.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ma.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/se.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/no.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/dk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fi.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/tr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/br.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ar.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mx.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/us.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ca.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/jp.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/kr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/in.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cn.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/au.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ng.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/eg.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/za.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ma.svg" width="44" height="44" loading="lazy" alt="" /></li></ul>
+                  </div>
+                  <ul class="region-chips">
+                    <li>Everywhere</li>
+                    <li>Europe</li>
+                    <li>The Balkans</li>
+                    <li>The Americas</li>
+                    <li>Asia</li>
+                    <li>Africa</li>
+                    <li>Oceania</li>
+                  </ul>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>It ends on a comeback</h4>
+                <p>In four battles out of five, the winner holds fewer strings than a rival for most of the way and takes the lead only near the end, so the numbers never give it away.</p>
+                <!-- Two flags' strings over a battle: the one behind most of the way takes it late. A drawing, not a battle. -->
+                <div class="fviz viz-comeback" aria-hidden="true">
+                  <svg viewBox="0 0 320 150">
+                    <path class="cb-grid" d="M0 37.5h320M0 75h320M0 112.5h320" />
+                    <path class="cb-line cb-rival" d="M0 75C50 60 110 36 170 34S240 42 262 70 300 140 320 146" />
+                    <path class="cb-line cb-winner" d="M0 75C45 92 95 116 150 112S225 88 262 70 300 40 320 30" />
+                    <circle class="cb-dot" cx="262" cy="70" r="6" />
+                  </svg>
+                  <p class="cb-legend"><span class="cb-key cb-rival">ahead most of the way</span><span class="cb-key cb-winner">wins</span></p>
+                </div>
+              </article>
+              <article class="fcard">
+                <h4>Slow motion, and a heartbeat</h4>
+                <p>The last outs play in slow motion. A flag down to its last ten strings turns red, its count beating like a heart, and the sound beats with it.</p>
+                <div class="fviz viz-danger" aria-hidden="true">
+                  <span class="danger-ball"><img src="/flags/br.svg" width="96" height="96" loading="lazy" alt="" /></span>
+                  <b class="danger-count">8</b>
+                  <span class="slow-tag"><i></i>SLOW MOTION</span>
+                </div>
+              </article>
+            </div>
+          </section>
+
           <section class="fgroup" aria-labelledby="group-race">
             <header class="fgroup-head">
               <h3 id="group-race"><!-- game:icon ball-race -->Ball Race</h3>
-              <p>A new matchup every roll: three looks, fifteen sequences, and powers for a twist.</p>
+              <p>A new matchup every roll: three looks, fifteen sequences, and powers for a twist. <a href="/games/ball-race">Everything about it</a></p>
             </header>
             <div class="fbento">
               <article class="fcard fcard-big">
@@ -420,61 +665,9 @@
             </div>
           </section>
 
-          <section class="fgroup" aria-labelledby="group-arena">
-            <header class="fgroup-head">
-              <h3 id="group-arena"><!-- game:icon arena-clash -->Arena Clash</h3>
-              <p>Any countries you like, a story that stays open to the end, and a finish viewers feel.</p>
-            </header>
-            <div class="fbento">
-              <article class="fcard fcard-big">
-                <h4>199 flags, any matchup</h4>
-                <p>Pick every flag yourself, or let the dice deal 2 to 12 from everywhere or from one region. When they all come from one, the title names it, as the format's most watched videos do.</p>
-                <!-- Some of the flags, running past in two rows (still under reduced motion), and the dice's regions. -->
-                <div class="fviz viz-flags" aria-hidden="true">
-                  <div class="flag-wall">
-                    <ul class="flag-row"><li><img src="/flags/rs.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/hr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/si.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ba.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/me.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/it.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/de.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/es.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pt.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gb.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ie.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ch.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/at.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/be.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/rs.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/hr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/si.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ba.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/me.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/it.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/de.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/es.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pt.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/gb.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ie.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nl.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ch.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/at.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/be.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/pl.svg" width="44" height="44" loading="lazy" alt="" /></li></ul>
-                    <ul class="flag-row"><li><img src="/flags/se.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/no.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/dk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fi.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/tr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/br.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ar.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mx.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/us.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ca.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/jp.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/kr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/in.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cn.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/au.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ng.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/eg.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/za.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ma.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/se.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/no.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/dk.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/fi.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/tr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/br.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ar.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/mx.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/us.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ca.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/jp.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/kr.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/in.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/cn.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/au.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/nz.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ng.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/eg.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/za.svg" width="44" height="44" loading="lazy" alt="" /></li><li><img src="/flags/ma.svg" width="44" height="44" loading="lazy" alt="" /></li></ul>
-                  </div>
-                  <ul class="region-chips">
-                    <li>Everywhere</li>
-                    <li>Europe</li>
-                    <li>The Balkans</li>
-                    <li>The Americas</li>
-                    <li>Asia</li>
-                    <li>Africa</li>
-                    <li>Oceania</li>
-                  </ul>
-                </div>
-              </article>
-              <article class="fcard">
-                <h4>It ends on a comeback</h4>
-                <p>In four battles out of five, the winner holds fewer strings than a rival for most of the way and takes the lead only near the end, so the numbers never give it away.</p>
-                <!-- Two flags' strings over a battle: the one behind most of the way takes it late. A drawing, not a battle. -->
-                <div class="fviz viz-comeback" aria-hidden="true">
-                  <svg viewBox="0 0 320 150">
-                    <path class="cb-grid" d="M0 37.5h320M0 75h320M0 112.5h320" />
-                    <path class="cb-line cb-rival" d="M0 75C50 60 110 36 170 34S240 42 262 70 300 140 320 146" />
-                    <path class="cb-line cb-winner" d="M0 75C45 92 95 116 150 112S225 88 262 70 300 40 320 30" />
-                    <circle class="cb-dot" cx="262" cy="70" r="6" />
-                  </svg>
-                  <p class="cb-legend"><span class="cb-key cb-rival">ahead most of the way</span><span class="cb-key cb-winner">wins</span></p>
-                </div>
-              </article>
-              <article class="fcard">
-                <h4>Slow motion, and a heartbeat</h4>
-                <p>The last outs play in slow motion. A flag down to its last ten strings turns red, its count beating like a heart, and the sound beats with it.</p>
-                <div class="fviz viz-danger" aria-hidden="true">
-                  <span class="danger-ball"><img src="/flags/br.svg" width="96" height="96" loading="lazy" alt="" /></span>
-                  <b class="danger-count">8</b>
-                  <span class="slow-tag"><i></i>SLOW MOTION</span>
-                </div>
-              </article>
-            </div>
-          </section>
-
           <section class="fgroup" aria-labelledby="group-both">
             <header class="fgroup-head">
-              <h3 id="group-both">In both games</h3>
+              <h3 id="group-both">In every game</h3>
               <p>A narrator who asks for a pick, a follow button, and a library that remembers how each video was made.</p>
             </header>
             <div class="fbento">
@@ -552,14 +745,18 @@
               <p>As close as you ask. A photo finish puts the loser 0.15 to 1.1 seconds behind the winner; or pick a gap of 1 to 10 seconds. Either way the speeds are set so the video comes out at the length you chose.</p>
             </details>
             <details>
-              <summary>Can I choose who wins an Arena Clash?</summary>
-              <p>Yes: pick the winner in the battle's card, or leave it to the arena. Either way the battle is balanced to end at the length you set, with its flags going out along the way rather than all at once.</p>
+              <summary>Can I choose who wins an Arena Clash or a Goal Rush?</summary>
+              <p>Yes: pick the winner in the game's card, or leave it to the arena or the match. Either way the game is balanced to end at the length you set: a battle's flags go out along the way rather than all at once, and a match has its goals through the ninety minutes.</p>
+            </details>
+            <details>
+              <summary>Do Goal Rush videos show club crests or player photos?</summary>
+              <p>No. Clubs and players are drawn as balls in their colours: a club's shirt with its letters, a player's national shirt and number. The names only say who plays; BounceReel is not affiliated with any club, league or player.</p>
             </details>
           </div>
           <div class="faq-col">
             <details>
               <summary>Is there a watermark?</summary>
-              <p>On the free plan, a small BounceReel watermark, the mark and the site's address: between the two cards of a race, under the arena of a battle. The paid plans have none.</p>
+              <p>On the free plan, a small BounceReel watermark, the mark and the site's address: between the two cards of a race, under the arena of a battle or the pitch of a match. The paid plans have none.</p>
             </details>
             <details>
               <summary>What does the narrator cost?</summary>

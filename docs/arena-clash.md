@@ -322,7 +322,7 @@ comment: Instagram says it may not recommend a video that asks for a comment in 
   [config.ts](../src/config.ts)). On a plan without `allGames` it is off, with a paid tag and the
   plans that have it.
 - **The battle card** replaces the matchup card: a row per flag (its flag in its strings'
-  colour, every country to pick, a die for a random one), how many (2–12), where the dice picks
+  colour, every country to pick, a die for a random one; the country is typed to find it, by its English name, its own, its Serbian one or a short form, letters in order: "srb", "erb" and "srbija" all find Serbia, `ALSO_CALLED` in [countries.ts](../src/battle/countries.ts) and [src/ui/picker.ts](../src/ui/picker.ts)), how many (2–12), where the dice picks
   from (`DICE_REGIONS`, kept with the dice's powers switch in `bouncereel:dice`), the winner
   (Random or one of the flags), and the verdict ("Croatia wins after 33.2 s · The video runs
   40 s · first flag out at 13.6 s").
@@ -361,3 +361,4 @@ the thumbnail; Open in studio replays it exactly. The superadmin's text for post
 - 2026-11-12 - four battles in five are comebacks (`isBattleComeback`); "+10" at every bounce and "-34" over a ball sweeping a fan; a count down to its last bundle red and beating, with a heartbeat; the region over the names when every flag is from one (`sharedRegion`); the arena drawn at 92 % (`SCALE`), off the frame's sides, the line under it and the watermark moved up with it.
 - 2026-11-14 - the picture 40 px lower (`DROP` 120): a reel on an iPhone had the region just under the top buttons and some 250 px of black under the ring; the title's lines fitted to 920 px, not 960, where the question ran to the screen's edge.
 - 2026-11-23 - a row of every flag under the ring, one out grey with a red cross; the arena drawn at 87 % (from 92 %) and centred at y 1000, the line under it and the watermark 8 px lower, to fit the row; the site's Arena Clash card frame made again.
+- 2026-11-23 - the battle card's flags are typed into to find them ("srb", "hrvatska", "usa"), with local and Serbian names; the third game, Goal Rush, shares the studio (docs/goal-rush.md).

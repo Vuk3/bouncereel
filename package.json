@@ -15,6 +15,7 @@
     "db:migrate:remote": "wrangler d1 migrations apply bouncereel --remote",
     "tune": "node scripts/tune.ts",
     "admin": "node scripts/admin.mjs",
+    "pictures": "node scripts/pictures.ts",
     "release": "node release.js"
   },
   "devDependencies": {

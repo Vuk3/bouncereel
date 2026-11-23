@@ -1,4 +1,4 @@
-import { FLAG_CODE, PLATFORMS, type BattleSummary, type NewVideo, type Platform, type RaceSide, type RaceSummary } from '../shared/api.ts';
+import { FLAG_CODE, PLATFORMS, SIDE_ID, type BattleSummary, type MatchSummary, type NewVideo, type Platform, type RaceSide, type RaceSummary } from '../shared/api.ts';
 import { HttpError } from './lib/http.ts';
 
 // Request bodies and path parameters, checked before anything touches D1. Each failure is a
@@ -72,9 +72,32 @@ function battle(value: unknown): BattleSummary {
   return { flags: list, winner: o.winner, out: flags(o.out, 'battle.out', 0, list.length - 1, list) };
 }
 
+/** A Goal Rush's sides by id, two different ones of one kind; its score, the winner and every goal. */
+function match(value: unknown): MatchSummary {
+  const o = object(value, 'match');
+  if (o.mode !== 'clubs' && o.mode !== 'players') throw invalid('match.mode', "must be 'clubs' or 'players'");
+  const id = (v: unknown, field: string) => {
+    if (typeof v !== 'string' || v.length > 60 || !SIDE_ID.test(v)) throw invalid(field, 'must be a club or a player id');
+    return v;
+  };
+  const home = id(o.home, 'match.home');
+  const away = id(o.away, 'match.away');
+  if (home === away) throw invalid('match.away', 'must not be the home side');
+  if (!Array.isArray(o.score) || o.score.length !== 2) throw invalid('match.score', 'must be two numbers');
+  const score: [number, number] = [integer(o.score[0], 'match.score', 0, 500), integer(o.score[1], 'match.score', 0, 500)];
+  if (o.winner !== 'home' && o.winner !== 'away' && o.winner !== null) throw invalid('match.winner', "must be 'home', 'away' or null");
+  if (!Array.isArray(o.goals) || o.goals.length !== score[0] + score[1]) throw invalid('match.goals', 'must list every goal of the score');
+  const goals = o.goals.map((g, i): MatchSummary['goals'][number] => {
+    const goal = object(g, `match.goals[${i}]`);
+    if (goal.side !== 'home' && goal.side !== 'away') throw invalid(`match.goals[${i}].side`, "must be 'home' or 'away'");
+    return { side: goal.side, minute: integer(goal.minute, `match.goals[${i}].minute`, 1, 1000) };
+  });
+  return { mode: o.mode, home, away, score, winner: o.winner, goals };
+}
+
 /** POST /api/videos */
 export function parseNewVideo(body: Record<string, unknown>): NewVideo {
-  if (body.game !== 'ball-race' && body.game !== 'arena-clash') throw invalid('game', "must be 'ball-race' or 'arena-clash'");
+  if (body.game !== 'ball-race' && body.game !== 'arena-clash' && body.game !== 'goal-rush') throw invalid('game', "must be 'ball-race', 'arena-clash' or 'goal-rush'");
   const recordedAt = text(body.recordedAt, 'recordedAt', 40);
   if (Number.isNaN(Date.parse(recordedAt))) throw invalid('recordedAt', 'must be an ISO 8601 time');
   if (typeof body.stoppedEarly !== 'boolean') throw invalid('stoppedEarly', 'must be true or false');
@@ -92,6 +115,7 @@ export function parseNewVideo(body: Record<string, unknown>): NewVideo {
     appVersion: text(body.appVersion, 'appVersion', 40),
     config,
   };
+  if (body.game === 'goal-rush') return { ...common, game: 'goal-rush', match: match(body.match) };
   return body.game === 'arena-clash' ? { ...common, game: 'arena-clash', battle: battle(body.battle) } : { ...common, game: 'ball-race', race: race(body.race) };
 }
 

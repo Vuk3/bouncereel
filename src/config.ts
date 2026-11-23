@@ -1,5 +1,5 @@
 import { GAMES, LOOKS, type Game, type Look, type Sound } from '../shared/features.ts';
-import { BATTLE_QUESTIONS, QUESTIONS, firstQuestion } from './audio/opening.ts';
+import { BATTLE_QUESTIONS, MATCH_QUESTIONS, QUESTIONS, firstQuestion } from './audio/opening.ts';
 import { SEQUENCES, type SequenceId } from './sim/sequences.ts';
 
 // Everything a video is made of. A Config fully determines the run, so a
@@ -56,8 +56,31 @@ export interface Battle {
   speed: number;
 }
 
+/**
+ * Who plays a Goal Rush: two clubs or two players (src/football/teams.ts). Here and not there, so
+ * the home page, whose hero loads this file, does not load the list of 621 clubs and players.
+ */
+export type Mode = 'clubs' | 'players';
+export const MODES: Mode[] = ['clubs', 'players'];
+
+/** Goal Rush's own settings (src/sim/match.ts); the other games ignore them. */
+export interface Match {
+  /** Clubs or players: both sides are one kind (src/football/teams.ts). */
+  mode: Mode;
+  /** The two sides by id: home kicks off on the left, away on the right. */
+  home: string;
+  away: string;
+  /** The side balancing makes win, by id; '' for whichever the seed gives. */
+  winner: string;
+  /**
+   * The match's length in seconds, its ninety minutes: balancing sets it, the video length less
+   * the frame around it for the side that wins (pacing.ts raceSeconds).
+   */
+  seconds: number;
+}
+
 export interface Config {
-  /** Which game this is: everything below is shared but `a`, `b`, `layers` and `physics` (the race's) and `battle`. */
+  /** Which game this is: everything below is shared but `a`, `b`, `layers` and `physics` (the race's), `battle` and `match`. */
   game: Game;
   seed: string;
   /** Top box. */
@@ -67,6 +90,7 @@ export interface Config {
   /** Health of each layer, top first: "1000, 1e10, 1e15" (also 1k, 10b, 1q). */
   layers: string;
   battle: Battle;
+  match: Match;
   physics: {
     /** px/s². 0 is the format: balls fly straight and keep their speed. */
     gravity: number;
@@ -186,10 +210,10 @@ export function spokenName(name: string): string {
  * wins as one: "The crowd of 100 Millionaire Balls wins!", where its name alone would read
  * "100 Millionaire Balls wins".
  */
-export function spokenOutro(cfg: Config, vars: { winner: string; time: string }): string {
+export function spokenOutro(cfg: Config, vars: { winner: string; time: string; score?: string }): string {
   const crowd = cfg.game === 'ball-race' && [cfg.a, cfg.b].some((c) => c.name === vars.winner && c.count > 1);
   const winner = `${crowd ? 'the crowd of ' : ''}${spokenName(vars.winner)}`;
-  const filled = fillTemplate(cfg.voice.outro, { ...vars, winner }).trim();
+  const filled = fillTemplate(cfg.voice.outro, { winner, time: vars.time, ...(vars.score ? { score: vars.score } : {}) }).trim();
   const line = filled.charAt(0).toUpperCase() + filled.slice(1);
   // The written line, not the filled one: a ball may be called "Follower Ball".
   return asksToFollow(cfg) && !/\bfollow/i.test(cfg.voice.outro) ? `${line} ${FOLLOW_LINE}`.trim() : line;
@@ -218,6 +242,29 @@ export const BATTLE_LAST_LINES = [
   'Want a rematch?',
 ];
 
+/**
+ * Goal Rush's winner lines: who won and the score, said with the winner's goals first ("Real Madrid
+ * wins 3 to 2!", spokenOutro fills {score}); none says the time, as a match is won by goals.
+ */
+export const MATCH_WINNER_LINES = [
+  '{winner} wins {score}!',
+  '{winner} takes it {score}!',
+  'Full time: {winner} wins {score}!',
+  'Victory for {winner}, {score}!',
+  '{winner} does it, {score}!',
+  'It finishes {score}, and {winner} wins!',
+];
+
+/** Goal Rush's last lines on the winner card, answering its questions. */
+export const MATCH_LAST_LINES = [
+  'Did your team win?',
+  'Who should play next?',
+  'Did you call the score?',
+  'Want a rematch?',
+  'Which match next? Comment below!',
+  'Was that your pick?',
+];
+
 const BASE: Config = {
   game: 'ball-race',
   seed: '1',
@@ -229,6 +276,8 @@ const BASE: Config = {
   // The top is 10^14 rather than the format's 10^15, which with it would take Fibonacci past 3,200 px/s at 30 s.
   layers: '5, 1000, 1e10, 1e14',
   battle: { flags: ['rs', 'hr', 'si'], winner: '', speed: 340 },
+  // El Clásico: the most watched match in the format, and the studio's first Goal Rush.
+  match: { mode: 'clubs', home: 'real-madrid', away: 'barcelona', winner: '', seconds: 30 },
   physics: { gravity: 0, maxSpeed: 5000 },
   sound: { melody: 'ode', timbre: 'marimba', volume: 0.8, track: 'narrator' },
   voice: { voice: 'af_heart', script: '', outro: WINNER_LINES[0] },
@@ -373,6 +422,7 @@ export function savedConfig(saved: unknown): Config {
   // Arena Clash was called Flag Battle while it was being made: a config kept from then is one.
   if ((cfg.game as string) === 'flag-battle') cfg.game = 'arena-clash';
   if (cfg.game === 'arena-clash' && cfg.voice.outro === TIMED_BATTLE_OUTRO) cfg.voice.outro = BATTLE_WINNER_LINES[0];
+  if (!MODES.includes(cfg.match.mode)) cfg.match.mode = 'clubs';
   // A game this version does not make (a config from a newer one): the race it can make.
   if (!GAMES.includes(cfg.game)) cfg.game = 'ball-race';
   return cfg;
@@ -397,8 +447,15 @@ function fitBall(ball: Contestant): void {
   ball.count = ball.sequence === 'ones' && Number.isFinite(ball.count) && ball.count >= 1 ? Math.round(ball.count) : 1;
 }
 
+/** Each game's winner lines and last lines, which the dice deals from and switchGame swaps between. */
+const WORDS: Record<Game, { outro: readonly string[]; cta: readonly string[] }> = {
+  'ball-race': { outro: WINNER_LINES, cta: LAST_LINES },
+  'arena-clash': { outro: BATTLE_WINNER_LINES, cta: BATTLE_LAST_LINES },
+  'goal-rush': { outro: MATCH_WINNER_LINES, cta: MATCH_LAST_LINES },
+};
+
 /**
- * `cfg` as the other game, not yet balanced. What both games share (length, sound, voice, the
+ * `cfg` as another game, not yet balanced. What every game shares (length, sound, voice, the
  * follow switch, the loop) stays, and the race's look is kept for the race; a winner line, last
  * line or question the dice dealt from one game's words is dealt again from the other's, at the
  * same place in the list, and one the creator wrote stays. A typed opening goes: it names the
@@ -407,16 +464,16 @@ function fitBall(ball: Contestant): void {
 export function switchGame(cfg: Config, game: Game): Config {
   const out = structuredClone(cfg);
   if (out.game === game) return out;
+  const from = WORDS[out.game];
+  const to = WORDS[game];
   out.game = game;
-  const battle = game === 'arena-clash';
-  const swap = (line: string, race: readonly string[], flags: readonly string[]) => {
-    const [from, to] = battle ? [race, flags] : [flags, race];
-    const at = from.indexOf(line);
-    return at < 0 ? line : to[at % to.length];
+  const swap = (line: string, was: readonly string[], now: readonly string[]) => {
+    const at = was.indexOf(line);
+    return at < 0 ? line : now[at % now.length];
   };
-  out.voice.outro = swap(out.voice.outro, WINNER_LINES, BATTLE_WINNER_LINES);
-  out.look.cta = swap(out.look.cta, LAST_LINES, BATTLE_LAST_LINES);
-  if (QUESTIONS.includes(out.look.question) || BATTLE_QUESTIONS.includes(out.look.question)) out.look.question = '';
+  out.voice.outro = swap(out.voice.outro, from.outro, to.outro);
+  out.look.cta = swap(out.look.cta, from.cta, to.cta);
+  if ([QUESTIONS, BATTLE_QUESTIONS, MATCH_QUESTIONS].some((list) => list.includes(out.look.question))) out.look.question = '';
   out.voice.script = '';
   return out;
 }

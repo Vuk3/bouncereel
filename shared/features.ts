@@ -20,11 +20,11 @@ export type Look = (typeof LOOKS)[number];
  * The games the studio makes, `game` in the config and in the library. Ball races are in every
  * plan; any other game needs the plan's `allGames`.
  */
-export const GAMES = ['ball-race', 'arena-clash'] as const;
+export const GAMES = ['ball-race', 'arena-clash', 'goal-rush'] as const;
 export type Game = (typeof GAMES)[number];
 
 /** Each game's name, as the studio, the site and the library write it; its icon is public/games/<id>.svg. */
-export const GAME_LABELS: Record<Game, string> = { 'ball-race': 'Ball Race', 'arena-clash': 'Arena Clash' };
+export const GAME_LABELS: Record<Game, string> = { 'ball-race': 'Ball Race', 'arena-clash': 'Arena Clash', 'goal-rush': 'Goal Rush' };
 
 /**
  * Which plans make `game`, in words, from the plans the site lists: "Every plan", or the names of
@@ -76,7 +76,7 @@ export interface Features {
    */
   follow: boolean;
   /**
-   * Every game BounceReel makes, each new one included as it comes out: Arena Clash today. Ball
+   * Every game BounceReel makes, each new one included as it comes out: Arena Clash and Goal Rush today. Ball
    * races are in every plan whatever this says (gameAllowed).
    */
   allGames: boolean;
@@ -189,7 +189,7 @@ export function describeFeatures(f: Features): { text: string; included: boolean
   const sounds = f.sounds.filter((s) => soundAllowed(f, s));
   const narrator = f.narrator && sounds.includes('narrator');
   return [
-    { text: f.allGames ? 'Every game: ball races, Arena Clash and each new one' : 'Ball races; no Arena Clash', included: f.allGames },
+    { text: f.allGames ? 'Every game: ball races, Arena Clash, Goal Rush and each new one' : 'Ball races; no Arena Clash or Goal Rush', included: f.allGames },
     { text: f.perDay === null ? 'Unlimited videos' : `${f.perDay} video${f.perDay === 1 ? '' : 's'} a day`, included: f.perDay !== 0 },
     { text: `Videos up to ${f.maxSeconds} seconds`, included: true },
     { text: looks.length === LOOKS.length ? 'All three looks' : `The ${joinWords(looks.map((l) => l.toLowerCase()))} look${looks.length === 1 ? '' : 's'}`, included: true },

@@ -34,6 +34,7 @@ npm run dev        # http://localhost:5173 (the owner runs this)
 | `npm run preview` | build, then serve it with the same headers, the Worker and the local database |
 | `npm run tune` | balance every built-in matchup and 100 random ones at 30, 40 and 60 s, then 20 Arena Clashes of 2, 3, 4, 6 and 12 flags, in Node |
 | `npm run admin -- <email>` | a local superadmin: prints a link to set its password |
+| `npm run pictures -- fetch`, `photos`, `upload [--remote]` | Goal Rush's real crests and players' photos: from Wikipedia into `pictures/` (ignored by git), the best photo of each player cut round his face (macOS only: Vision and `sips`), then into the local or production bucket ([goal-rush](./goal-rush.md#3-the-sides-and-their-pictures)) |
 
 The deploy, migration, type and release scripts are in
 [build and deploy](./build-and-deploy.md#1-scripts).
@@ -351,3 +352,4 @@ browser's Cache Storage. The videos themselves live in D1, locally in `.wrangler
 - 2026-11-03 - the timeline's winner card is the run's own: its hold, or a beat past the winner line (its clip once generated), so the track can end a few tenths either side of the length.
 - 2026-11-11 - the game switch at the top of the panel; tabs, sections and fields with `show` by game; `npm run tune` checks Arena Clashes of 2 to 12 flags.
 - 2026-11-12 - `npm run tune` holds an Arena Clash to 0.1 s of its length and prints when its first flag goes out.
+- 2026-11-23 - `npm run pictures` (Goal Rush's crests and photos); `npm run tune` checks Goal Rush matches of every pool of clubs and players. After a rebuild the preview must be started again: it keeps the build it started with, and the new pages' scripts answer 404.

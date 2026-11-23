@@ -58,7 +58,8 @@ or with the browser's voice, opens as Music only (`savedConfig`,
 | `stopped_early` | 1 when **Stop & save** ended it before the winner card had its time |
 | `seed`, `config` | the seed, and the whole config as JSON |
 | `app_version` | section 1 |
-| `battle` | an Arena Clash's `BattleSummary` as JSON: the flags' codes in the order the battle was given them, the winner, the order they went out ([0011_flag_battle.sql](../migrations/0011_flag_battle.sql)); NULL for a race. Small enough that the list parses it per row ([arena-clash](./arena-clash.md#7-in-the-library)) |
+| `battle` | an Arena Clash's `BattleSummary` as JSON: the flags' codes in the order the battle was given them, the winner, the order they went out ([0011_flag_battle.sql](../migrations/0011_flag_battle.sql)); NULL for the other games. Small enough that the list parses it per row ([arena-clash](./arena-clash.md#7-in-the-library)) |
+| `match_result` | a Goal Rush's `MatchSummary` as JSON: clubs or players, the two ids, the score, the winner, every goal's side and minute ([0012_goal_rush.sql](../migrations/0012_goal_rush.sql)); NULL for the other games. Not `match`, an operator in SQLite ([goal-rush](./goal-rush.md#7-in-the-library)) |
 | `a_*`, `b_*` | name, sequence and special of the top (`a`) and bottom (`b`) ball, copied out of the config so sorting and grouping never parse JSON |
 | `winner`, `margin`, `lead_changes` | `'a'`/`'b'` (NULL only if nobody finished), seconds between the two at the line, how often the lead changed: from the prediction, which is the race |
 | `texts` | a superadmin's texts for posting it (`VideoTexts` as JSON: YouTube's title, description, tags and pinned comment, the TikTok and Instagram captions and pinned comments, when they were saved); NULL until pasted (section 6). Read and replaced whole, never queried by field |
@@ -282,8 +283,11 @@ an API on a schedule, note that the account's five cron triggers are all Hoops'
 `a_*`/`b_*`/`winner`/`margin`/`lead_changes` stay NULL, and what it came to is one JSON column of
 its own (`battle`, 0011); `NewVideo` has a variant per game (`race` or `battle`), `toSummary` in
 [worker/videos.ts](../worker/videos.ts) returns `race` for `ball-race` and `battle` for
-`arena-clash`, null otherwise, and `checkPlan` asks `gameAllowed`. A third game adds its
-variant, its column and its line in `parseNewVideo` the same way.
+`arena-clash`, null otherwise, and `checkPlan` asks `gameAllowed`. Goal Rush, the third, did the
+same: its variant (`match`), its column (`match_result`, 0012), its line in `parseNewVideo`, and on
+the Videos page its line ("Goal Rush, clubs", "Real Madrid wins 3–2"), the winner's kit as the
+thumbnail and its totals under its name (`renderRush`: home and away wins, matches won by one goal,
+every club and player played and won). A fourth game adds its own the same way.
 
 ## Changelog
 
@@ -311,3 +315,4 @@ variant, its column and its line in `parseNewVideo` the same way.
 - 2026-11-12 - each game's statistics under its name and icon; Arena Clash's: how many battles had how many flags, and every flag played, in how many battles and how many it won.
 - 2026-11-12 - an Arena Clash thumbnail shows its game's icon whole, over its corner like a race's: the thumbnail is `.thumb.clash`, since the studio card's `.battle` (overflow: hidden) clipped it.
 - 2026-11-14 - each platform's texts in the drawer in its own colours: YouTube a red tint, TikTok black with cyan and pink, Instagram its gradient.
+- 2026-11-23 - Goal Rush in the library: `game` `goal-rush`, its `match_result` column (0012), `MatchSummary` in the list, checked on save; the Videos page's line, winner, kit thumbnail and totals; its text for posts (`BounceReel goal rush:`).

@@ -75,3 +75,13 @@ export const VS_Y = cardBottom(TOP) + BETWEEN / 2;
 
 /** The arena in the simulation: centre and radius of the ring's inner edge, where balls bounce and strings are tied. Moving it changes every battle. */
 export const ARENA = { x: W / 2, y: 915, r: 485 };
+
+// ── Goal Rush ───────────────────────────────────────────────────────────────
+//
+// The same circle as the Arena Clash's, a constant of its own: moving one game's must never move
+// the other's, and every match is worked out on this one. The picture is drawn at 84 % round its
+// centre, at y 1000 (SCALE and CENTRE_Y in src/render/match.ts), with the title and the scoreboard
+// over it and the match's timeline under it.
+
+/** The pitch in the simulation: centre and radius of the ring's inner edge, where balls bounce and the goal turns. Moving it changes every match. */
+export const PITCH = { x: W / 2, y: 915, r: 485 };

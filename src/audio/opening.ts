@@ -2,8 +2,8 @@ import type { Config } from '../config.ts';
 import { createRng } from '../sim/rng.ts';
 
 // The opening's question, in a file of its own: the narrator ends the opening on it
-// (narration.ts) and the video shows it over its first frame (src/render, `drawOpening`), a
-// Arena Clash as its title all through.
+// (narration.ts) and the video shows it over its first frame (src/render, `drawOpening`), an
+// Arena Clash and a Goal Rush as its title all through.
 // The renderer is on the home page too, which must not load narration.ts: it would bring the
 // Kokoro loader, and the build would tie the home page's scripts to the 2 MB voice chunk.
 
@@ -58,6 +58,25 @@ export const BATTLE_QUESTIONS = [
 ];
 
 /**
+ * Goal Rush's questions: a match, so who wins it, who scores more, which side. Each is also its
+ * title over the pitch (src/render/match.ts), so short enough for one line of big type there;
+ * "WHO WINS THIS MATCH?" is the longest. None tells viewers to comment, as with the battle's.
+ */
+export const MATCH_QUESTIONS = [
+  'Who wins this match?',
+  'Who wins?',
+  'Pick your winner.',
+  "Who's your pick?",
+  'Who scores more?',
+  'Which side are you on?',
+  'Who takes it?',
+  'Who are you backing?',
+  'Who would you bet on?',
+  'So, who wins?',
+  'Call the score.',
+];
+
+/**
  * How many questions there were before a config kept its own (`look.question`): a config saved
  * then asked its seed's pick among these, and keeps it (`firstQuestion`, savedConfig).
  */
@@ -80,7 +99,7 @@ export function firstQuestion(seed: string): string {
 
 /** The config's question: the creator's (`look.question`), else the seed's pick from its game's questions. */
 export function configQuestion(cfg: Config): string {
-  const pool = cfg.game === 'arena-clash' ? BATTLE_QUESTIONS : QUESTIONS;
+  const pool = cfg.game === 'arena-clash' ? BATTLE_QUESTIONS : cfg.game === 'goal-rush' ? MATCH_QUESTIONS : QUESTIONS;
   return cfg.look.question.trim() || pool[Math.floor(openingDraws(cfg.seed).question * pool.length)];
 }
 

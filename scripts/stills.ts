@@ -3,14 +3,20 @@ import { loadFlags } from '../src/battle/flags.ts';
 import { mergeConfig, PRESETS, switchGame, type Config, type Skin } from '../src/config.ts';
 import { H, W } from '../src/layout.ts';
 import { BattleRenderer } from '../src/render/battle.ts';
+import { MatchRenderer } from '../src/render/match.ts';
 import { drawMark } from '../src/render/draw.ts';
 import { Renderer } from '../src/render/renderer.ts';
 import { SITE_HOST } from '../shared/site.ts';
 import { heroConfig } from '../src/site/hero.ts';
 import { BattleWorld, STRIDE, predictBattle } from '../src/sim/battle.ts';
 import { balanceBattle } from '../src/sim/battle-balance.ts';
+import { MATCH_STEP, MatchWorld, predictMatch } from '../src/sim/match.ts';
+import { balanceMatch } from '../src/sim/match-balance.ts';
+import { SHOWCASES, matchConfig } from '../src/site/pitch.ts';
 import { STEP } from '../src/sim/types.ts';
-import { createWorld, predict } from '../src/sim/world.ts';
+import { createWorld, finishTimes, predict } from '../src/sim/world.ts';
+import { SLOWMO, SLOWMO_TAIL } from '../src/pacing.ts';
+import { SHOWCASES as BATTLES } from '../src/site/arena.ts';
 
 // The public site's images, drawn by the studio's own renderers (docs/website.md says when to
 // remake them): the hero's first frame, which must match the first frame src/site/hero.ts draws,
@@ -105,6 +111,154 @@ async function midBattle(cfg: Config, at: number): Promise<HTMLCanvasElement> {
   return renderer.canvas;
 }
 
+/**
+ * A Goal Rush `at` (0..1) of the way through its match, drawn as playback would: trails, ripples,
+ * the board's numbers; then on to a moment at least QUIET_GOAL seconds after the last goal or post,
+ * so the card shows the match with goals on its board and none being celebrated (GOAL! across a
+ * still card reads as the game, not a moment of it, and POST! as stuck beside the ball). Kits only:
+ * the stills page asks for no picture.
+ */
+const QUIET_GOAL = 1.6;
+function midMatch(cfg: Config, at: number): HTMLCanvasElement {
+  const renderer = new MatchRenderer(document.createElement('canvas'));
+  renderer.reset(cfg);
+  const world = new MatchWorld(cfg);
+  const until = predictMatch(cfg).time * at;
+  let since = Infinity;
+  let acc = 0;
+  while (world.time < until || since < QUIET_GOAL || world.stopped >= 0) {
+    acc += 1 / 60;
+    while (acc >= MATCH_STEP) {
+      acc -= MATCH_STEP;
+      world.step();
+    }
+    const events = world.drain();
+    since = events.some((e) => e.type === 'goal' || e.type === 'post') ? 0 : since + 1 / 60;
+    renderer.handle(events, world, cfg);
+    renderer.draw(world, cfg, 1 / 60, { winner: 0, age: 0, ahead: acc });
+  }
+  return renderer.canvas;
+}
+
+/** A copy of a canvas as it is now: the frame a moment keeps. */
+const snap = (source: HTMLCanvasElement) => scaled(source, 0, 0, source.width, source.height, source.width, source.height);
+
+/**
+ * A Ball Race's moments for its page (games/ball-race.html), as the phones play it: half way, the
+ * last layers, and the winner card (its margin measured as the studio measures it).
+ */
+function raceMoments(cfg: Config): Record<string, HTMLCanvasElement> {
+  const renderer = new Renderer(document.createElement('canvas'));
+  renderer.reset(cfg);
+  const world = createWorld(cfg);
+  const outcome = predict(cfg);
+  const out: Record<string, HTMLCanvasElement> = {};
+  while (world.winner === null) {
+    for (let i = 0; i < 4; i++) world.step(STEP);
+    renderer.handle(world.drain(), world, cfg);
+    renderer.draw(world, cfg, 1 / 60, { winner: 0, age: 0 });
+    if (!out.mid && world.time >= outcome.time * 0.5) out.mid = snap(renderer.canvas);
+    if (!out.last && world.time >= outcome.time * 0.95) out.last = snap(renderer.canvas);
+  }
+  const finish = finishTimes(cfg, outcome.time + 30);
+  renderer.celebrate(world);
+  for (let age = 0; age < 1.2; age += 1 / 60) {
+    world.step(STEP * SLOWMO);
+    renderer.handle(world.drain(), world, cfg);
+    renderer.draw(world, cfg, 1 / 60, { winner: Math.min(1, age / 0.35), age, margin: Math.abs(finish[0] - finish[1]) });
+  }
+  out.winner = snap(renderer.canvas);
+  return out;
+}
+
+/**
+ * An Arena Clash's moments for its page (games/arena-clash.html): the fans tied at the start, the
+ * strings crossing a third of the way in, the first flag out, the last two, and the winner card.
+ */
+function battleMoments(cfg: Config): Record<string, HTMLCanvasElement> {
+  const renderer = new BattleRenderer(document.createElement('canvas'));
+  renderer.reset(cfg);
+  const world = new BattleWorld(cfg);
+  const outcome = predictBattle(cfg);
+  const out: Record<string, HTMLCanvasElement> = {};
+  let acc = 0;
+  let outAt = -1;
+  let t = 0;
+  while (world.winner === null) {
+    t += 1 / 60;
+    acc += 1 / 60;
+    while (acc >= world.nextStep) {
+      acc -= world.nextStep;
+      world.step();
+    }
+    const events = world.drain();
+    if (outAt < 0 && events.some((e) => e.type === 'out')) outAt = t;
+    renderer.handle(events, world, cfg);
+    renderer.draw(world, cfg, 1 / 60, { winner: 0, age: 0, lead: (acc / world.nextStep) * STRIDE });
+    if (!out.start && t >= 1.2) out.start = snap(renderer.canvas);
+    if (!out.mid && world.time >= outcome.time * 0.33) out.mid = snap(renderer.canvas);
+    if (!out.out && outAt >= 0 && t >= outAt + 0.35) out.out = snap(renderer.canvas);
+    if (!out.last && world.time >= outcome.time * 0.9) out.last = snap(renderer.canvas);
+  }
+  renderer.celebrate(world, cfg);
+  for (let age = 0; age < 1.2; age += 1 / 60) {
+    acc += SLOWMO / 60;
+    while (acc >= world.nextStep) {
+      acc -= world.nextStep;
+      world.step();
+    }
+    renderer.handle(world.drain(), world, cfg);
+    renderer.draw(world, cfg, 1 / 60, { winner: Math.min(1, age / 0.35), age, lead: (acc / world.nextStep) * STRIDE });
+  }
+  out.winner = snap(renderer.canvas);
+  return out;
+}
+
+/**
+ * A Goal Rush's moments for its page (games/goal-rush.html): the kick-off, the first goal as GOAL!
+ * lands and its half of the crowd jumps, half time, FULL TIME, and the winner card.
+ */
+function matchMoments(cfg: Config): Record<string, HTMLCanvasElement> {
+  const renderer = new MatchRenderer(document.createElement('canvas'));
+  renderer.reset(cfg);
+  const world = new MatchWorld(cfg);
+  const out: Record<string, HTMLCanvasElement> = {};
+  let acc = 0;
+  let t = 0;
+  const at = { goal: -1, half: -1, whistle: -1 };
+  const step = (dt: number) => {
+    acc += dt;
+    while (acc >= MATCH_STEP) {
+      acc -= MATCH_STEP;
+      world.step();
+    }
+    const events = world.drain();
+    for (const e of events) {
+      if (e.type === 'goal' && at.goal < 0 && e.goal.time > 3) at.goal = t;
+      if (e.type === 'half') at.half = t;
+      if (e.type === 'whistle') at.whistle = t;
+    }
+    renderer.handle(events, world, cfg);
+  };
+  while (at.whistle < 0 || t < at.whistle + SLOWMO_TAIL) {
+    t += 1 / 60;
+    step(world.winner === null ? 1 / 60 : SLOWMO / 60);
+    renderer.draw(world, cfg, 1 / 60, { winner: 0, age: 0, ahead: acc });
+    if (!out.kickoff && t >= 0.8) out.kickoff = snap(renderer.canvas);
+    if (!out.goal && at.goal >= 0 && t >= at.goal + 0.3) out.goal = snap(renderer.canvas);
+    if (!out.half && at.half >= 0 && t >= at.half + 0.45) out.half = snap(renderer.canvas);
+    if (!out.whistle && at.whistle >= 0 && t >= at.whistle + 0.6) out.whistle = snap(renderer.canvas);
+  }
+  renderer.celebrate(world, cfg);
+  for (let age = 0; age < 1.2; age += 1 / 60) {
+    t += 1 / 60;
+    step(SLOWMO / 60);
+    renderer.draw(world, cfg, 1 / 60, { winner: Math.min(1, age / 0.35), age });
+  }
+  out.winner = snap(renderer.canvas);
+  return out;
+}
+
 async function main(): Promise<void> {
   await Promise.all([400, 600, 700, 800, 900].map((w) => document.fonts.load(`${w} 40px Rubik`)));
   const hero = heroConfig(PRESETS[0].config)!;
@@ -143,6 +297,25 @@ async function main(): Promise<void> {
     offer(halved(frame, 1), 'games/arena-clash.webp', 'image/webp', 0.86);
     offer(halved(frame, 2), 'games/arena-clash-270.webp', 'image/webp', 0.86);
   }
+
+  // 2c. The Goal Rush's card: El Clásico, the site's first showcase (src/site/pitch.ts), balanced to
+  // 30 s, 45 % of the way through, the board showing goals.
+  const show = SHOWCASES[0];
+  const rush = balanceMatch(matchConfig(show.mode, show.home, show.away, show.seed));
+  if (rush) {
+    const frame = midMatch(rush, 0.45);
+    offer(halved(frame, 1), 'games/goal-rush.webp', 'image/webp', 0.86);
+    offer(halved(frame, 2), 'games/goal-rush-270.webp', 'image/webp', 0.86);
+  }
+
+  // 2d. The game pages' moments (games/<game>.html, "A video, moment by moment"): each game's
+  // first showcase played as its phone plays it, each moment halved once to 540×960.
+  for (const [name, frame] of Object.entries(raceMoments(mergeConfig(hero, { look: { skin: 'night' } })))) offer(halved(frame, 1), `games/ball-race/${name}.webp`, 'image/webp', 0.84);
+  const battle = BATTLES[0];
+  await loadFlags(battle.flags);
+  const pageClash = balanceBattle(mergeConfig(switchGame(mergeConfig(PRESETS[0].config, { timing: { video: 30 } }), 'arena-clash'), { seed: battle.seed ?? '1', battle: { flags: battle.flags }, look: { question: battle.question ?? '' } }));
+  if (pageClash) for (const [name, frame] of Object.entries(battleMoments(pageClash))) offer(halved(frame, 1), `games/arena-clash/${name}.webp`, 'image/webp', 0.84);
+  if (rush) for (const [name, frame] of Object.entries(matchMoments(rush))) offer(halved(frame, 1), `games/goal-rush/${name}.webp`, 'image/webp', 0.84);
 
   // 3. Open Graph, 1200×630, as the site's hero: the ink stage, the mark, the name and the headline
   // on the left with the address along the bottom (as vukcvetkovic.com's card has it), two phones

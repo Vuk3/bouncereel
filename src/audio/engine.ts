@@ -231,6 +231,120 @@ export class AudioEngine {
     }
   }
 
+  /**
+   * A referee's whistle (Goal Rush): a pea whistle's 2.9 kHz with the pea's rattle, a fast flutter
+   * of its level, and a breath of noise round the pitch. `blasts` are their lengths in seconds, 0.12 s
+   * apart: one short for a kick-off, two for half time, three for full time, the last long.
+   */
+  whistle(blasts: number[]): void {
+    const ctx = this.ctx;
+    let t = ctx.currentTime + 0.01;
+    for (const length of blasts) {
+      const out = this.channel(0);
+      const level = ctx.createGain();
+      level.gain.setValueAtTime(0, t);
+      level.gain.linearRampToValueAtTime(0.16, t + 0.015);
+      level.gain.setValueAtTime(0.16, t + length - 0.04);
+      level.gain.linearRampToValueAtTime(0, t + length);
+      level.connect(out);
+      const trill = ctx.createGain();
+      trill.gain.value = 0.6;
+      const pea = ctx.createOscillator();
+      pea.frequency.value = 38;
+      const depth = ctx.createGain();
+      depth.gain.value = 0.4;
+      pea.connect(depth).connect(trill.gain);
+      trill.connect(level);
+      const tone = ctx.createOscillator();
+      tone.frequency.setValueAtTime(2750, t);
+      tone.frequency.linearRampToValueAtTime(2950, t + 0.05);
+      tone.connect(trill);
+      const air = ctx.createBufferSource();
+      air.buffer = this.noise;
+      air.loop = true;
+      const band = ctx.createBiquadFilter();
+      band.type = 'bandpass';
+      band.frequency.value = 2900;
+      band.Q.value = 6;
+      const airLevel = ctx.createGain();
+      airLevel.gain.value = 0.35;
+      air.connect(band).connect(airLevel).connect(trill);
+      this.start(t, length + 0.02, tone, pea, air);
+      t += length + 0.12;
+    }
+  }
+
+  /**
+   * A crowd rising at a goal (Goal Rush): noise through a band that opens from 500 Hz to 2 kHz as it
+   * swells, held a moment and dying over a second and a half, with a low rumble under it. It never
+   * waits for the voice cap: the picture celebrates either way.
+   */
+  roar(pan: number): void {
+    const ctx = this.ctx;
+    const t = ctx.currentTime + 0.01;
+    const out = this.channel(pan * 0.4);
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    src.loop = true;
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 0.8;
+    band.frequency.setValueAtTime(500, t);
+    band.frequency.exponentialRampToValueAtTime(2000, t + 0.35);
+    band.frequency.exponentialRampToValueAtTime(900, t + 1.8);
+    const level = ctx.createGain();
+    level.gain.setValueAtTime(0.0001, t);
+    level.gain.exponentialRampToValueAtTime(0.5, t + 0.18);
+    level.gain.setValueAtTime(0.5, t + 0.45);
+    level.gain.exponentialRampToValueAtTime(0.0001, t + 1.9);
+    src.connect(band).connect(level).connect(out);
+    const low = ctx.createBiquadFilter();
+    low.type = 'lowpass';
+    low.frequency.value = 260;
+    const rumble = ctx.createGain();
+    rumble.gain.setValueAtTime(0.0001, t);
+    rumble.gain.exponentialRampToValueAtTime(0.35, t + 0.2);
+    rumble.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+    src.connect(low).connect(rumble).connect(out);
+    src.start(t, (t * 3.1) % 0.5);
+    src.stop(t + 2);
+    this.track(src);
+    // The net: a short swish of high noise as the ball hits it.
+    const swish = ctx.createBufferSource();
+    swish.buffer = this.noise;
+    const high = ctx.createBiquadFilter();
+    high.type = 'highpass';
+    high.frequency.value = 3500;
+    swish.connect(high).connect(envelope(this.channel(pan), t, 0.3, 0.005, 0.22));
+    swish.start(t, (t * 5.7) % 0.5, 0.3);
+    this.track(swish);
+  }
+
+  /** Ball against ball in a match: a kick's thud, 110 Hz falling to 45, with a click on top for phone speakers. */
+  kick(velocity: number, pan: number): void {
+    if (this.active >= MAX_VOICES) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime + 0.004;
+    const thud = ctx.createOscillator();
+    thud.frequency.setValueAtTime(110, t);
+    thud.frequency.exponentialRampToValueAtTime(45, t + 0.14);
+    thud.connect(envelope(this.channel(pan), t, velocity * 0.7, 0.002, 0.14));
+    this.start(t, 0.18, thud);
+    this.osc('triangle', 900, t, 0.04, envelope(this.channel(pan), t, velocity * 0.12, 0.001, 0.03));
+  }
+
+  /** A ball off the post: a struck metal tube, three inharmonic partials ringing out over half a second. */
+  clang(pan: number): void {
+    const t = this.ctx.currentTime + 0.004;
+    for (const [f, level, decay] of [
+      [523, 0.22, 0.6],
+      [1420, 0.12, 0.35],
+      [2710, 0.07, 0.2],
+    ]) {
+      this.osc('sine', f, t, decay + 0.05, envelope(this.channel(pan), t, level, 0.002, decay));
+    }
+  }
+
   /** The win: an arpeggio into a held major chord over a noise swell. */
   fanfare(): void {
     const ctx = this.ctx;

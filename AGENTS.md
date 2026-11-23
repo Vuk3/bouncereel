@@ -12,7 +12,9 @@ Its first game is ball races: two balls, each in its own card, break layers with
 numbers of a sequence (Fibonacci, factorial…). Its second is Arena Clash, a game of its own
 on a black stage: 2 to 12 flags in a round arena, each tied to the ring by a fan of strings,
 cut each other's strings, and the last flag standing wins
-([docs/arena-clash.md](./docs/arena-clash.md)).
+([docs/arena-clash.md](./docs/arena-clash.md)). Its third is Goal Rush: a football match of
+ninety minutes, two clubs or two players, one goal spinning round a round pitch
+([docs/goal-rush.md](./docs/goal-rush.md)).
 
 > **`CLAUDE.md` is a symlink to this file**, so the two names can never drift and there
 > is only ever one file to edit. Do not replace the symlink with a copy.
@@ -31,7 +33,7 @@ Documentation is layered, so you only pay for what the task needs:
    [src/render](./src/render/CLAUDE.md) (the video's look) ·
    [worker](./worker/CLAUDE.md) (the API, the sign-in) ·
    [migrations](./migrations/CLAUDE.md) (the database schema).
-4. **[docs/](./docs/)** - the detail. Eleven deep-dives, each written to be self-sufficient:
+4. **[docs/](./docs/)** - the detail. Twelve deep-dives, each written to be self-sufficient:
    paste one link into a prompt and start working. [docs/README.md](./docs/README.md)
    indexes them. Accounts, plans and the admin area are
    [accounts-and-billing](./docs/accounts-and-billing.md); the public site is

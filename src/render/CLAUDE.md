@@ -14,8 +14,9 @@ The video's look, drawn on one 1080×1920 canvas every frame. Deep-dive:
 | the opening title over the first frame, the meters and LEAD CHANGE, the last layer's glow and LAST LAYER!, a layer's number counting down | [renderer.ts](./renderer.ts) `drawOpening`, `drawMeters`, `drawLeadChange`, `finalGlow`, `drawTitleRow`, `count` |
 | the race's follow button: where (right of the VS, where LEAD CHANGE shows, and under the winner card) and when | [renderer.ts](./renderer.ts) `drawRaceFollow`, `drawEndFollow`, `followAt`; the button itself is [follow.ts](./follow.ts), the hand's image in [public/hand/](../../public/hand/) |
 | Arena Clash, a look of its own: the black stage, the title with its region, N LEFT and OUT, the arena at 87 % (`SCALE`), the strings, the balls and their counts (red and beating in danger), "+10" and "-34", ghosts and sparks, the row of every flag under the ring (`drawRoster`), the slow motion tag, its follow button, winner card and watermark | [battle.ts](./battle.ts) `BattleRenderer`, `battleFollowAt` ([arena-clash](../../docs/arena-clash.md#4-the-look)) |
-| what both games draw with: the type, colour sums, text that fits, easings, the mark, the preview marks, the base `Overlay` | [draw.ts](./draw.ts) |
-| the follow button and the hand that taps it, for both games | [follow.ts](./follow.ts) `FollowButton`; each renderer says where and when |
+| Goal Rush, a look of its own: the title, the scoreboard, the pitch at 82 % with its spinning goal, its end and net, the crowd in its stand, the balls (kits or real pictures), a goal's moment, the timeline of goals, HALF TIME and GOLDEN GOAL, FULL TIME, its follow button, winner card and watermark | [match.ts](./match.ts) `MatchRenderer`, `matchFollowAt` ([goal-rush](../../docs/goal-rush.md#4-the-look)); a side's ball itself is [src/football/kits.ts](../football/kits.ts) |
+| what the games draw with: the type, colour sums, text that fits, easings, the mark, the preview marks, the base `Overlay` | [draw.ts](./draw.ts) |
+| the follow button and the hand that taps it, for every game | [follow.ts](./follow.ts) `FollowButton`; each renderer says where and when |
 
 ## Rules
 
@@ -37,9 +38,9 @@ The video's look, drawn on one 1080×1920 canvas every frame. Deep-dive:
   place in every frame that no platform covers and the race never uses. Nothing else goes
   there, and a layout change that moves the VS moves it too. An Arena Clash's sits under the
   arena, above the platforms' caption zone.
-- **The two games' renderers are independent.** [renderer.ts](./renderer.ts) is the race's,
-  [battle.ts](./battle.ts) the Arena Clash's; neither imports the other. What both need goes in
-  [draw.ts](./draw.ts) or [follow.ts](./follow.ts), which know nothing of either game.
+- **The games' renderers are independent.** [renderer.ts](./renderer.ts) is the race's,
+  [battle.ts](./battle.ts) the Arena Clash's, [match.ts](./match.ts) the Goal Rush's; none imports another. What they share goes in
+  [draw.ts](./draw.ts) or [follow.ts](./follow.ts), which know nothing of any one game.
 - **`drawMark` ([draw.ts](./draw.ts)) and [public/mark.svg](../../public/mark.svg) are one drawing**: change both,
   and [public/favicon.svg](../../public/favicon.svg).
 - **Check both cards, a full box (64 split balls) and the winner card, in each look**, in

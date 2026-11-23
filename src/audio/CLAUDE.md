@@ -11,7 +11,7 @@ words and the voices that say them. Deep-dive:
 | an instrument, a sound effect, mixing, ducking under the narrator | [engine.ts](./engine.ts) |
 | which note a floor hit plays, a new melody | [music.ts](./music.ts) |
 | which event makes which sound | [sonify.ts](./sonify.ts) |
-| the opening, the winner line, the voices, loading Kokoro, the clip cache; an Arena Clash's opening | [narration.ts](./narration.ts) (`battleScript`) |
+| the opening, the winner line, the voices, loading Kokoro, the clip cache; an Arena Clash's opening, a Goal Rush's (`matchScript`) and its winner line with the score (`winnerLine`) | [narration.ts](./narration.ts) (`battleScript`, `matchScript`) |
 | the opening's question, also on screen over the first frame | [opening.ts](./opening.ts): kept apart, since the renderer (on the home page too) must not load narration.ts |
 
 ## Rules

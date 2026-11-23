@@ -57,7 +57,7 @@
         </div>
       </section>
 
-      <!-- What each game's videos came to (dashboard.ts renderBalls, renderClash), each under its name and icon; a game with no videos yet shows nothing. -->
+      <!-- What each game's videos came to (dashboard.ts renderBalls, renderClash, renderRush), each under its name and icon; a game with no videos yet shows nothing. -->
       <section class="game-stats" id="race-stats" aria-labelledby="race-stats-name" hidden>
         <p class="game-stats-name" id="race-stats-name"><img src="/games/ball-race.svg" alt="" width="22" height="22" />Ball Race</p>
         <div class="race-stats">
@@ -81,6 +81,19 @@
           <section class="card balls" aria-labelledby="flags-title">
             <h2 id="flags-title">Flags played, and won</h2>
             <div id="flags" class="meters"></div>
+          </section>
+        </div>
+      </section>
+      <section class="game-stats" id="rush-stats" aria-labelledby="rush-stats-name" hidden>
+        <p class="game-stats-name" id="rush-stats-name"><img src="/games/goal-rush.svg" alt="" width="22" height="22" />Goal Rush</p>
+        <div class="race-stats">
+          <section class="card wins" aria-labelledby="ends-title">
+            <h2 id="ends-title">Who won</h2>
+            <div id="ends" class="meters"></div>
+          </section>
+          <section class="card balls" aria-labelledby="sides-title">
+            <h2 id="sides-title">Clubs and players played, and won</h2>
+            <div id="sides" class="meters"></div>
           </section>
         </div>
       </section>

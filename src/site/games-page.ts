@@ -6,8 +6,9 @@ import { fillGamePlans } from './pricing.ts';
 // /games: each game's section says which plans make it, from the plans the site lists (GET
 // /api/plans), so it follows what the admin area sets; until they load, or if they do not, it keeps
 // the words written in games.html. Each section's phone plays its game, the studio's own engine as
-// on the home page: the race (hero.ts, the built-in matchups through the three looks) and the
-// Arena Clash (arena.ts). Each runs only while it is on screen, loads only after the page has, and
+// on the home page: the race (hero.ts, the built-in matchups through the three looks), the Arena
+// Clash (arena.ts) and the Goal Rush (pitch.ts, with the kits everyone's videos have). Each runs
+// only while it is on screen, loads only after the page has, and
 // never under prefers-reduced-motion, where the still frames stay.
 void api<PlansResponse>('GET', '/api/plans')
   .then(fillGamePlans)
@@ -16,11 +17,13 @@ void api<PlansResponse>('GET', '/api/plans')
 async function play(): Promise<void> {
   // A canvas never loads a web font by itself: without this the games would draw in the fallback font.
   await Promise.all([600, 700, 800, 900].map((w) => document.fonts.load(`${w} 40px Rubik`)));
-  const [race, arena] = await Promise.all([import('./hero.ts'), import('./arena.ts')]);
+  const [race, arena, pitch] = await Promise.all([import('./hero.ts'), import('./arena.ts'), import('./pitch.ts')]);
   const raceCanvas = document.querySelector('#race-phone canvas') as HTMLCanvasElement;
   const arenaCanvas = document.querySelector('#arena-phone canvas') as HTMLCanvasElement;
+  const pitchCanvas = document.querySelector('#pitch-phone canvas') as HTMLCanvasElement;
   new race.Hero(raceCanvas, (cfg) => (document.querySelector('#race-note')!.textContent = race.describeRace(cfg)));
   new arena.ArenaDemo(arenaCanvas, (cfg) => (document.querySelector('#arena-note')!.textContent = arena.describeBattle(cfg)));
+  new pitch.PitchDemo(pitchCanvas, (cfg) => (document.querySelector('#pitch-note')!.textContent = pitch.describeMatch(cfg)));
 }
 
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {

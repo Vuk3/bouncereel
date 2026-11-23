@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- site:head /games/goal-rush -->
+    <title>Goal Rush · BounceReel</title>
+    <meta
+      name="description"
+      content="Goal Rush: a football match of ninety minutes in one round pitch, two clubs or two players, a goal that spins round the ring and a crowd that jumps when it goes in. 157 clubs, 453 players, 201 classic matches, balanced to the length you pick."
+    />
+  </head>
+  <body data-game="goal-rush">
+    <!-- site:header -->
+
+    <!--
+      A game's own page (docs/website.md §4, The game pages): what it is, a video of it moment by
+      moment, its rules beside it playing, recordings, what you choose, its numbers and questions.
+      The phones are the studio's own engine (src/site/game-page.ts), the frames and the clips its
+      own renderer (scripts/stills.ts, scripts/clips.ts); everything with the drawn kits.
+    -->
+    <main id="main" class="game-page" style="--game-glow-a: rgb(19 161 87 / 0.34); --game-glow-b: rgb(255 210 63 / 0.18)">
+      <section class="shell hero" aria-labelledby="game-title">
+        <div class="stage gp-stage">
+          <div class="gp-intro">
+            <p class="eyebrow"><a href="/games">Games</a> · Football</p>
+            <div class="gp-name">
+              <!-- game:icon goal-rush -->
+              <h1 id="game-title">Goal Rush</h1>
+            </div>
+            <p class="lede">
+              A football match of ninety minutes in one round pitch: two clubs or two players, one goal spinning round the ring, and a crowd on its
+              feet when the ball goes in. Pick the sides, or roll them; the match is worked out before it plays and balanced to end on your
+              length.
+            </p>
+            <ul class="gp-facts">
+              <li><b>157</b> clubs</li>
+              <li><b>453</b> players</li>
+              <li><b>201</b> classics</li>
+              <li><b>20–90 s</b> a video</li>
+            </ul>
+            <div class="actions">
+              <a class="btn btn-primary" href="/signup" data-guest data-signups="open">Start free</a>
+              <button class="btn btn-primary" type="button" disabled data-guest data-signups="closed">Coming soon</button>
+              <a class="btn btn-primary" href="/app" data-member>Open studio</a>
+              <a class="btn btn-ghost" href="/pricing">See the plans</a>
+            </div>
+            <p class="gp-plans" data-game-plans="goal-rush">Paid plans</p>
+          </div>
+          <figure class="gp-demo">
+            <div class="phone" data-play="match" data-first="0">
+              <img src="/games/goal-rush.webp" srcset="/games/goal-rush-270.webp 270w, /games/goal-rush.webp 540w" sizes="300px" width="540" height="960" alt="A Goal Rush: Real Madrid against Barcelona in a round pitch, the goal and its net turning round the ring, the crowd round it and a scoreboard over it." />
+              <canvas aria-hidden="true"></canvas>
+            </div>
+            <figcaption class="game-demo-note" aria-live="polite">El Clásico: Real Madrid vs Barcelona</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="shell section" aria-labelledby="moments-title">
+        <header class="section-head">
+          <h2 id="moments-title">A video, moment by moment</h2>
+          <p>El Clásico in 30 seconds, frames from the video the studio records. The clock runs from 0' to 90' over whatever length you pick.</p>
+        </header>
+        <ol class="moments">
+          <li>
+            <figure>
+              <div class="moment-phone"><img src="/games/goal-rush/kickoff.webp" width="540" height="960" loading="lazy" alt="The kick-off: the derby's name and the question over the scoreboard, both balls flying from the centre." /></div>
+              <figcaption><b><span>0:00</span> Kick-off</b>The derby's name, a question for the comments and the scoreboard. Both balls fly from the centre spot.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="moment-phone"><img src="/games/goal-rush/goal.webp" width="540" height="960" loading="lazy" alt="GOAL! over the pitch, Real Madrid 17', the net bulging and the home half of the crowd on its feet." /></div>
+              <figcaption><b><span>0:05</span> GOAL!</b>Through the mouth: the net bulges, GOAL! with the scorer and the minute, and the scorer's half of the crowd jumps.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="moment-phone"><img src="/games/goal-rush/half.webp" width="540" height="960" loading="lazy" alt="Half time, 1–1: HALF TIME · THE GOAL TURNS BACK under the timeline." /></div>
+              <figcaption><b><span>0:14</span> Half time</b>At 45' the sides change ends: the goal turns back the other way, and the timeline keeps every goal at its minute.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="moment-phone"><img src="/games/goal-rush/whistle.webp" width="540" height="960" loading="lazy" alt="FULL TIME over the pitch, 3–2 on the scoreboard." /></div>
+              <figcaption><b><span>0:27</span> Full time</b>Ninety minutes: the side with more goals wins. Every match is set so it never ends level.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="moment-phone"><img src="/games/goal-rush/winner.webp" width="540" height="960" loading="lazy" alt="The winner card: Real Madrid, 3–2 against Barcelona, every goal by its minute, and DID YOUR TEAM WIN?" /></div>
+              <figcaption><b><span>0:28</span> The winner</b>The score, every goal by its minute and a line for the comments, in confetti. Then it fades back into its first frame.</figcaption>
+            </figure>
+          </li>
+        </ol>
+      </section>
+
+      <section class="shell section gp-split" aria-labelledby="rules-title">
+        <div class="gp-split-copy">
+          <header class="section-head gp-head">
+            <h2 id="rules-title">How it plays</h2>
+            <p>Six rules, all of them on screen: a viewer gets the game from its first second.</p>
+          </header>
+          <ol class="game-rules gp-rules">
+            <li><b>Two balls, one pitch</b>Each a club in its shirt, or a player in his country's, flying at one speed and bouncing off the ring and off each other.</li>
+            <li><b>The goal spins</b>Its mouth turns round the ring all match, and the other way from half time, as the sides change ends.</li>
+            <li><b>Through it is a goal</b>A ball that flies through the mouth scores. One that clips a post bounces off it: POST!</li>
+            <li><b>Kick-off again</b>After each goal both balls go back to the centre spot and away. The clock runs on, as a referee's does.</li>
+            <li><b>Ninety minutes</b>The clock fills the timeline over your video. Level at 90', the next goal wins: golden goal.</li>
+            <li><b>A crowd for each side</b>The home side's fans on the left, the away side's on the right, each half on its feet when its side scores.</li>
+          </ol>
+        </div>
+        <figure class="stage gp-split-demo">
+          <div class="phone" data-play="match" data-first="2">
+            <img src="/gallery/messi-vs-ronaldo.webp" width="540" height="960" loading="lazy" alt="Lionel Messi against Cristiano Ronaldo in a round pitch, a scoreboard over it." />
+            <canvas aria-hidden="true"></canvas>
+          </div>
+          <figcaption class="game-demo-note" aria-live="polite">The GOAT debate: Lionel Messi vs Cristiano Ronaldo</figcaption>
+        </figure>
+      </section>
+
+      <section class="shell section" aria-labelledby="watch-title">
+        <header class="section-head">
+          <h2 id="watch-title">Watch it played</h2>
+          <p>Recorded from the studio as you would post them, shown here smaller and muted: 30 seconds each, from the kick-off to the fade back to the first frame.</p>
+        </header>
+        <ul class="gallery gp-gallery">
+          <li>
+            <figure>
+              <div class="gallery-phone">
+                <video src="/gallery/el-clasico.mp4" poster="/gallery/el-clasico.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play El Clásico: Real Madrid vs Barcelona" hidden>
+                  <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                </button>
+              </div>
+              <figcaption><b>El Clásico</b><span>Real Madrid vs Barcelona, 30 s</span></figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="gallery-phone">
+                <video src="/gallery/messi-vs-ronaldo.mp4" poster="/gallery/messi-vs-ronaldo.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Lionel Messi vs Cristiano Ronaldo" hidden>
+                  <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                </button>
+              </div>
+              <figcaption><b>The GOAT debate</b><span>Messi vs Ronaldo, players, 30 s</span></figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="gallery-phone">
+                <video src="/gallery/der-klassiker.mp4" poster="/gallery/der-klassiker.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Bayern Munich vs Borussia Dortmund" hidden>
+                  <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                </button>
+              </div>
+              <figcaption><b>Der Klassiker</b><span>Bayern vs Dortmund, 30 s</span></figcaption>
+            </figure>
+          </li>
+        </ul>
+      </section>
+
+      <section class="shell section" aria-labelledby="choose-title">
+        <header class="section-head">
+          <h2 id="choose-title">What you choose</h2>
+          <p>Everything on one card at the top of the studio. Leave any of it to the dice.</p>
+        </header>
+        <ul class="gp-choices">
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="m12 7.5 3.8 2.8-1.5 4.4H9.7l-1.5-4.4Z" /></svg></span>
+            <h3>Clubs or players</h3>
+            <p>157 clubs: the Champions League, Europe's five big leagues, the Balkans, South America and beyond. Or 453 players, today's stars and the legends.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg></span>
+            <h3>Found as you type</h3>
+            <p>A few letters are enough: <i>rma</i>, <i>zvezda</i>, <i>barsa</i>, <i>cr7</i>. Nicknames, short names and spellings without accents all find their side.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0ZM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v4M8.5 20.5h7" /></svg></span>
+            <h3>201 classic matches</h3>
+            <p>The derbies, Europe's great nights, the GOAT debate, today's rivals, then and now. Beside each, how many times you made it and who won.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 3.5L16 11H5" /></svg></span>
+            <h3>The winner</h3>
+            <p>Pick the side that wins, or let the match decide. Four matches in five end on a comeback or a late winner.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2.5M9.5 2.5h5" /></svg></span>
+            <h3>The length</h3>
+            <p>From 20 to 90 seconds. Ninety minutes always fit it: three to six goals in 30 seconds, five to ten in a minute.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" /></svg></span>
+            <h3>Whistles and a narrator</h3>
+            <p>A whistle at each kick-off, the crowd's roar on a goal, three at full time. A narrator names both sides and calls the winner (paid plans).</p>
+          </li>
+        </ul>
+        <!-- Some of the clubs as their balls are drawn, running past in two rows (still under reduced motion). -->
+        <div class="flag-wall kit-wall gp-wall" aria-hidden="true">
+          <ul class="flag-row"><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #febe10; --dark: #febe10; --light: #ffffff; --ink: #1b1b2f"><b>RMA</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #a50044; --c2: #004d98; --dark: #004d98; --light: #a50044; --ink: #ffffff"><b>BAR</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #e2001a; --c2: #ffffff; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>CZV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>PAR</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #dc052d; --c2: #ffffff; --dark: #dc052d; --light: #ffffff; --ink: #ffffff"><b>BAY</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #c8102e; --c2: #ffffff; --dark: #c8102e; --light: #ffffff; --ink: #ffffff"><b>LIV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>JUV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #0068a8; --c2: #111111; --dark: #111111; --light: #0068a8; --ink: #ffffff"><b>INT</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fb090b; --c2: #111111; --dark: #111111; --light: #fb090b; --ink: #ffffff"><b>MIL</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #004170; --c2: #da291c; --dark: #004170; --light: #da291c; --ink: #ffffff"><b>PSG</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #6cabdd; --c2: #ffffff; --dark: #6cabdd; --light: #ffffff; --ink: #1b1b2f"><b>MCI</b></span></li><li><span class="kit-ball" data-p="sleeves" style="--c1: #ef0107; --c2: #ffffff; --dark: #ef0107; --light: #ffffff; --ink: #ffffff"><b>ARS</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #fde100; --c2: #111111; --dark: #111111; --light: #fde100; --ink: #ffffff"><b>BVB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #cb3524; --c2: #ffffff; --dark: #cb3524; --light: #ffffff; --ink: #ffffff"><b>ATM</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #ffffff; --c2: #d2122e; --dark: #d2122e; --light: #ffffff; --ink: #ffffff"><b>AJX</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #018749; --c2: #ffffff; --dark: #018749; --light: #ffffff; --ink: #ffffff"><b>CEL</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #febe10; --dark: #febe10; --light: #ffffff; --ink: #1b1b2f"><b>RMA</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #a50044; --c2: #004d98; --dark: #004d98; --light: #a50044; --ink: #ffffff"><b>BAR</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #e2001a; --c2: #ffffff; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>CZV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>PAR</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #dc052d; --c2: #ffffff; --dark: #dc052d; --light: #ffffff; --ink: #ffffff"><b>BAY</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #c8102e; --c2: #ffffff; --dark: #c8102e; --light: #ffffff; --ink: #ffffff"><b>LIV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #111111; --c2: #ffffff; --dark: #111111; --light: #ffffff; --ink: #ffffff"><b>JUV</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #0068a8; --c2: #111111; --dark: #111111; --light: #0068a8; --ink: #ffffff"><b>INT</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fb090b; --c2: #111111; --dark: #111111; --light: #fb090b; --ink: #ffffff"><b>MIL</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #004170; --c2: #da291c; --dark: #004170; --light: #da291c; --ink: #ffffff"><b>PSG</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #6cabdd; --c2: #ffffff; --dark: #6cabdd; --light: #ffffff; --ink: #1b1b2f"><b>MCI</b></span></li><li><span class="kit-ball" data-p="sleeves" style="--c1: #ef0107; --c2: #ffffff; --dark: #ef0107; --light: #ffffff; --ink: #ffffff"><b>ARS</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #fde100; --c2: #111111; --dark: #111111; --light: #fde100; --ink: #ffffff"><b>BVB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #cb3524; --c2: #ffffff; --dark: #cb3524; --light: #ffffff; --ink: #ffffff"><b>ATM</b></span></li><li><span class="kit-ball" data-p="band" style="--c1: #ffffff; --c2: #d2122e; --dark: #d2122e; --light: #ffffff; --ink: #ffffff"><b>AJX</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #018749; --c2: #ffffff; --dark: #018749; --light: #ffffff; --ink: #ffffff"><b>CEL</b></span></li></ul>
+          <ul class="flag-row"><li><span class="kit-ball" data-p="solid" style="--c1: #da291c; --c2: #111111; --dark: #111111; --light: #da291c; --ink: #ffffff"><b>MUN</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #034694; --c2: #ffffff; --dark: #034694; --light: #ffffff; --ink: #ffffff"><b>CHE</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #12a0d7; --c2: #ffffff; --dark: #12a0d7; --light: #ffffff; --ink: #1b1b2f"><b>NAP</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #e83030; --c2: #ffffff; --dark: #e83030; --light: #ffffff; --ink: #ffffff"><b>SLB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #00428c; --c2: #ffffff; --dark: #00428c; --light: #ffffff; --ink: #ffffff"><b>FCP</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #008057; --c2: #ffffff; --dark: #008057; --light: #ffffff; --ink: #ffffff"><b>SCP</b></span></li><li><span class="kit-ball" data-p="halves" style="--c1: #a90432; --c2: #fdb912; --dark: #a90432; --light: #fdb912; --ink: #ffffff"><b>GS</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fdcd02; --c2: #002d72; --dark: #002d72; --light: #fdcd02; --ink: #ffffff"><b>FB</b></span></li><li><span class="kit-ball" data-p="bar" style="--c1: #003da5; --c2: #fdd800; --dark: #003da5; --light: #fdd800; --ink: #ffffff"><b>BOC</b></span></li><li><span class="kit-ball" data-p="sash" style="--c1: #ffffff; --c2: #e2001a; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>RIV</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #e2001a; --c2: #111111; --dark: #111111; --light: #e2001a; --ink: #ffffff"><b>FLA</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #132257; --dark: #132257; --light: #ffffff; --ink: #ffffff"><b>TOT</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #8e1f2f; --c2: #f0bc42; --dark: #8e1f2f; --light: #f0bc42; --ink: #ffffff"><b>ROM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #2faee0; --dark: #2faee0; --light: #ffffff; --ink: #1b1b2f"><b>OM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #003da5; --dark: #003da5; --light: #ffffff; --ink: #ffffff"><b>HAJ</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #0033a0; --c2: #ffffff; --dark: #0033a0; --light: #ffffff; --ink: #ffffff"><b>DZG</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #da291c; --c2: #111111; --dark: #111111; --light: #da291c; --ink: #ffffff"><b>MUN</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #034694; --c2: #ffffff; --dark: #034694; --light: #ffffff; --ink: #ffffff"><b>CHE</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #12a0d7; --c2: #ffffff; --dark: #12a0d7; --light: #ffffff; --ink: #1b1b2f"><b>NAP</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #e83030; --c2: #ffffff; --dark: #e83030; --light: #ffffff; --ink: #ffffff"><b>SLB</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #00428c; --c2: #ffffff; --dark: #00428c; --light: #ffffff; --ink: #ffffff"><b>FCP</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #008057; --c2: #ffffff; --dark: #008057; --light: #ffffff; --ink: #ffffff"><b>SCP</b></span></li><li><span class="kit-ball" data-p="halves" style="--c1: #a90432; --c2: #fdb912; --dark: #a90432; --light: #fdb912; --ink: #ffffff"><b>GS</b></span></li><li><span class="kit-ball" data-p="stripes" style="--c1: #fdcd02; --c2: #002d72; --dark: #002d72; --light: #fdcd02; --ink: #ffffff"><b>FB</b></span></li><li><span class="kit-ball" data-p="bar" style="--c1: #003da5; --c2: #fdd800; --dark: #003da5; --light: #fdd800; --ink: #ffffff"><b>BOC</b></span></li><li><span class="kit-ball" data-p="sash" style="--c1: #ffffff; --c2: #e2001a; --dark: #e2001a; --light: #ffffff; --ink: #ffffff"><b>RIV</b></span></li><li><span class="kit-ball" data-p="hoops" style="--c1: #e2001a; --c2: #111111; --dark: #111111; --light: #e2001a; --ink: #ffffff"><b>FLA</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #132257; --dark: #132257; --light: #ffffff; --ink: #ffffff"><b>TOT</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #8e1f2f; --c2: #f0bc42; --dark: #8e1f2f; --light: #f0bc42; --ink: #ffffff"><b>ROM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #2faee0; --dark: #2faee0; --light: #ffffff; --ink: #1b1b2f"><b>OM</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #ffffff; --c2: #003da5; --dark: #003da5; --light: #ffffff; --ink: #ffffff"><b>HAJ</b></span></li><li><span class="kit-ball" data-p="solid" style="--c1: #0033a0; --c2: #ffffff; --dark: #0033a0; --light: #ffffff; --ink: #ffffff"><b>DZG</b></span></li></ul>
+        </div>
+        <p class="kit-note gp-note">Clubs and players are drawn as balls in their colours: a club's shirt with its letters, a player's national shirt and number. No crests or photos.</p>
+      </section>
+
+      <section class="shell section faq-section" aria-labelledby="faq-title">
+        <header class="section-head">
+          <h2 id="faq-title">Questions</h2>
+          <p>About Goal Rush. The rest are on <a href="/#faq-title">the home page</a>.</p>
+        </header>
+        <div class="faq">
+          <div class="faq-col">
+            <details>
+              <summary>Is the result random?</summary>
+              <p>It is worked out before it plays, from a seed, and balanced: the studio tries seeds until the match ends on your length, is not a draw, has its goals spread through it and none in the first seconds. The same settings always play the same match.</p>
+            </details>
+            <details>
+              <summary>Can I choose who wins?</summary>
+              <p>Yes. Pick the winner on the match card and the studio finds a match that side wins, comeback and all. Leave it open and either side can.</p>
+            </details>
+          </div>
+          <div class="faq-col">
+            <details>
+              <summary>Does it show club crests or player photos?</summary>
+              <p>No. Clubs and players are drawn as balls in their colours: a club's shirt with its letters, a player's national shirt and number. The names only say who plays; BounceReel is not affiliated with any club, league or player.</p>
+            </details>
+            <details>
+              <summary>How many goals are there?</summary>
+              <p>Three to six in a 30-second video, five to ten in a minute: about one every five seconds, the first after the opening seconds and none of them long apart.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="shell section" aria-labelledby="others-title">
+        <header class="section-head">
+          <h2 id="others-title">The other games</h2>
+          <p>The same studio around each: the length you pick, the sound and the narrator, the follow button, your library.</p>
+        </header>
+        <ul class="gp-others">
+          <li>
+            <a class="gp-other" href="/games/ball-race">
+              <img src="/games/ball-race-270.webp" srcset="/games/ball-race-270.webp 270w, /games/ball-race.webp 540w" sizes="132px" width="270" height="480" loading="lazy" alt="" />
+              <span class="gp-other-body">
+                <span class="gp-other-name"><!-- game:icon ball-race -->Ball Race</span>
+                <span class="gp-other-text">Two balls race through layers of ever bigger numbers: Fibonacci against factorial, primes against squares.</span>
+                <span class="gp-other-go">See the game</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="gp-other" href="/games/arena-clash">
+              <img src="/games/arena-clash-270.webp" srcset="/games/arena-clash-270.webp 270w, /games/arena-clash.webp 540w" sizes="132px" width="270" height="480" loading="lazy" alt="" />
+              <span class="gp-other-body">
+                <span class="gp-other-name"><!-- game:icon arena-clash -->Arena Clash</span>
+                <span class="gp-other-text">Flags in one round arena, tied to the ring by fans of strings. Cut theirs, keep yours: the last flag standing wins.</span>
+                <span class="gp-other-go">See the game</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="shell close" aria-labelledby="close-title">
+        <div class="stage close-stage">
+          <h2 id="close-title">Your first match is a dice roll away.</h2>
+          <p>Free to start, no card needed.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/signup" data-guest data-signups="open">Start free</a>
+            <button class="btn btn-primary" type="button" disabled data-guest data-signups="closed">Coming soon</button>
+            <a class="btn btn-primary" href="/app" data-member>Open studio</a>
+            <a class="btn btn-ghost" href="/games">All the games</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- site:footer -->
+    <script type="module" src="/src/site/game-page.ts"></script>
+  </body>
+</html>

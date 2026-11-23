@@ -1,8 +1,8 @@
-import type { BattleSummary, NewVideo, Platform, Post, VideoDetail, VideoSummary, VideoTexts } from '../shared/api.ts';
+import type { BattleSummary, MatchSummary, NewVideo, Platform, Post, VideoDetail, VideoSummary, VideoTexts } from '../shared/api.ts';
 import type { PostLink } from '../shared/links.ts';
 
 // Every D1 query of the video library, and the mappers from rows (migrations/0001_initial.sql,
-// 0002_accounts.sql, 0007_video_texts.sql, 0011_flag_battle.sql) to the API's shapes (shared/api.ts).
+// 0002_accounts.sql, 0007_video_texts.sql, 0011_flag_battle.sql, 0012_goal_rush.sql) to the API's shapes (shared/api.ts).
 // Handlers never write SQL themselves.
 //
 // Every query names the account (`user_id`): a video or link of another account is not found,
@@ -29,8 +29,10 @@ interface VideoRow {
   winner: 'a' | 'b' | null;
   margin: number | null;
   lead_changes: number | null;
-  /** An Arena Clash's BattleSummary as JSON; NULL for a race. */
+  /** An Arena Clash's BattleSummary as JSON; NULL for the other games. */
   battle: string | null;
+  /** A Goal Rush's MatchSummary as JSON; NULL for the other games (not `match`, an SQLite operator). */
+  match_result: string | null;
   has_texts: number;
   a_color: unknown;
   b_color: unknown;
@@ -51,7 +53,7 @@ interface PostRow {
  * not the Worker's.
  */
 const SUMMARY_COLUMNS = `id, game, recorded_at, title, file_name, format, seconds, stopped_early, video_length, seed,
-  app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes, battle,
+  app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes, battle, match_result,
   texts IS NOT NULL AS has_texts, json_extract(config, '$.a.color') AS a_color, json_extract(config, '$.b.color') AS b_color`;
 const POST_COLUMNS = 'video_id, platform, url, external_id, added_at';
 
@@ -84,6 +86,7 @@ function toSummary(row: VideoRow, posts: Post[]): VideoSummary {
         : null,
     // A hundred bytes of JSON a row, unlike the config: parsing it for the whole list costs nothing.
     battle: row.game === 'arena-clash' && row.battle ? (JSON.parse(row.battle) as BattleSummary) : null,
+    match: row.game === 'goal-rush' && row.match_result ? (JSON.parse(row.match_result) as MatchSummary) : null,
     colors: row.game === 'ball-race' && typeof row.a_color === 'string' && typeof row.b_color === 'string' ? { a: row.a_color, b: row.b_color } : null,
     posts,
     hasTexts: row.has_texts === 1,
@@ -140,14 +143,15 @@ export async function countVideos(db: D1Database, userId: number): Promise<numbe
  * The count is checked inside the INSERT, so two saves at once cannot both take the last place.
  */
 export async function insertVideo(db: D1Database, video: NewVideo, userId: number, limit: number | null): Promise<number | null> {
-  // A race fills the race's columns, a battle its one: the other game's stay NULL.
+  // A race fills the race's columns, a battle and a match their one each: the other games' stay NULL.
   const race = video.game === 'ball-race' ? video.race : null;
   const battle = video.game === 'arena-clash' ? JSON.stringify(video.battle) : null;
+  const match = video.game === 'goal-rush' ? JSON.stringify(video.match) : null;
   const row = await db
     .prepare(
       `INSERT INTO videos (user_id, game, recorded_at, title, file_name, format, seconds, stopped_early, video_length, seed, config,
-        app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes, battle)
-       SELECT ?21, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?23
+        app_version, a_name, a_sequence, a_special, b_name, b_sequence, b_special, winner, margin, lead_changes, battle, match_result)
+       SELECT ?21, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?23, ?24
         WHERE ?22 IS NULL OR (SELECT COUNT(*) FROM videos WHERE user_id = ?21) < ?22
        RETURNING id`,
     )
@@ -175,6 +179,7 @@ export async function insertVideo(db: D1Database, video: NewVideo, userId: numbe
       userId,
       limit,
       battle,
+      match,
     )
     .first<{ id: number }>();
   return row?.id ?? null;

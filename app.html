@@ -73,10 +73,11 @@
         </section>
 
         <fieldset id="controls">
-          <!-- Which game (app.ts buildBattleBlock): Ball Race in every plan, Arena Clash with the plan's "Every game". Each with its icon (public/games/). -->
+          <!-- Which game (app.ts buildBattleBlock): Ball Race in every plan, Arena Clash and Goal Rush with the plan's "Every game". Each with its icon (public/games/). -->
           <div class="games" role="radiogroup" aria-label="Game">
             <label><input type="radio" name="game" value="ball-race" autocomplete="off" /><span><!-- game:icon ball-race --><b>Ball Race</b></span></label>
             <label><input type="radio" name="game" value="arena-clash" autocomplete="off" /><span><!-- game:icon arena-clash --><b>Arena Clash</b></span></label>
+            <label><input type="radio" name="game" value="goal-rush" autocomplete="off" /><span><!-- game:icon goal-rush --><b>Goal Rush</b></span></label>
           </div>
 
           <!--
@@ -154,6 +155,40 @@
             <p id="battle-note" class="balance-note" role="status" hidden></p>
           </section>
 
+          <!--
+            Goal Rush's card (app.ts buildMatchBlock, syncMatch): clubs or players, the two sides, each
+            picked by typing (src/ui/picker.ts) or by its die, where the dice picks from, the winner,
+            and how the match ends.
+          -->
+          <section class="battle goal-card match-only" aria-label="This match">
+            <div class="modes" role="radiogroup" aria-label="Who plays">
+              <label><input type="radio" name="match-mode" value="clubs" autocomplete="off" /><span>Clubs</span></label>
+              <label><input type="radio" name="match-mode" value="players" autocomplete="off" /><span>Players</span></label>
+            </div>
+            <!-- The match as a fixture: both sides big, and how often this account has made it and who won how many (app.ts syncMatch). -->
+            <div class="fixture" aria-live="polite">
+              <div class="fixture-side" id="fixture-home"><span class="fixture-ball"><img alt="" width="64" height="64" /></span><b></b></div>
+              <div class="fixture-mid"><span class="fixture-vs">VS</span><span class="fixture-record" id="fixture-record"></span></div>
+              <div class="fixture-side" id="fixture-away"><span class="fixture-ball"><img alt="" width="64" height="64" /></span><b></b></div>
+            </div>
+            <div class="classic-row">
+              <select id="match-classic" name="match-classic" aria-label="Load a classic match"><option value="">Classic matches…</option></select>
+            </div>
+            <ol id="side-list" class="side-list"></ol>
+            <div class="battle-fields">
+              <div class="field">
+                <label for="match-pool"><span>Dice picks from</span></label>
+                <select id="match-pool" name="match-pool"></select>
+              </div>
+              <div class="field">
+                <label for="match-winner"><span>Winner</span></label>
+                <select id="match-winner" name="match-winner"></select>
+              </div>
+            </div>
+            <div id="match-verdict" class="verdict" aria-live="polite"><p id="match-prediction"></p></div>
+            <p id="match-note" class="balance-note" role="status" hidden></p>
+          </section>
+
           <div class="deal">
             <!-- Violet while nothing is ready to record, a ghost once Record is (app.ts syncPrimary). -->
             <button id="dice" type="button" class="button dice" title="A brand-new matchup, balanced to the video length">
@@ -163,7 +198,7 @@
                 <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
                 <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" stroke="none" />
               </svg>
-              <span id="dice-label" class="race-only">Random matchup</span><span class="battle-only">Random flags</span>
+              <span id="dice-label" class="race-only">Random matchup</span><span class="battle-only">Random flags</span><span class="match-only">Random match</span>
             </button>
             <div class="row">
               <!-- What Play and Restart do about the narrator (app.ts voiceOn); Record follows Sound alone. -->
@@ -177,7 +212,7 @@
                   <path d="M3 17h3c1.5 0 2.5-.4 3.4-1.4M14.6 8.4C15.5 7.4 16.5 7 18 7h3" />
                   <path d="m18 4 3 3-3 3M18 14l3 3-3 3" />
                 </svg>
-                <span class="race-only">New race</span><span class="battle-only">New battle</span>
+                <span class="race-only">New race</span><span class="battle-only">New battle</span><span class="match-only">New match</span>
               </button>
             </div>
             <div class="deal-options race-only">

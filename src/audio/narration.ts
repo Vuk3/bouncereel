@@ -2,6 +2,9 @@ import { country, flagName, type Country } from '../battle/countries.ts';
 import type { Config, Contestant } from '../config.ts';
 import { fillTemplate, spokenName, spokenOutro } from '../config.ts';
 import type { BattleOutcome } from '../sim/battle.ts';
+import { derby, nationName, side, sideName, type Side } from '../football/teams.ts';
+import { scoreSaid } from '../pacing.ts';
+import type { MatchOutcome } from '../sim/match.ts';
 import { SEQUENCES, strengthSaid } from '../sim/sequences.ts';
 import type { Outcome } from '../sim/world.ts';
 import { configQuestion, openingDraws } from './opening.ts';
@@ -86,7 +89,7 @@ export function autoScript(cfg: Config): string {
 }
 
 export function introLine(cfg: Config): string {
-  return cfg.voice.script.trim() || (cfg.game === 'arena-clash' ? battleScript(cfg) : autoScript(cfg));
+  return cfg.voice.script.trim() || (cfg.game === 'arena-clash' ? battleScript(cfg) : cfg.game === 'goal-rush' ? matchScript(cfg) : autoScript(cfg));
 }
 
 // ── Arena Clash ────────────────────────────────────────────────────────────
@@ -151,18 +154,76 @@ export function battleScript(cfg: Config): string {
   return [starts[Math.floor(draws.start * starts.length)], BATTLE_RULES[Math.floor(draws.ball * BATTLE_RULES.length)], fact, configQuestion(cfg)].filter(Boolean).join(' ');
 }
 
+// ── Goal Rush ──────────────────────────────────────────────────────────────
+
+/**
+ * The match's rule in one sentence, as a battle's opening says its own: that a ball scores by
+ * flying through the goal, and that the goal turns, is what the first second does not show.
+ */
+const MATCH_RULES = ['Fly through the spinning goal to score.', 'Ninety minutes, one spinning goal.', 'Whoever hits the spinning goal scores.'];
+
+/**
+ * One fact about the two sides, from their years and countries, which never go out of date: which
+ * club is older and when each was founded, which player is older, who plays for which country. A
+ * legend "played", a star "plays".
+ */
+function matchFact(a: Side, b: Side, draw: number): string {
+  const facts: string[] = [];
+  if (a.year !== null && b.year !== null) {
+    const [older, younger] = a.year <= b.year ? [a, b] : [b, a];
+    const gap = younger.year! - older.year!;
+    if (a.mode === 'clubs') {
+      facts.push(gap ? `${older.name} is the older club, founded in ${older.year}.` : `Both clubs were founded in ${a.year}.`);
+      if (gap) facts.push(`${a.name} was founded in ${a.year}, ${b.name} in ${b.year}.`);
+    } else {
+      facts.push(gap ? `${older.name} is the older, born in ${older.year}.` : `Both were born in ${a.year}.`);
+      if (gap >= 2) facts.push(`${younger.name} was born ${gap} years after ${older.name}.`);
+    }
+  }
+  if (a.mode === 'players') {
+    const plays = (s: Side) => (s.groups.includes('legends') ? 'played' : 'plays');
+    if (a.nation === b.nation && a.team === b.team) facts.push(plays(a) === plays(b) ? `Both ${plays(a)} for ${nationName(a)}.` : `Both wore ${nationName(a)}'s shirt.`);
+    else facts.push(`${a.name} ${plays(a)} for ${nationName(a)}, ${b.name} for ${nationName(b)}.`);
+  }
+  return facts.length ? facts[Math.floor(draw * facts.length)] : '';
+}
+
+/**
+ * A match's opening: the two sides (and the derby, when they make one), the rule in one sentence,
+ * one fact and the question, about 10 seconds read aloud. How it starts, the rule's words and the
+ * fact are picked by the seed.
+ */
+export function matchScript(cfg: Config): string {
+  const draws = openingDraws(cfg.seed);
+  const a = sideName(cfg.match.home);
+  const b = sideName(cfg.match.away);
+  const named = derby(cfg.match.home, cfg.match.away);
+  const big = named ? named.charAt(0).toUpperCase() + named.slice(1) : '';
+  const starts = named ? [`It's ${named}: ${a} against ${b}!`, `${big}! ${a} versus ${b}!`] : [`${a} versus ${b}!`, `It's ${a} against ${b}!`, `${a} takes on ${b}!`];
+  const home = side(cfg.match.home);
+  const away = side(cfg.match.away);
+  const fact = home && away ? matchFact(home, away, draws.fact) : '';
+  return [starts[Math.floor(draws.start * starts.length)], MATCH_RULES[Math.floor(draws.ball * MATCH_RULES.length)], fact, configQuestion(cfg)].filter(Boolean).join(' ');
+}
+
 /**
  * The winner line, and "Follow for more!" after it when the video asks viewers to follow
  * (spokenOutro); '' when the Winner line field is empty and it does not, and then the narrator
- * says nothing at the end.
+ * says nothing at the end. `score` is a match's, as said ("3 to 2").
  */
-export function outroLine(cfg: Config, winner: string, time: number): string {
-  return spokenOutro(cfg, { winner, time: time.toFixed(1) });
+export function outroLine(cfg: Config, winner: string, time: number, score?: string): string {
+  return spokenOutro(cfg, { winner, time: time.toFixed(1), score });
+}
+
+/** The winner line of the predicted run: the winner's name, its time, and a match's score. */
+export function winnerLine(cfg: Config, outcome: Outcome | BattleOutcome | MatchOutcome): string {
+  if (outcome.winner === null) return '';
+  return outroLine(cfg, outcome.winnerName, outcome.time, 'goals' in outcome ? scoreSaid(outcome.score, outcome.winner) : undefined);
 }
 
 /** Every line a run will say, in order: the opening, then the winner. */
-export function plannedLines(cfg: Config, outcome: Outcome | BattleOutcome): string[] {
-  const outro = outcome.winner === null ? '' : outroLine(cfg, outcome.winnerName, outcome.time);
+export function plannedLines(cfg: Config, outcome: Outcome | BattleOutcome | MatchOutcome): string[] {
+  const outro = winnerLine(cfg, outcome);
   return [introLine(cfg), ...(outro ? [outro] : [])];
 }
 
@@ -172,6 +233,7 @@ export function previewLine(cfg: Config): string {
     const names = cfg.battle.flags.slice(0, 3).map(flagName);
     return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}! Who survives?`;
   }
+  if (cfg.game === 'goal-rush') return `${sideName(cfg.match.home)} versus ${sideName(cfg.match.away)}! Who wins this match?`;
   return `${spokenName(cfg.a.name)} versus ${spokenName(cfg.b.name)}! Who do you think wins?`;
 }
 

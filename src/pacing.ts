@@ -78,12 +78,27 @@ export function spokenSeconds(line: string): number {
 /**
  * Seconds before the winner card that the narrator starts the winner line. An Arena Clash's is
  * said at the win, over the slow motion of its last strings falling (SLOWMO_TAIL), as a
- * commentator calls it, so its card holds only the end of the line: a card that waits out a whole
- * line once the battle is over is where viewers scroll away, and its seconds are the battle's. A
- * race's line comes with its card.
+ * commentator calls it, and a Goal Rush's at the final whistle: so their card holds only the end of
+ * the line: a card that waits out a whole line once the game is over is where viewers scroll away,
+ * and its seconds are the game's. A race's line comes with its card.
  */
 export function lineLead(cfg: Config): number {
-  return cfg.game === 'arena-clash' ? SLOWMO_TAIL : 0;
+  return cfg.game === 'ball-race' ? 0 : SLOWMO_TAIL;
+}
+
+/**
+ * Simulated seconds before the win played in slow motion (SLOWMO_LEAD): a race's last 0.6 s to the
+ * line, a battle's last strings. A Goal Rush has none: its end is the final whistle, which nothing
+ * leads up to, and its moments are its goals.
+ */
+export function leadSlow(cfg: Config): number {
+  return cfg.game === 'goal-rush' ? 0 : SLOWMO_LEAD;
+}
+
+/** "3 to 2", a score as the narrator says it, the winner's goals first; a guess at one before the match is known. */
+export function scoreSaid(score: [number, number] | null, winner: 0 | 1 | null): string {
+  if (!score || winner === null) return '3 to 2';
+  return `${score[winner]} to ${score[winner === 0 ? 1 : 0]}`;
 }
 
 /** The shortest the winner card stays: the hold, or FOLLOW_CARD with the follow button. */
@@ -103,14 +118,22 @@ export function cardHold(cfg: Config): number {
 export function cardSeconds(cfg: Config, winner?: string): number {
   const hold = cardHold(cfg);
   if (!narrated(cfg)) return hold;
-  const names = winner !== undefined ? [winner] : cfg.game === 'arena-clash' ? cfg.battle.flags.map(flagName) : [cfg.a.name, cfg.b.name];
-  const longest = Math.max(...names.map((name) => spokenSeconds(spokenOutro(cfg, { winner: name, time: '00.0' }))));
+  const names =
+    winner !== undefined
+      ? [winner]
+      : cfg.game === 'arena-clash'
+        ? cfg.battle.flags.map(flagName)
+        : cfg.game === 'goal-rush'
+          ? // The ids as words ("real madrid"), about as long to say as the names, which live in a list the home page does not load.
+            [cfg.match.home, cfg.match.away].map((id) => id.replace(/-/g, ' '))
+          : [cfg.a.name, cfg.b.name];
+  const longest = Math.max(...names.map((name) => spokenSeconds(spokenOutro(cfg, { winner: name, time: '00.0', score: scoreSaid(null, null) }))));
   return Math.max(hold, longest + AFTER_OUTRO - lineLead(cfg));
 }
 
 /** Seconds of video that are not race: everything above except the race itself. */
 export function overhead(cfg: Config, winner?: string): number {
-  return cfg.timing.startDelay + SLOWMO_LEAD * (1 / SLOWMO - 1) + SLOWMO_TAIL + cardSeconds(cfg, winner) + END_PAD;
+  return cfg.timing.startDelay + leadSlow(cfg) * (1 / SLOWMO - 1) + SLOWMO_TAIL + cardSeconds(cfg, winner) + END_PAD;
 }
 
 /** How long the race should take for the video to come out at the requested length, `winner` winning. */

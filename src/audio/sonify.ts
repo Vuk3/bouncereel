@@ -1,6 +1,7 @@
 import type { Config } from '../config.ts';
 import { W } from '../layout.ts';
 import { HEARTBEAT, STRINGS, inDanger, type BattleEvent, type BattleWorld } from '../sim/battle.ts';
+import type { MatchEvent, MatchWorld } from '../sim/match.ts';
 import type { SimEvent } from '../sim/types.ts';
 import type { Outcome, World } from '../sim/world.ts';
 import type { AudioEngine } from './engine.ts';
@@ -99,6 +100,11 @@ export class Sonifier {
    * (DANGER) a heart beats, on the whole HEARTBEATs of the battle's clock, the beats the renderer
    * pulses its count on.
    */
+  /** A Goal Rush frame's events (sonifyMatch). */
+  match(events: MatchEvent[], cfg: Config, world: MatchWorld): void {
+    sonifyMatch(this.audio, this.music, events, cfg, world);
+  }
+
   battle(events: BattleEvent[], cfg: Config, world: BattleWorld): void {
     let notes = 0;
     let ticks = 0;
@@ -132,6 +138,49 @@ export class Sonifier {
     const beat = Math.floor(world.time / HEARTBEAT);
     if (beat > this.beat && world.winner === null && world.flags.some(inDanger)) this.audio.heartbeat();
     this.beat = beat;
+  }
+}
+
+/**
+ * A Goal Rush frame's events: a bounce off the ring plays the melody (the match's music is its
+ * bounces, as the battle's is), the two balls meeting thud, a post clangs, a goal is the crowd
+ * rising and the net, a kick-off one short whistle, half time two, full time three, the last long,
+ * and the win's fanfare after it. At most three notes and two thuds a frame.
+ */
+function sonifyMatch(audio: AudioEngine, music: Music, events: MatchEvent[], cfg: Config, world: MatchWorld): void {
+  let notes = 0;
+  let kicks = 0;
+  const pan = (x: number) => ((x - W / 2) / (W / 2)) * 0.5;
+  for (const e of events) {
+    switch (e.type) {
+      case 'bounce':
+        if (notes++ < 3) audio.note(music.next(), 0.75, cfg.sound.timbre, pan(e.x));
+        break;
+      case 'clash':
+        if (kicks++ < 2) audio.kick(0.8, pan(e.x));
+        break;
+      case 'post':
+        audio.clang(pan(e.x));
+        break;
+      case 'goal':
+        audio.roar(pan(e.x));
+        break;
+      case 'kickoff':
+        audio.whistle([0.22]);
+        break;
+      case 'half':
+        audio.whistle([0.2, 0.32]);
+        break;
+      case 'whistle':
+        if (!world.timedOut) audio.whistle([0.2, 0.2, 0.7]);
+        break;
+      case 'win':
+        audio.fanfare();
+        break;
+      case 'golden':
+        audio.sting();
+        break;
+    }
   }
 }
 

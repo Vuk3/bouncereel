@@ -1,6 +1,6 @@
 import { LAST_LINES, type Config, type Special } from '../config.ts';
 import { MELODIES } from '../audio/music.ts';
-import { autoScript, battleScript } from '../audio/narration.ts';
+import { autoScript, battleScript, matchScript } from '../audio/narration.ts';
 import { configQuestion } from '../audio/opening.ts';
 import { COLORS } from '../sim/balance.ts';
 import { MAX_BALLS, MAX_CROWD } from '../sim/duel.ts';
@@ -172,7 +172,7 @@ export const TABS: Tab[] = [
             path: 'voice.script',
             label: 'Opening (leave empty for the automatic one)',
             live: true,
-            placeholder: (cfg) => (cfg.game === 'arena-clash' ? battleScript(cfg) : autoScript(cfg)),
+            placeholder: (cfg) => (cfg.game === 'arena-clash' ? battleScript(cfg) : cfg.game === 'goal-rush' ? matchScript(cfg) : autoScript(cfg)),
           },
           { kind: 'text', path: 'voice.outro', label: 'Winner line', live: true, hint: '{winner} and {time} are filled in. The dice deals a new one unless you write your own. Leave it empty for none.' },
         ],

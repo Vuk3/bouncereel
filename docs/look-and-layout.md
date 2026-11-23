@@ -32,7 +32,8 @@ and chips on a pastel page.
 | the font | [public/fonts/](../public/fonts/), `@font-face` in [src/style.css](../src/style.css), `FONT` in renderer.ts |
 | the platform UI overlay (not recorded) | `#safe-zones` in [app.html](../app.html) and [src/style.css](../src/style.css) |
 | Arena Clash's stage, title, strings, counts and winner card | [arena-clash](./arena-clash.md#4-the-look), [src/render/battle.ts](../src/render/battle.ts) |
-| what both games' renderers draw with, the follow button itself | [src/render/draw.ts](../src/render/draw.ts), [src/render/follow.ts](../src/render/follow.ts) |
+| Goal Rush's stage, title, scoreboard, pitch and goal, a goal's moment and winner card | [goal-rush](./goal-rush.md#4-the-look), [src/render/match.ts](../src/render/match.ts) |
+| what the games' renderers draw with, the follow button itself | [src/render/draw.ts](../src/render/draw.ts), [src/render/follow.ts](../src/render/follow.ts) |
 
 ## 1. The frame
 
@@ -421,9 +422,10 @@ follow twice, with a button like the platforms' own: a plus and FOLLOW on a pill
 turns into a tick and FOLLOWING on the look's card (white on paper and cards, dark on night).
 It is drawn in the look's pill, the cards' with their hard shadow, and the plus and the tick
 are lines, since Rubik has neither. It is as wide as FOLLOWING in both states, so the tap does
-not move it. The button and its hand are [follow.ts](../src/render/follow.ts), which both games
-draw with: an Arena Clash shows it under its ring, in the middle, and under its own winner card, on
-its black stage ([arena-clash](./arena-clash.md#4-the-look)); the places and timings below are
+not move it. The button and its hand are [follow.ts](../src/render/follow.ts), which every game
+draws with: an Arena Clash shows it under its ring, in the middle, and under its own winner card, on
+its black stage ([arena-clash](./arena-clash.md#4-the-look)), a Goal Rush under its pitch near the
+middle of the match and under its winner card ([goal-rush](./goal-rush.md#4-the-look)); the places and timings below are
 the race's.
 
 **The tap** is a hand, both times: Microsoft's 3D 👆 from Fluent Emoji (MIT,
@@ -484,3 +486,4 @@ The narrator's "Follow for more!" is in [sound and narration](./sound-and-narrat
 - 2026-11-11 - Arena Clash drawn in the same three looks from the same palettes (src/render/battle.ts; arena-clash.md); renderer.ts exports its palettes and helpers for it.
 - 2026-11-11 - the follow button a ball race's alone (`asksToFollow`); the preview marks in an Arena Clash too, `paintPreviewMarks` exported for it.
 - 2026-11-12 - the two games' renderers are independent: what both draw with moved from renderer.ts to draw.ts (the type, colour sums, text helpers, the mark, the preview marks, the base `Overlay`; the race's own is `RaceOverlay`) and follow.ts (the follow button and its hand); an Arena Clash has one look of its own and the follow button (arena-clash.md).
+- 2026-11-23 - Goal Rush, a third look of its own (src/render/match.ts; goal-rush.md), drawing with draw.ts and follow.ts as the other two do.

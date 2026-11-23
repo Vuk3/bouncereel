@@ -58,6 +58,33 @@ export interface BattleSummary {
   out: string[];
 }
 
+/** What a Goal Rush came to, as the prediction knew it before the recording started. */
+export interface MatchSummary {
+  /** Clubs or players (src/football/teams.ts). */
+  mode: 'clubs' | 'players';
+  /** The two sides by id: "real-madrid", "messi". */
+  home: string;
+  away: string;
+  /** Home's goals, then away's. */
+  score: [number, number];
+  /** null only if neither won (never, a match always ends with one). */
+  winner: 'home' | 'away' | null;
+  /** Every goal, first first: whose, and its minute on the clock (91 and on in golden goal). */
+  goals: { side: 'home' | 'away'; minute: number }[];
+}
+
+/**
+ * GET /api/admin/sides: the superadmin's real pictures for Goal Rush (worker/routes/sides.ts), by
+ * club or player id: the file (GET /api/admin/sides/:file) and whether it is a crest or a photo.
+ */
+export interface SidesResponse {
+  version: string;
+  sides: Record<string, { file: string; kind: 'crest' | 'photo' }>;
+}
+
+/** A club's or a player's id as the library takes one. */
+export const SIDE_ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
 /** A flag's code as the library takes one: "rs", "gb-eng". */
 export const FLAG_CODE = /^[a-z]{2}(-[a-z]{3})?$/;
 
@@ -81,6 +108,8 @@ export interface VideoSummary {
   race: RaceSummary | null;
   /** null for a game that is not an Arena Clash. */
   battle: BattleSummary | null;
+  /** null for a game that is not a Goal Rush. */
+  match: MatchSummary | null;
   /** The two balls' colours from its config, top then bottom, for the Videos page's thumbnail; null when the config has none. */
   colors: { a: string; b: string } | null;
   posts: Post[];
@@ -123,7 +152,8 @@ export interface VideoResponse {
 }
 
 /** POST /api/videos: what Record sends once a file is saved, with what its game came to. */
-export type NewVideo = NewVideoBase & ({ game: 'ball-race'; race: RaceSummary } | { game: 'arena-clash'; battle: BattleSummary });
+export type NewVideo = NewVideoBase &
+  ({ game: 'ball-race'; race: RaceSummary } | { game: 'arena-clash'; battle: BattleSummary } | { game: 'goal-rush'; match: MatchSummary });
 
 interface NewVideoBase {
   recordedAt: string;

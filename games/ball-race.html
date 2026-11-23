@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- site:head /games/ball-race -->
+    <title>Ball Race · BounceReel</title>
+    <meta
+      name="description"
+      content="Ball Race: two balls race through layers of ever bigger numbers, Fibonacci against factorial, primes against squares, each floor hit dealing the next number of its sequence. Three looks, four powers, balanced to a photo finish at the length you pick."
+    />
+  </head>
+  <body data-game="ball-race">
+    <!-- site:header -->
+
+    <!--
+      A game's own page (docs/website.md §4, The game pages): what it is, a video of it moment by
+      moment, its rules beside it playing, recordings, what you choose, its numbers and questions.
+      The phones are the studio's own engine (src/site/game-page.ts), the frames and the clips its
+      own renderer (scripts/stills.ts, scripts/clips.ts); everything with the drawn kits.
+    -->
+    <main id="main" class="game-page" style="--game-glow-a: rgb(124 77 255 / 0.32); --game-glow-b: rgb(14 165 233 / 0.24)">
+      <section class="shell hero" aria-labelledby="game-title">
+        <div class="stage gp-stage">
+          <div class="gp-intro">
+            <p class="eyebrow"><a href="/games">Games</a> · Numbers</p>
+            <div class="gp-name">
+              <!-- game:icon ball-race -->
+              <h1 id="game-title">Ball Race</h1>
+            </div>
+            <p class="lede">
+              Two balls race through layers of ever bigger numbers: Fibonacci against factorial, primes against squares. Each floor hit deals the next number of its sequence, a layer breaks once its number is dealt, and the race is set to end close, at your length.
+            </p>
+            <ul class="gp-facts">
+              <li><b>15</b> sequences</li>
+              <li><b>79</b> pairings</li>
+              <li><b>3</b> looks</li>
+              <li><b>20–90 s</b> a video</li>
+            </ul>
+            <div class="actions">
+              <a class="btn btn-primary" href="/signup" data-guest data-signups="open">Start free</a>
+              <button class="btn btn-primary" type="button" disabled data-guest data-signups="closed">Coming soon</button>
+              <a class="btn btn-primary" href="/app" data-member>Open studio</a>
+              <a class="btn btn-ghost" href="/pricing">See the plans</a>
+            </div>
+            <p class="gp-plans" data-game-plans="ball-race">Every plan</p>
+          </div>
+          <figure class="gp-demo">
+            <div class="phone" data-play="race">
+              <img src="/hero/first-frame-4.webp" width="540" height="960" alt="The first frame of a Ball Race in the night look: Fibonacci Ball in the top card, Slow Factorial Ball in the bottom one, each above its layers of numbers." />
+              <canvas aria-hidden="true"></canvas>
+            </div>
+            <figcaption class="game-demo-note" aria-live="polite">Night look, Fibonacci against Factorial</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="shell section" aria-labelledby="moments-title">
+        <header class="section-head">
+          <h2 id="moments-title">A video, moment by moment</h2>
+          <p>Fibonacci against Slow Factorial in 30 seconds, night look, frames from the video the studio records.</p>
+        </header>
+        <ol class="moments">
+          <li>
+            <figure>
+              <div class="moment-phone"><img src="/hero/first-frame-4.webp" width="540" height="960" loading="lazy" alt="The opening: FIBONACCI BALL adds up its last two hits, SLOW FACTORIAL BALL multiplies by the next number, WHO ARE YOU BACKING?" /></div>
+              <figcaption><b><span>0:00</span> The opening</b>Each ball's name and what it does, over its layers, and a question for the comments.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="moment-phone"><img src="/games/ball-race/mid.webp" width="540" height="960" loading="lazy" alt="Half way: both balls in their cards, NEXT HIT over each, the layers counting down." /></div>
+              <figcaption><b><span>0:13</span> Layer by layer</b>Every floor hit deals the ball's next number to the layer under it. NEXT HIT says what is coming; the meter beside each card, how far is left.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="moment-phone"><img src="/games/ball-race/last.webp" width="540" height="960" loading="lazy" alt="Near the end: hits in the trillions and quadrillions, a last layer each." /></div>
+              <figcaption><b><span>0:24</span> Into the trillions</b>The numbers grow with every hit, to every digit. The speeds are set so it ends close: here by three tenths of a second.</figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="moment-phone"><img src="/games/ball-race/winner.webp" width="540" height="960" loading="lazy" alt="The winner card: SLOW FACTORIAL BALL, won by 0.3 s, 24.9 s, 17 hits." /></div>
+              <figcaption><b><span>0:27</span> The winner</b>Won by how much, in how long and how many hits, and a line for the comments, in confetti. Then it fades back into its first frame.</figcaption>
+            </figure>
+          </li>
+        </ol>
+      </section>
+
+      <section class="shell section gp-split" aria-labelledby="rules-title">
+        <div class="gp-split-copy">
+          <header class="section-head gp-head">
+            <h2 id="rules-title">How it plays</h2>
+            <p>Three rules, and the numbers do the rest: a viewer picks a side in the first second and stays for the last digit.</p>
+          </header>
+          <ol class="game-rules gp-rules">
+            <li><b>Every floor hit deals a number</b>Each ball hits with the next number of its sequence: 1, 1, 2, 3, 5… against 1, 2, 6, 24, 120…</li>
+            <li><b>Break every layer</b>A layer breaks once its number has been dealt, and the first ball through its last one reaches the line.</li>
+            <li><b>Close to the very end</b>Speeds are set so it ends close, a photo finish or a gap of 1 to 10 s that you pick, at the length you pick.</li>
+            <li><b>A power, if you like</b>A ball can speed up or slow down with every floor hit, grow or split into more balls.</li>
+            <li><b>A crowd against one</b>Up to 200 balls of one sequence against one ball of another, racing as one.</li>
+            <li><b>Every digit</b>Numbers are whole, with a separator, never scientific notation: the last digits are what the comments check.</li>
+          </ol>
+        </div>
+        <figure class="stage gp-split-demo">
+          <div class="phone">
+            <img src="/games/ball-race.webp" srcset="/games/ball-race-270.webp 270w, /games/ball-race.webp 540w" sizes="270px" width="540" height="960" loading="lazy" alt="A Ball Race in the night look, half way, both balls breaking their layers." />
+          </div>
+          <figcaption class="game-demo-note">The night look, half way</figcaption>
+        </figure>
+      </section>
+
+      <section class="shell section" aria-labelledby="watch-title">
+        <header class="section-head">
+          <h2 id="watch-title">Watch it played</h2>
+          <p>Recorded from the studio as you would post them, one in each look, shown here smaller and muted: 30 seconds each.</p>
+        </header>
+        <ul class="gallery gp-gallery">
+          <li>
+            <figure>
+              <div class="gallery-phone">
+                <video src="/gallery/primes-vs-squares-3.mp4" poster="/gallery/primes-vs-squares-3.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Prime Ball vs Square Ball" hidden>
+                  <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                </button>
+              </div>
+              <figcaption><b>Prime Ball vs Square Ball</b><span>Paper look, 30 s</span></figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="gallery-phone">
+                <video src="/gallery/doubling-vs-fibonacci-3.mp4" poster="/gallery/doubling-vs-fibonacci-3.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Doubling Ball vs Fibonacci Ball" hidden>
+                  <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                </button>
+              </div>
+              <figcaption><b>Doubling Ball vs Fibonacci Ball</b><span>Cards look, 30 s</span></figcaption>
+            </figure>
+          </li>
+          <li>
+            <figure>
+              <div class="gallery-phone">
+                <video src="/gallery/tribonacci-vs-tripling-3.mp4" poster="/gallery/tribonacci-vs-tripling-3.webp" width="540" height="960" muted loop playsinline preload="none" controls></video>
+                <button class="gallery-play" type="button" aria-pressed="false" aria-label="Play Tribonacci Ball vs Tripling Ball" hidden>
+                  <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5Z" /></svg>
+                  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2" /><rect x="13.5" y="5.5" width="4" height="13" rx="1.2" /></svg>
+                </button>
+              </div>
+              <figcaption><b>Tribonacci Ball vs Tripling Ball</b><span>Night look, 30 s</span></figcaption>
+            </figure>
+          </li>
+        </ul>
+      </section>
+
+      <section class="shell section" aria-labelledby="choose-title">
+        <header class="section-head">
+          <h2 id="choose-title">What you choose</h2>
+          <p>Everything on one card at the top of the studio. Leave any of it to the dice.</p>
+        </header>
+        <ul class="gp-choices">
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg></span>
+            <h3>Two sequences</h3>
+            <p>Fifteen to pick from: Fibonacci, factorial, primes, squares, doubling, tripling, tribonacci and more. Or a roll of the dice, from 79 pairings.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h12M3.5 17h6M17 4.5l3.5 2.5-3.5 2.5M11.5 14.5l3.5 2.5-3.5 2.5" /></svg></span>
+            <h3>A photo finish or a gap</h3>
+            <p>The loser a fraction of a second behind, or a gap of 1 to 10 seconds that you set.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="3" /></svg></span>
+            <h3>Three looks</h3>
+            <p>Paper, cards or night, the same race drawn three ways.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2.5 5 13.5h6l-1 8 8-11h-6Z" /></svg></span>
+            <h3>A power</h3>
+            <p>Speeds up, slows down, grows or splits, on either ball.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0M15.5 5.5a3.5 3.5 0 0 1 0 7M17.5 14.5a6.5 6.5 0 0 1 4 5.5" /></svg></span>
+            <h3>A crowd</h3>
+            <p>Up to 200 balls of one sequence against one ball of another.</p>
+          </li>
+          <li class="tile">
+            <span class="gp-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" /></svg></span>
+            <h3>Notes and a narrator</h3>
+            <p>Every hit a note, every break a crack, the fanfare at the line. A narrator names both balls, asks the question and calls the winner (paid plans).</p>
+          </li>
+        </ul>
+        <ul class="gp-looks">
+          <li><img src="/looks/paper.webp" width="480" height="416" loading="lazy" alt="The paper look: cream boxes in ink frames." /><span>Paper</span></li>
+          <li><img src="/looks/cards.webp" width="480" height="416" loading="lazy" alt="The cards look: white cards with hard shadows on a pastel page." /><span>Cards</span></li>
+          <li><img src="/looks/night.webp" width="480" height="416" loading="lazy" alt="The night look: dark cards on a dusk-blue page." /><span>Night</span></li>
+        </ul>
+      </section>
+
+      <section class="shell section faq-section" aria-labelledby="faq-title">
+        <header class="section-head">
+          <h2 id="faq-title">Questions</h2>
+          <p>About Ball Race. The rest are on <a href="/#faq-title">the home page</a>.</p>
+        </header>
+        <div class="faq">
+          <div class="faq-col">
+            <details>
+              <summary>How close are the races?</summary>
+              <p>As close as you ask. A photo finish puts the loser 0.15 to 1.1 seconds behind the winner; or pick a gap of 1 to 10 seconds. Either way the speeds are set so the video comes out at the length you chose.</p>
+            </details>
+            <details>
+              <summary>Which ball wins?</summary>
+              <p>Whichever the race says: the studio finds speeds that end it close, and the sequences decide. Roll again for another.</p>
+            </details>
+          </div>
+          <div class="faq-col">
+            <details>
+              <summary>Are the numbers real?</summary>
+              <p>Every one: the next term of the sequence, to every digit, with a separator. Layers stay at or under 10<sup>18</sup> so every digit fits.</p>
+            </details>
+            <details>
+              <summary>Is it on the free plan?</summary>
+              <p>Yes: Ball Race is made on every plan, up to 30 seconds in the paper look on the free one.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="shell section" aria-labelledby="others-title">
+        <header class="section-head">
+          <h2 id="others-title">The other games</h2>
+          <p>The same studio around each: the length you pick, the sound and the narrator, the follow button, your library.</p>
+        </header>
+        <ul class="gp-others">
+          <li>
+            <a class="gp-other" href="/games/arena-clash">
+              <img src="/games/arena-clash-270.webp" srcset="/games/arena-clash-270.webp 270w, /games/arena-clash.webp 540w" sizes="132px" width="270" height="480" loading="lazy" alt="" />
+              <span class="gp-other-body">
+                <span class="gp-other-name"><!-- game:icon arena-clash -->Arena Clash</span>
+                <span class="gp-other-text">Flags in one round arena, tied to the ring by fans of strings. Cut theirs, keep yours: the last flag standing wins.</span>
+                <span class="gp-other-go">See the game</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="gp-other" href="/games/goal-rush">
+              <img src="/games/goal-rush-270.webp" srcset="/games/goal-rush-270.webp 270w, /games/goal-rush.webp 540w" sizes="132px" width="270" height="480" loading="lazy" alt="" />
+              <span class="gp-other-body">
+                <span class="gp-other-name"><!-- game:icon goal-rush -->Goal Rush</span>
+                <span class="gp-other-text">A football match of ninety minutes in one round pitch, two clubs or two players, and a goal that spins round the ring.</span>
+                <span class="gp-other-go">See the game</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="shell close" aria-labelledby="close-title">
+        <div class="stage close-stage">
+          <h2 id="close-title">Your first race is a dice roll away.</h2>
+          <p>Free to start, no card needed.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/signup" data-guest data-signups="open">Start free</a>
+            <button class="btn btn-primary" type="button" disabled data-guest data-signups="closed">Coming soon</button>
+            <a class="btn btn-primary" href="/app" data-member>Open studio</a>
+            <a class="btn btn-ghost" href="/games">All the games</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- site:footer -->
+    <script type="module" src="/src/site/game-page.ts"></script>
+  </body>
+</html>

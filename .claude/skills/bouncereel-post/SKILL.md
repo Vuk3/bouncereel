@@ -1,12 +1,12 @@
 ---
 name: bouncereel-post
-description: Writes the posts for one BounceReel video on YouTube Shorts, TikTok and Instagram Reels (title, description, tags, captions, pinned comments) as one JSON block to paste on the Videos page, and saves the video's thumbnail (its first frame) next to the clip, from the "BounceReel ball race:" or "BounceReel arena clash:" text the studio gives a superadmin after a recording (Copy on the sheet after a take, or "Copy what it is about" in the video's drawer on the Videos page). Use when the user pastes that text, asks for titles, captions, tags or a thumbnail for a BounceReel video, or asks to redo or change them.
+description: Writes the posts for one BounceReel video on YouTube Shorts, TikTok and Instagram Reels (title, description, tags, captions, pinned comments) as one JSON block to paste on the Videos page, and saves the video's thumbnail (its first frame) next to the clip, from the "BounceReel ball race:", "BounceReel arena clash:" or "BounceReel goal rush:" text the studio gives a superadmin after a recording (Copy on the sheet after a take, or "Copy what it is about" in the video's drawer on the Videos page). Use when the user pastes that text, asks for titles, captions, tags or a thumbnail for a BounceReel video, or asks to redo or change them.
 ---
 
 # Posts for a BounceReel video
 
 The user pastes a block that starts with `BounceReel ball race:` (or `BounceReel arena clash:`,
-read as *An Arena Clash* below says). Write the three posts from it,
+read as *An Arena Clash* below says, or `BounceReel goal rush:`, read as *A Goal Rush* says). Write the three posts from it,
 save the video's thumbnail next to the clip (*The thumbnail* below), and answer with **one JSON
 block in a ```json fence, then the thumbnail's path on a line of its own, and nothing else**: no
 greeting, no notes, no alternatives. The user copies the answer whole and pastes it on the Videos
@@ -69,6 +69,32 @@ changes:
   Scotland and Wales have theirs (🏴󠁧󠁢󠁥󠁮󠁧󠁿 🏴󠁧󠁢󠁳󠁣󠁴󠁿 🏴󠁧󠁢󠁷󠁬󠁳󠁿), Northern Ireland has none: write it.
 - **No politics**: the countries meet in a game; no history, borders, wars or rivalries, even as
   a joke.
+
+### A Goal Rush
+
+A block that starts `BounceReel goal rush:` is the third game: a football match of ninety minutes
+in a round pitch on a black stage, two clubs or two players as balls, a goal that spins round the
+ring; a ball that flies through it scores, and both kick off again. The clock runs 0' to 90' over
+the video, and the side with more goals at full time wins. Everything above applies, with these
+lines and changes:
+
+| Line | What it is for |
+| --- | --- |
+| `BounceReel goal rush: A vs B` | the two sides, as written |
+| `Clubs: …` or `Players: …` | who plays: each club with its league or country, each player with his country, whether he is a legend, his number |
+| `The match is …` | the derby or the rivalry they make ("El Clásico", "the Eternal Derby", "the GOAT debate"): the format's best hook, use it in titles and tags |
+| `Score: …`, `Goals, by minute: …` | **for you only**: the result and when each goal came. Neither is told, nor who scores first, nor how many goals |
+| `On screen all through: …` | the title (the video's question), the scoreboard and the timeline of goals: the posts pose the same choice |
+| `Video`, `Last line…`, `Asks viewers to follow…`, `Seed`, `File`, `Library id` | as for a race |
+
+- **Equal billing**: both sides named, the home side first as the block has them; neither is the
+  favourite or the underdog, whatever their records.
+- **What it is**, in words people search: the sides by name, "Real Madrid vs Barcelona", the
+  derby's name, "football simulation", "who wins?", "90 minutes", "spinning goal"; for players,
+  "Messi vs Ronaldo", "GOAT debate", "legends". A club's or a country's flag emoji may stand for a
+  side where it is plain (🇵🇹 for Ronaldo); no club emoji is invented.
+- **No real results**: the match is a game, not a fixture; no "last season's final", no table, no
+  injuries or transfers, nothing a reader could take for news.
 
 ## Rules
 

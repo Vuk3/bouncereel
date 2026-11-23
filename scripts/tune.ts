@@ -1,17 +1,21 @@
 // Checks, in plain Node, that matchups balance: every preset and a hundred
 // random matchups, at a few video lengths, as photo finishes and with the
-// finish gaps the panel offers, and rolls that keep one ball or both; then Flag
-// Battles of 2 to 12 flags, on their own and with a chosen winner. Run after
-// changing the physics, the presets or the generator.
+// finish gaps the panel offers, and rolls that keep one ball or both; then Arena
+// Clashes of 2 to 12 flags, on their own and with a chosen winner; then Goal Rush
+// matches of clubs and of players, from every pool, with and without a chosen
+// winner. Run after changing the physics, the presets or the generator.
 //
 //   npm run tune
 //   npm run tune -- 45      one video length
 
-import { DEFAULT_CONFIG, PRESETS, mergeConfig, switchGame, type Contestant } from '../src/config.ts';
+import { DEFAULT_CONFIG, MODES, PRESETS, mergeConfig, switchGame, type Contestant } from '../src/config.ts';
 import { videoSeconds } from '../src/pacing.ts';
 import { predictBattle } from '../src/sim/battle.ts';
 import { balanceBattle, randomBattle, slowExtra, spread } from '../src/sim/battle-balance.ts';
 import { balance, isComeback, randomMatchup } from '../src/sim/balance.ts';
+import { MATCH_POOLS } from '../src/football/teams.ts';
+import { predictMatch } from '../src/sim/match.ts';
+import { balanceMatch, goalsWanted, isMatchComeback, quietest, randomMatch } from '../src/sim/match-balance.ts';
 import { finishTimes, predict } from '../src/sim/world.ts';
 
 // The one Node global used here; declared instead of pulling in @types/node.
@@ -146,6 +150,58 @@ for (const video of lengths) {
       console.log(
         `  ${label.padEnd(26)} ${((performance.now() - started) / BATTLES).toFixed(0)} ms each (worst ${worst.toFixed(0)} ms), ${failed} not balanced, ${off} more than 0.1 s off length${chosen ? `, ${lost} won by another flag` : ''}, first flag out at ${Math.min(...firsts).toFixed(1)} s at the earliest, longest quiet stretch ${Math.round(mean * 100)} % on average (worst ${Math.round(Math.max(0, ...spreads) * 100)} %), speeds ${Math.round(Math.min(...speeds))}–${Math.round(Math.max(...speeds))} px/s`,
       );
+    }
+  }
+}
+
+/** Matches per mode and pool, and length: enough to see a failure, quick enough to run after every change. */
+const MATCHES = 12;
+for (const video of lengths) {
+  console.log(`\n── ${video} s Goal Rush matches`);
+  const base = mergeConfig(switchGame(DEFAULT_CONFIG, 'goal-rush'), { timing: { video } });
+  for (const mode of MODES) {
+    for (const pool of MATCH_POOLS[mode]) {
+      for (const chosen of [false, true]) {
+        const started = performance.now();
+        let worst = 0;
+        let failed = 0;
+        let off = 0;
+        let lost = 0;
+        let golden = 0;
+        let comebacks = 0;
+        let outside = 0;
+        const goals: number[] = [];
+        const firsts: number[] = [];
+        const quiet: number[] = [];
+        for (let i = 1; i <= MATCHES; i++) {
+          const dealt = randomMatch(String(i * 7919), base, mode, pool.id);
+          // The chosen winner: away, so it is never the side that kicks off on the left.
+          if (chosen) dealt.match.winner = dealt.match.away;
+          const t = performance.now();
+          const cfg = balanceMatch(dealt);
+          worst = Math.max(worst, performance.now() - t);
+          if (!cfg) {
+            failed++;
+            continue;
+          }
+          const o = predictMatch(cfg);
+          // A match's length is its clock's: more than a tenth of a second off is a fault.
+          if (Math.abs(videoSeconds(cfg, o.time, o.winnerName) - video) > 0.1) off++;
+          if (chosen && o.winner !== 1) lost++;
+          if (o.golden) golden++;
+          if (isMatchComeback(o)) comebacks++;
+          const [lo, hi] = goalsWanted(o.time);
+          if (o.goals.length < lo || o.goals.length > hi) outside++;
+          goals.push(o.goals.length);
+          firsts.push(o.goals[0]?.time ?? o.time);
+          quiet.push(quietest(o));
+        }
+        const mean = (list: number[]) => list.reduce((a, b) => a + b, 0) / Math.max(1, list.length);
+        const label = `${mode}, ${pool.label}${chosen ? ', winner chosen' : ''}`;
+        console.log(
+          `  ${label.padEnd(46)} ${((performance.now() - started) / MATCHES).toFixed(0)} ms each (worst ${worst.toFixed(0)}), ${failed} not balanced, ${off} off length, ${golden} golden goal${chosen ? `, ${lost} won by the other side` : ''}, goals ${Math.min(...goals)}–${Math.max(...goals)} (${mean(goals).toFixed(1)} on average, ${outside} outside the range), first goal at ${Math.min(...firsts).toFixed(1)}–${Math.max(...firsts).toFixed(1)} s, longest wait ${Math.round(mean(quiet) * 100)} % on average, ${comebacks} comebacks`,
+        );
+      }
     }
   }
 }

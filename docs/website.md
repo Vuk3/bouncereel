@@ -12,6 +12,9 @@ the legal pages. Accounts, plans and the admin area are in
 | a new page | its HTML file, its line in `PAGES` in [vite.config.ts](../vite.config.ts), and its address in [public/sitemap.xml](../public/sitemap.xml) if search engines should list it (§7) |
 | the look: colours, type, components | [src/site/site.css](../src/site/site.css) (tokens at the top) |
 | the live race in the hero | [src/site/hero.ts](../src/site/hero.ts); when it loads: [src/site/home.ts](../src/site/home.ts) |
+| the live Arena Clash and Goal Rush in the hero, on /games, on the game pages and in How it works | [src/site/arena.ts](../src/site/arena.ts) `ArenaDemo`, [src/site/pitch.ts](../src/site/pitch.ts) `PitchDemo` (§4) |
+| a game's own page | [games/ball-race.html](../games/ball-race.html), [games/arena-clash.html](../games/arena-clash.html), [games/goal-rush.html](../games/goal-rush.html); its phones and clips [src/site/game-page.ts](../src/site/game-page.ts) (§4, The game pages) |
+| the recorded clips' player (home page, game pages) | [src/site/gallery.ts](../src/site/gallery.ts) `gallery`, `wholeFile` |
 | the pricing cards | [src/site/pricing.ts](../src/site/pricing.ts); what a plan includes, in words: `describeFeatures` in [shared/features.ts](../shared/features.ts) |
 | the sign-in forms | [src/site/auth.ts](../src/site/auth.ts) |
 | the hero's still frame, the looks, the share image | [scripts/stills.ts](../scripts/stills.ts) (section 5) |
@@ -34,6 +37,7 @@ Vite, and its address is the file's path without `.html` (Workers Assets'
 | `/` | everyone | [index.html](../index.html) |
 | `/pricing` | everyone | [pricing.html](../pricing.html) |
 | `/games` | everyone | [games.html](../games.html): the games, a section each with the game playing |
+| `/games/ball-race`, `/games/arena-clash`, `/games/goal-rush` | everyone | [games/](../games/): a page each game, everything about it (§4, The game pages) |
 | `/signup`, `/login` | signed out (the Worker sends a signed-in visitor on) | [signup.html](../signup.html), [login.html](../login.html) |
 | `/forgot`, `/reset?token=`, `/verify?token=` | everyone | [forgot.html](../forgot.html), [reset.html](../reset.html), [verify.html](../verify.html) |
 | `/terms`, `/privacy`, `/refunds` | everyone | the three legal pages |
@@ -112,9 +116,10 @@ it before first paint, and the theme toggle with the theme
 
 The pieces, each used where it carries information:
 
-- **the phones**: a game playing live in a dark bezel. The hero has two side by side, a race and
-  an Arena Clash (the arena's a little lower from 920 px, so the pair reads as two), in the balls'
-  light (violet above, sky below), each with its game's icon, name and what it plays under it;
+- **the phones**: a game playing live in a dark bezel. The hero has three, a race, a Goal Rush and
+  an Arena Clash, fanned from 640 px (the two outer ones 48 px lower, so the three read as a set
+  and not a wall), in a row that scrolls sideways a phone at a time under 640 px, in the balls'
+  light (violet, green, sky), each with its game's icon, name and what it plays under it;
   the one beside How it works plays what the steps set; each section of /games has its game's;
 - **pieces of the studio** in the step tiles, each a small screen with an edge and the accent's
   light from above, and real (section 4): the dice with the matchup it rolled and how it ends;
@@ -170,21 +175,25 @@ button starts one.
 ## 4. The home page
 
 In order, each thing said once: the hero on its stage (the headline **"Game videos, ready to
-post."**, what they are in two sentences: balls racing through ever bigger numbers and flags
-cutting each other's strings, balanced to end at the length you pick, recorded as a vertical MP4
-with nothing to edit; Start free and See the games, a line saying it records in Chrome or Edge
-on a computer, whose Why opens that answer in the questions, three specs, and **both games
-playing**, a phone each, with one dice for both); **the games** (`#games`) in words, a card each
+post."**, what they are in two sentences: balls racing through ever bigger numbers, flags
+cutting each other's strings and football matches with a spinning goal, balanced to end at the
+length you pick, recorded as a vertical MP4 with nothing to edit; Start free and See the games, a
+line saying it records in Chrome or Edge on a computer, whose Why opens that answer in the
+questions, three specs, and **the three games playing**, a phone each, with one dice for all
+three); **the games** (`#games`) in words, a card each
 (below); **how it works**, a small working studio shown with a race (below): three steps (roll a
 matchup → choose length, look, sound and narrator → post it as it is), each a card with its
 words beside the piece of the studio it is about, and the phone that plays what they set; **the
 gallery**, three recordings from the studio (below); what the studio does, **on the stage, in
-three groups**, each under its name (a game's under its icon) and a line, one card across the
+four groups**, each under its name (a game's under its icon) and a line, one card across the
 width (the group's main drawing) and two side by side under it: **Ball Race** (the three looks;
 fifteen sequences, 79 pairings; powers, for a twist), **Arena Clash** (199 flags, any matchup:
-flags running past and the dice's regions; it ends on a comeback; slow motion and a heartbeat)
-and **in both games** (a narrator who asks for a pick; a follow button in the video; the
-library); the plans (from `GET /api/plans`); questions, eight, under their heading in two columns
+flags running past and the dice's regions; it ends on a comeback; slow motion and a heartbeat),
+**Goal Rush** (157 clubs and 453 players: the clubs' kits running past, with "Drawn in their
+colours: no crests or photos." under them; the derbies and classics as the studio names them;
+GOAL! over a scoreboard, with players' shirts and numbers) and **in every game** (a narrator who
+asks for a pick; a follow button in the video; the library); the plans (from `GET /api/plans`);
+questions, nine, under their heading in two columns
 of their own (one list on a phone); the last call to action on the stage; the footer. What only a
 paid plan makes is said where it comes up: the narrator's, the follow button's and the powers'
 cards say "the paid plans", never a plan's name, and step 2's line says what the free plan makes.
@@ -194,14 +203,20 @@ The length, the loop, the file and the apps' buttons are step 3's alone; no card
 game in words, with no picture (the hero's phones are a screen above): its icon and name, which
 plans make it, a line on what it is, its three rules numbered (what happens in bold, how under
 it), and the way to its part of /games, under a strip in its own colours (the race's two balls,
-the arena's strings). On [/games](../games.html) each game has a section instead: its phone
+the arena's strings, the pitch's green). The cards stand two to a row, Goal Rush across both,
+and three to a row from 1080 px. Goal Rush's card and section say under the rules that clubs and
+players are drawn in their colours, with no crests or photos (`.game-note`): the real ones are the
+owner's alone ([goal-rush](./goal-rush.md#3-the-sides-and-their-pictures)), and nothing on the
+site asks for them. On [/games](../games.html) each game has a section instead: its phone
 playing it ([src/site/games-page.ts](../src/site/games-page.ts): `Hero` from hero.ts for the
-race, `ArenaDemo` from arena.ts for the arena) on a stage of its own in its colours, beside its
-icon, name and plans, a line on what it is, **how it plays** (the three rules, each on a tile),
-four numbers (the race: 15 sequences, 79 pairings, 3 looks, 4 powers; the arena: 199 flags, 2–12
-a battle, 6 regions for the dice, 4 in 5 on a comeback) and **what you choose**, as chips; the
-arena's the other way round, with its flags running past under both. The page opens on its stage
-(what the games are, a tile linking to each) and ends on **in both games**, six tiles (the length
+race, `ArenaDemo` from arena.ts for the arena, `PitchDemo` from pitch.ts for the match) on a
+stage of its own in its colours, beside its icon, name and plans, a line on what it is, **how it
+plays** (the three rules, each on a tile), four numbers (the race: 15 sequences, 79 pairings, 3
+looks, 4 powers; the arena: 199 flags, 2–12 a battle, 6 regions for the dice, 4 in 5 on a
+comeback; the match: 157 clubs, 453 players, 201 classics, 4 in 5 a comeback or a late winner) and
+**what you choose**, as chips; the arena's the other way round, with its flags running past under
+both, and the match's clubs' kits under its own. The page opens on its stage (what the games are,
+a tile linking to each) and ends on **in every game**, six tiles (the length
 you pick, a narrator, a follow button, a loop with no cut, the library, ready to post), then the
 close. A game's icon is [public/games/](../public/games/)`<id>.svg` written into the page at
 build time (`<!-- game:icon <id> -->`, `gameIcon` in [vite.config.ts](../vite.config.ts)), so it
@@ -233,14 +248,15 @@ working on the steps' matchup where they share something with the steps:
   says it in Heart, a file made once (section 5) and fetched whole on the first press (see the
   gallery for why); the press pauses it again, and the wave moves only while it plays.
 
-**The gallery** (`gallery` in [home.ts](../src/site/home.ts)) shows three recordings from the
-studio, one per look, made smaller and silent (section 5), each in a phone with its matchup and
-look under it. A video plays, muted and looping, only while it is half on screen, and pauses when
+**The gallery** (`gallery` in [gallery.ts](../src/site/gallery.ts)) shows a recording of each
+game, made smaller and silent (section 5): El Clásico (Goal Rush), the four biggest countries
+(Arena Clash) and Tribonacci against Tripling (Ball Race, night), each in a phone with its game,
+its length and a link to the game's page under it. A video plays, muted and looping, only while it is half on screen, and pauses when
 it leaves; its button pauses it, and the screen then leaves it paused until the button plays it
 again. Under reduced motion nothing starts by itself: the button plays it. Without JS each keeps
 the browser's own controls and its poster.
 
-**Under it, where the races are posted** (`.follow`): "Watch more races." and a line, then a card
+**Under it, where the videos are posted** (`.follow`): "Watch more." and a line, then a card
 for each of BounceReel's accounts (`<!-- site:follow -->`): the network's mark on an inset
 square, its name and handle, and a Follow pill; three across from 760 px, one under another on a
 phone. The marks are in the ink rather than the brand colours, and a card turns to the accent on
@@ -255,8 +271,9 @@ would not play there at all. A blob URL needs no ranges. The opening's first pre
 `play()` before the file has arrived: Safari lets an element play outside a press only once it
 was asked to inside one.
 
-**The site makes "game videos"**, in its headings and descriptions: two games, a race of balls
-through layers of numbers and an arena of flags tied by strings, each named in the lede. The
+**The site makes "game videos"**, in its headings and descriptions: three games, a race of balls
+through layers of numbers, an arena of flags tied by strings and a football match with a spinning
+goal, each named in the lede. The
 numbers (Fibonacci, factorial…) are what a ball deals, not a word in the name of a game.
 
 ⚠️ **Which browsers record** stays where every visitor sees it before signing up: the hero's
@@ -301,15 +318,59 @@ recorded battle goes (its last outs and its win in slow motion, the winner card,
 next battle's first frame). It plays four battles in turn (`SHOWCASES`): China, India, the United
 States and Russia (public/games/arena-clash.webp is a frame of the same battle, its first paint,
 which the live battle fades in over), then the Balkans, the Americas and Scandinavia, so the title
-names a region; the hero's dice gives it three or four new flags from a region (`randomBattle`). A
+names a region; the hero's dice gives it three or four of the countries anyone knows (`KNOWN`: the
+world's best known, Europe, the Balkans, the Americas, Asia, Africa; never four from deep in the
+list, the owner's call), from one group so the title names it (`dealFlags`). A
 battle is balanced as the studio balances it, a seed at a time, 8 ms a frame (`balanceSoon`), and
 the next one while the one on screen plays, so it never holds the page. It plays when the hero's
 race does (`share` in home.ts), loads with it, and never under reduced motion; under the phone,
 its flags, the region first when they share one (`describeBattle`).
 
+**The hero's Goal Rush is the real engine too** ([src/site/pitch.ts](../src/site/pitch.ts),
+`PitchDemo`), built as the arena's is: the studio's match simulation and renderer, muted, at half
+size, the free plan's 30 s, played the way a recorded match goes (the whistle, FULL TIME, the
+winner card, the fade into the next match's first frame). It plays the rivalries everyone knows
+in turn (`SHOWCASES`): El Clásico first (public/games/goal-rush.webp is a frame of the same match,
+its first paint), the Eternal Derby, Messi against Ronaldo, Der Klassiker, the Old Firm, the
+Manchester derby, the Superclásico, Mbappé against Haaland and on; the hero's dice deals another
+of them on a new seed, never two names from deep in the list (the owner's call). Its balls
+are the drawn kits every customer's videos have: the file never asks for the owner's crests or
+photos. Balanced a seed at a time, 8 ms a frame (`balanceSoon`), it plays when the hero's race
+does; under the phone, the derby's name and the two sides (`describeMatch`).
+
+**The game pages** ([games/](../games/), [src/site/game-page.ts](../src/site/game-page.ts)), one
+a game, everything about it, linked from the cards (Everything about it), the stage's groups, the
+gallery, the footer's Games column and the sitemap. Each is built the same way, its own words:
+
+- **The stage**: the game's icon and name, what it is, four numbers, the way in (Start free or
+  Open studio, See the plans), which plans make it (`data-game-plans`), and the game playing in a
+  phone in its own light (`--game-glow-a`, `--game-glow-b` on the page's main).
+- **A video, moment by moment**: five frames of its first showcase from the renderer (four for the
+  race), each with the second it shows and what happens there (public/games/<game>/, section 5);
+  a row to swipe under 1100 px.
+- **How it plays**: six rules beside the game playing on its stage, another showcase than the
+  stage's (`data-first`); on a phone the stage comes first.
+- **Watch it played**: three recorded clips (section 5).
+- **What you choose**: six tiles, then the flags or the kits running past, or the race's looks; on
+  Goal Rush's, the line that there are no crests or photos.
+- **Questions** about the game, **the other games** (a card each with its frame), and the close.
+
+Every phone (`data-play`: `race`, `battle`, `match`) is the studio's engine, as the hero's: each
+runs only while it is on screen, loads after the page has, never under reduced motion (the stills
+stay); `data-first` the showcase it opens on, so no two on a page play the same.
+
 **How it works is a working studio, not pictures of one** ([src/site/home.ts](../src/site/home.ts),
-the engine's side in [src/site/hero.ts](../src/site/hero.ts)). The steps set a matchup and the
-phone beside them plays it, replaying it until the steps change it:
+the engine's side in [src/site/hero.ts](../src/site/hero.ts), arena.ts and pitch.ts). A choice of
+game over the steps (the studio's segments, each game's icon and name) shows the steps of one game
+at a time: every step has a version a game (`data-how`), and the phone beside them is that game's.
+The steps set a matchup and the phone plays it, replaying it until the steps change it. For an
+Arena Clash, step 1 rolls three, four or six of the site's known countries (`dealFlags`) and lists
+their flags, regions and the last flag standing (`battleFacts`); step 2 sets the length, how many
+flags and the winner (each flag, or let it play). For a Goal Rush, step 1 rolls another of the big
+rivalries (`SHOWCASES`) and lists the two sides, their league or country and how it ends, the
+derby's name first (`matchFacts`); step 2 sets the length and the winner. Their phones play it
+through `show()` (balanced as the studio does, then on a loop); step 3 shows their first frame as
+a still (public/games/arena-clash/start.webp, goal-rush/kickoff.webp). For a Ball Race:
 
 - **Step 1** rolls the studio's dice with powers off, as the hero does, and shows each ball's
   colour, name and first numbers and how the race ends, worded as the studio's matchup card
@@ -341,7 +402,9 @@ narrator, on the paid plans, ending on a call to pick a winner (`QUESTIONS`); th
 loop; music only or silence; the library and its links (the settings, not the file); any video
 replayed exactly; an Arena Clash's 199 flags, 2 to 12 a battle, six regions for the dice (and
 everywhere), ten strings a bounce, four battles in five a comeback (`COMEBACK` in
-battle-balance.ts), the last outs in slow motion and a heartbeat at ten strings or fewer. Check a claim against [recording and export](./recording-and-export.md) and
+battle-balance.ts), the last outs in slow motion and a heartbeat at ten strings or fewer; a Goal
+Rush's 157 clubs and 453 players, 201 classics, a goal that spins and turns back at half time, and
+kits drawn in colours, never crests or photos. Check a claim against [recording and export](./recording-and-export.md) and
 [matchups and balancing](./matchups-and-balancing.md) before changing it.
 
 **The plans** come from `GET /api/plans` ([src/site/pricing.ts](../src/site/pricing.ts)), so the
@@ -379,12 +442,15 @@ All drawn by the studio's renderer, so they are what a video looks like, by
 | [public/hero/first-frame-4.webp](../public/hero/first-frame-4.webp) | the hero's first frame, its opening title and all: Fibonacci vs Slow Factorial balanced to 30 s, night; also the first paint of the steps' phone and of step 3, whose defaults are that race. The `-4` is a new name for a frame that changed in a way that shows (the title, its lighter wash, then its panels): a browser keeps `/hero` a week, and the old name would show the old still under the new first frame | 540×960, ~34 KB |
 | [public/looks/](../public/looks/) `paper.webp`, `cards.webp`, `night.webp` | the same race 55 % of the way, the top box as the studio's look picker crops it | 480×416, 15–17 KB each |
 | [public/games/](../public/games/) `ball-race.webp`, `arena-clash.webp`, and each at `-270.webp` | each game's frame for its card (§4): the race in the night look 55 % of the way, as the looks have it; an Arena Clash of China, India, the United States and Russia (the four biggest countries, the owner's pick) balanced to 30 s, an eighth of the way and then on to a moment with no "+10" or "-34" in the air (`QUIET`: on a still card they read as stuck to the balls), with its title (`SHOWCASE` in stills.ts). Each halved from the full frame step by step (`halved`), and the card's `srcset` picks the size nearest the one it shows: scaled down in one step, by the canvas or by the browser to a 122 px card, an Arena Clash's hundreds of strings beat into waves (moiré), averaged step by step they make the wedge they are. Made again when either game's look changes | 540×960 (30 and 60 KB) and 270×480 (13 and 17 KB) |
-| [public/games/](../public/games/) `ball-race.svg`, `arena-clash.svg` | not from the stills page: each game's icon, drawn by hand on a 48-unit grid as a tile in one of the site's two colours, so it reads on the dark thumbnails and at 22 px (the race's ball falling on its layers on violet; the arena's white ring with a white and a dark ball and their fans on sky blue: on the stage's ink it was lost on a dark thumbnail). Written into the pages (§4) and shown as an `<img>` on the Videos page | 1–2 KB |
+| [public/games/](../public/games/) `goal-rush.webp` and `goal-rush-270.webp` | the Goal Rush card's and the hero's frame: El Clásico (Real Madrid against Barcelona, the drawn kits) balanced to 30 s, at a moment with no goal being celebrated and no POST! in the air (`midMatch`, `QUIET_GOAL` in stills.ts), its title and board, the turf and the crowd; halved as the others are | 540×960 (38 KB) and 270×480 (14 KB) |
+| [public/games/](../public/games/) `ball-race.svg`, `arena-clash.svg`, `goal-rush.svg` | not from the stills page: each game's icon, drawn by hand on a 48-unit grid as a tile in one of the site's colours, so it reads on the dark thumbnails and at 22 px (the race's ball falling on its layers on violet; the arena's white ring with a white and a dark ball and their fans on sky blue: on the stage's ink it was lost on a dark thumbnail; the match's ring with its goal at the edge and a ball flying in on green). Written into the pages (§4) and shown as an `<img>` on the Videos page | 1–2 KB |
 | [public/og.png](../public/og.png) | the Open Graph and Twitter image, as the hero: the ink, the mark and the name, the headline, one line on what it makes, and at the bottom the address (`SITE_HOST`, narrowed if it would reach the phones), then a violet rule and "Free to start"; two phones (night, paper) in the balls' light. Made again when the address changes | 1200×630, ~300 KB |
 | [public/favicon-32.png](../public/favicon-32.png), [public/favicon.png](../public/favicon.png), [public/apple-touch-icon.png](../public/apple-touch-icon.png) | the icons every head links (the app's too), one drawing at three sizes: [public/favicon.svg](../public/favicon.svg) drawn from the vector at each size, never scaled down from a bigger PNG (that is what makes a favicon soft in the tab strip). 32 px for the tab, with the tile's rounded corners; 512 px for Google's results and Search Console and 180 px for the iOS home screen, filled to the edge with the ink, since those crop or round the square themselves and iOS turns a transparent corner black. The SVG is no longer linked: the PNGs are what every browser and Google read | 32, 512 and 180 px square |
 | [brand/profile.png](../brand/profile.png) | not for the site: the profile picture for Instagram, YouTube and TikTok, the mark on the ink in the balls' light, sized to stay inside the circle each shows it in (offered at `./brand/profile.png` on the stills page) | 1080×1080, ~940 KB |
 | [public/voice/opening-heart.m4a](../public/voice/opening-heart.m4a) | not an image: the narrator card's opening, the classic's `introLine` said by Kokoro in Heart, the studio's own narrator (the page's "Make the opening" button; a WAV, then `ffmpeg -i opening-heart.wav -ac 1 -c:a aac -b:a 48k -movflags +faststart opening-heart.m4a`) | 16.8 s, AAC 48 kb/s mono, ~95 KB |
 | [public/gallery/](../public/gallery/) `primes-vs-squares-3`, `doubling-vs-fibonacci-3`, `tribonacci-vs-tripling-3`, each `.mp4` and `.webp` (`-3` for the same reason as the still: recorded again when the first frame changed) | not from the stills page: the gallery, three takes made with Record on an account with every look (the built-in matchup of that name, 30 s, music only or silent, since the file drops its sound; paper, cards and night; ⚠️ Chrome holds a page's second download until it is allowed, so take each file as it lands), then `ffmpeg -i take.mp4 -an -vf fps=30,scale=540:960:flags=lanczos -c:v libx264 -profile:v high -preset veryslow -tune animation -crf 30 -pix_fmt yuv420p -movflags +faststart <name>.mp4`; the poster is the take's first frame as a WebP at 0.86, made through a canvas in the browser (this ffmpeg has no WebP encoder). Check a take's frame 0 before using it: it must be the race's first, the opening title over it | 540×960, 30 fps, no sound, 0.87–1.03 MB; posters 31–36 KB |
+| [public/gallery/](../public/gallery/) `el-clasico`, `messi-vs-ronaldo`, `der-klassiker` (Goal Rush), `four-biggest`, `balkans`, `nordics` (Arena Clash), each `.mp4` and `.webp` | from the clips page ([scripts/clips.html](../scripts/clips.html), [clips.ts](../scripts/clips.ts), built with STILLS=1 as the stills page is): a showcase of the site's phones (pitch.ts 0, 2, 3; arena.ts 0, 1, 3) balanced as they balance it, played in real time at 540×960 through the studio's phases and recorded off the canvas, fading into its own first frame so it loops (`await recordClip('match', 0)` in the console returns the file and its first frame as data URLs); then the same ffmpeg line as the race's. The drawn kits only: the page asks for no picture. Check frame 0 and the last frame match | 540×960, 30 fps, no sound, 1.2–1.6 MB; posters 37–46 KB |
+| [public/games/](../public/games/) `ball-race/`, `arena-clash/`, `goal-rush/` (`mid`, `last`, `winner`; `start`, `mid`, `out`, `last`, `winner`; `kickoff`, `goal`, `half`, `whistle`, `winner`) | the stills page: each game's first showcase played as its phone plays it (`raceMoments`, `battleMoments`, `matchMoments`), a frame at each moment, halved once; the game pages' "A video, moment by moment" (the race's first is hero/first-frame-4.webp) | 540×960, 23–45 KB each |
 
 ⚠️ **Remake them after a change to the renderer, the layout, the first built-in matchup, the
 balancer, `HERO_SECONDS` or `HERO_LOOKS`**: the still frame must be the first frame the hero
@@ -401,6 +467,7 @@ The page that draws the images is only built on request:
 ```sh
 STILLS=1 npx vite build && npx vite preview --port 4199 --strictPort
 # open http://localhost:4199/scripts/stills, download each image into public/ at the path under it
+# the clips: open http://localhost:4199/scripts/clips and run recordClip(game, showcase) in the console
 ```
 
 ## 6. Speed
@@ -555,3 +622,6 @@ used for.
 - 2026-11-12 - the Arena Clash card's frame made again: the arena drawn at 92 %, and a moment with no number in the air (`QUIET` in stills.ts).
 - 2026-11-13 - the home page for both games and each thing said once: the hero plays a race and an Arena Clash side by side (arena.ts) under "Game videos, ready to post.", one dice for both; the browser note under the stage gone (the hero's Why opens the first question); the games in words, three rules each, no picture; the stage's groups are Ball Race, Arena Clash (flags, a comeback, slow motion and a heartbeat) and both games (narrator, follow button, library), without the race board, the loop, the buttons' zones and the specs, which step 3 says; eight questions, one on choosing an Arena Clash's winner. /games remade: a stage, then a section a game with it playing, its rules, numbers and choices, the arena's flags running past, and six tiles for both games. Fifteen sequences and 79 pairings, as the dice has them.
 - 2026-11-23 - the Arena Clash card's frame made again: the row of flags under the ring, the arena at 87 %.
+- 2026-11-23 - Goal Rush on the site: a third phone in the hero (pitch.ts, El Clásico first, fanned with the other two), its card (two to a row, three from 1080 px) and its section on /games with its kits running past, a Goal Rush group on the home page's stage, "In every game", a question on crests and photos; everywhere the clubs and players are drawn in their colours, with no crests or photos. Its frames are public/games/goal-rush.webp and -270.webp; the Terms say what the studio makes and that it is not affiliated with any club, league or player.
+- 2026-11-23 - the Goal Rush phone plays and deals only the big rivalries (thirteen `SHOWCASES`); its match livelier, on green turf with a crowd (goal-rush.md); the frames made again; 453 players and 201 classics on the card, /games and the home page.
+- 2026-11-24 - a page for each game (games/ball-race.html, arena-clash.html, goal-rush.html, game-page.ts): the stage, a video moment by moment, the rules beside the game playing, three clips, the choices, questions, the other games; linked from the home page, the footer and the sitemap. How it works shows each game (a choice over the steps, `data-how`; `show()`, `matchFacts`, `battleFacts`, `dealFlags`), the gallery a clip of each game, the stage's groups Goal Rush first, each linking to its page. The hero's Arena Clash dice deals only known countries (`KNOWN`). Six new clips recorded by scripts/clips.ts; the game pages' moments by stills.ts.

@@ -22,6 +22,9 @@ const PAGES = {
   home: 'index.html',
   pricing: 'pricing.html',
   games: 'games.html',
+  gameRace: 'games/ball-race.html',
+  gameArena: 'games/arena-clash.html',
+  gameRush: 'games/goal-rush.html',
   login: 'login.html',
   signup: 'signup.html',
   forgot: 'forgot.html',
@@ -189,9 +192,10 @@ export default defineConfig({
     // The pages only: a top-level `build.rolldownOptions.input` is inherited by the
     // Worker's environment too, which then fails to build the HTML as a module.
     client: {
-      // STILLS=1 adds the page that draws the site's images (scripts/stills.html, docs/website.md).
+      // STILLS=1 adds the pages that draw the site's images and record its clips (scripts/stills.html,
+      // scripts/clips.html, docs/website.md).
       build: {
-        rolldownOptions: { input: process.env.STILLS ? { ...PAGES, stills: 'scripts/stills.html' } : PAGES },
+        rolldownOptions: { input: process.env.STILLS ? { ...PAGES, stills: 'scripts/stills.html', clips: 'scripts/clips.html' } : PAGES },
       },
     },
   },

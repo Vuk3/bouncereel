@@ -2,6 +2,7 @@ import type { PublicPlan } from '../../shared/api.ts';
 import { LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, soundAllowed, type Sound } from '../../shared/features.ts';
 import type { Config, Skin } from '../config.ts';
 import './chrome.ts';
+import { gallery, wholeFile } from './gallery.ts';
 import type { Settings } from './hero.ts';
 import { fillGamePlans, renderPlans } from './pricing.ts';
 
@@ -10,15 +11,16 @@ import { fillGamePlans, renderPlans } from './pricing.ts';
 // delays it. Under prefers-reduced-motion it loads only when the dice is rolled or a step is
 // changed, to draw that matchup's first frame.
 //
-// The hero plays both games, a phone each: a race (hero.ts) and an Arena Clash (arena.ts), and its
-// dice rolls both. How it works is a small working studio: step 1 rolls the dice, step 2 sets the
-// video, step 3 shows the video as it will be posted, and the phone beside them plays what they
-// set. A look on the stage below plays the same matchup larger; a power's sketch and the
+// The hero plays the three games, a phone each: a race (hero.ts), a Goal Rush (pitch.ts) and an
+// Arena Clash (arena.ts), and its dice rolls all three. How it works is a small working studio, a
+// game at a time (picked over the steps): step 1 rolls the dice, step 2 sets the video, step 3
+// shows the video as it will be posted, and the phone beside them plays what they set. A look on the stage below plays the same matchup larger; a power's sketch and the
 // narrator's opening are their own. The gallery's videos play only while they are on screen.
 
 const phone = document.querySelector<HTMLElement>('#phone')!;
 const canvas = phone.querySelector('canvas')!;
 const arenaCanvas = document.querySelector<HTMLElement>('#arena-phone')!.querySelector('canvas')!;
+const pitchCanvas = document.querySelector<HTMLElement>('#pitch-phone')!.querySelector('canvas')!;
 const roll = document.querySelector<HTMLButtonElement>('#roll')!;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -55,28 +57,35 @@ const SOUND_HINTS: Record<Sound, string> = {
 type HeroModule = typeof import('./hero.ts');
 type Phone = InstanceType<HeroModule['Hero']>;
 type Arena = InstanceType<(typeof import('./arena.ts'))['ArenaDemo']>;
-let engine: Promise<{ module: HeroModule; hero: Phone; arena: Arena; demo: Phone }> | null = null;
+type Pitch = InstanceType<(typeof import('./pitch.ts'))['PitchDemo']>;
+let engine: Promise<{ module: HeroModule; hero: Phone; arena: Arena; pitch: Pitch; demo: Phone }> | null = null;
 /** The matchup the steps have set; null until the engine has made the first one. */
 let steps: Config | null = null;
 
 /** Under each of the hero's phones, what it is playing. */
 const showMatchup = (text: string) => ($('#matchup-note').textContent = text);
 const showBattle = (text: string) => ($('#battle-note').textContent = text);
+const showMatch = (text: string) => ($('#match-note').textContent = text);
 
 /**
  * Only one place plays at a time: of the phones on screen, the most visible plays and the others
- * hold their frame; with a look open larger, only that one. The hero's two phones are one place,
- * side by side: the arena plays when the hero's race does. Ratios are kept from the start, so each
+ * hold their frame; with a look open larger, only that one. The hero's three phones are one place,
+ * side by side: the arena and the match play when the hero's race does (each only while it is on
+ * screen itself, which the swiped row of a phone's screen decides). Ratios are kept from the start, so each
  * phone has its turn as soon as the engine is there.
  */
 const shown = new Map<Element, number>();
 let phones: [Element, Phone][] = [];
 let arenaPhone: Arena | null = null;
+let pitchPhone: Pitch | null = null;
 function share(): void {
   let best: Element | null = lookDialog.open ? lookCanvas : null;
   if (!best) for (const [target, ratio] of shown) if (ratio > 0 && (!best || ratio > shown.get(best)!)) best = target;
   for (const [target, p] of phones) p.setActive(target === best);
   arenaPhone?.setActive(best === canvas);
+  pitchPhone?.setActive(best === canvas);
+  howArena?.setActive(best === howArenaCanvas);
+  howPitch?.setActive(best === howPitchCanvas);
 }
 const sharing = new IntersectionObserver(
   (entries) => {
@@ -96,7 +105,7 @@ function start(): NonNullable<typeof engine> {
     // A canvas never loads a web font by itself: without this the race would draw in the
     // fallback font over a still frame drawn in Rubik.
     await Promise.all([600, 700, 800, 900].map((w) => document.fonts.load(`${w} 40px Rubik`)));
-    const [module, arenaModule] = await Promise.all([import('./hero.ts'), import('./arena.ts')]);
+    const [module, arenaModule, pitchModule] = await Promise.all([import('./hero.ts'), import('./arena.ts'), import('./pitch.ts')]);
     const hero = timed('hero', () => new module.Hero(canvas, (cfg) => showMatchup(module.describeRace(cfg))));
     phones = [[canvas, hero]];
     share();
@@ -104,6 +113,11 @@ function start(): NonNullable<typeof engine> {
     // The arena balances its battle a seed at a time between frames (arena.ts), so it never holds the page.
     const arena = timed('arena', () => new arenaModule.ArenaDemo(arenaCanvas, (cfg) => showBattle(arenaModule.describeBattle(cfg))));
     arenaPhone = arena;
+    share();
+    await nextTask();
+    // The match balances the same way (pitch.ts), a seed at a time between frames.
+    const pitch = timed('pitch', () => new pitchModule.PitchDemo(pitchCanvas, (cfg) => showMatch(pitchModule.describeMatch(cfg))));
+    pitchPhone = pitch;
     share();
     await nextTask();
     // Whatever the steps were set to before the engine came, it starts from there.
@@ -115,7 +129,7 @@ function start(): NonNullable<typeof engine> {
     share();
     await nextTask();
     timed('facts', () => describeSteps(module, first));
-    return { module, hero, arena, demo };
+    return { module, hero, arena, pitch, demo };
   })();
   return engine;
 }
@@ -123,9 +137,10 @@ function start(): NonNullable<typeof engine> {
 roll.addEventListener('click', async () => {
   roll.disabled = true;
   try {
-    const { hero, arena } = await start();
+    const { hero, arena, pitch } = await start();
     hero.roll();
     arena.roll();
+    pitch.roll();
   } finally {
     roll.disabled = false;
   }
@@ -282,6 +297,161 @@ for (const input of document.querySelectorAll<HTMLInputElement>('input[name="how
     void refit();
   });
 }
+
+// ── How it works, for each game ─────────────────────────────────────────
+
+/*
+ * The steps show one game at a time, picked above them: each step has a version a game (marked
+ * data-how), and the phone beside them is that game's. Ball Race is the steps above; an Arena
+ * Clash and a Goal Rush each have their own roll (the site's dice: the big rivalries, the known
+ * countries), length and winner, and their phone plays the battle or match they set on a loop
+ * (arena.ts, pitch.ts show()). Step 3 shows their first frame as a still.
+ */
+type HowGame = 'ball-race' | 'arena-clash' | 'goal-rush';
+const howPost = $('#how-post');
+const howPostImg = howPost.querySelector('img')!;
+const howPhones: Record<HowGame, HTMLElement> = { 'ball-race': $('#how-phone'), 'arena-clash': $('#how-phone-arena'), 'goal-rush': $('#how-phone-pitch') };
+const howArenaCanvas = howPhones['arena-clash'].querySelector('canvas')!;
+const howPitchCanvas = howPhones['goal-rush'].querySelector('canvas')!;
+const FIRST_FRAMES: Record<HowGame, string> = { 'ball-race': '/hero/first-frame-4.webp', 'arena-clash': '/games/arena-clash/start.webp', 'goal-rush': '/games/goal-rush/kickoff.webp' };
+const howLengths: Record<HowGame, HTMLInputElement> = { 'ball-race': how.length, 'arena-clash': $<HTMLInputElement>('#how-battle-length'), 'goal-rush': $<HTMLInputElement>('#how-match-length') };
+let howGame: HowGame = 'ball-race';
+let howArena: Arena | null = null;
+let howPitch: Pitch | null = null;
+const captions: Record<HowGame, string> = { 'ball-race': '', 'arena-clash': 'China vs India vs United States vs Russia, 30 s, muted', 'goal-rush': 'El Clásico: Real Madrid vs Barcelona, 30 s, muted' };
+/** What the arena's and the match's steps have set; the seed stays until the dice is rolled. */
+let battle = { flags: ['cn', 'in', 'us', 'ru'], seed: '7' };
+let match: { mode: 'clubs' | 'players'; home: string; away: string; seed: string } = { mode: 'clubs', home: 'real-madrid', away: 'barcelona', seed: '11' };
+const newSeed = () => String(1 + Math.floor(Math.random() * 999_999));
+
+sharing.observe(howArenaCanvas);
+sharing.observe(howPitchCanvas);
+
+function setHowGame(game: HowGame): void {
+  howGame = game;
+  for (const part of document.querySelectorAll<HTMLElement>('[data-how]')) part.hidden = part.dataset.how !== game;
+  for (const [id, el] of Object.entries(howPhones)) el.hidden = id !== game;
+  howPost.dataset.game = game;
+  howPostImg.src = FIRST_FRAMES[game];
+  how.lengthFact.textContent = `${Number(howLengths[game].value).toFixed(1)} s`;
+  if (game === 'ball-race') caption(steps);
+  else how.caption.textContent = captions[game];
+  if (game === 'arena-clash' && !howArena) void showHowBattle();
+  if (game === 'goal-rush' && !howPitch) void showHowMatch();
+  share();
+}
+for (const input of document.querySelectorAll<HTMLInputElement>('input[name="how-game"]')) input.addEventListener('change', () => setHowGame(input.value as HowGame));
+
+/** A step's slider: its number as it moves, the setting once the thumb stops. */
+function lengthSlider(input: HTMLInputElement, out: HTMLElement, then: () => void): void {
+  let timer = 0;
+  input.addEventListener('input', () => {
+    const video = Number(input.value);
+    input.setAttribute('aria-valuetext', `${video} seconds`);
+    out.textContent = `${video} s`;
+    how.lengthFact.textContent = `${video.toFixed(1)} s`;
+    window.clearTimeout(timer);
+    timer = window.setTimeout(then, 200);
+  });
+}
+
+function row(mark: HTMLElement, name: string, from: string): HTMLLIElement {
+  const li = el('li', 'piece-row');
+  li.append(mark, el('b', '', name), el('em', '', from));
+  return li;
+}
+
+/** The battle the arena's steps set, in its phone, and in words. */
+async function showHowBattle(): Promise<void> {
+  await start();
+  const arena = await import('./arena.ts');
+  howArena ??= new arena.ArenaDemo(howArenaCanvas, () => {});
+  share();
+  const video = Number(howLengths['arena-clash'].value);
+  const winner = document.querySelector<HTMLInputElement>('input[name="how-battle-winner"]:checked')?.value ?? '';
+  const cfg = await howArena.show(arena.battleConfig(battle.flags, battle.seed, '', winner, video));
+  if (!cfg) {
+    $('#how-battle-verdict').textContent = `These flags do not fit a ${video} s video: roll again.`;
+    return;
+  }
+  const facts = arena.battleFacts(cfg);
+  $('#how-flags').replaceChildren(
+    ...facts.flags.map((f) => {
+      const img = Object.assign(el('img', 'flag'), { src: `/flags/${f.code}.svg`, width: 22, height: 22, alt: '' });
+      return row(img, f.name, f.from);
+    }),
+  );
+  const [name, rest] = facts.verdict.split(/, (.*)/);
+  $('#how-battle-verdict').replaceChildren(el('strong', '', name), `, ${rest}`);
+  // The winner's choices: either flag of these, or none.
+  const winners = $('#how-battle-winner');
+  if (winners.dataset.flags !== battle.flags.join()) {
+    winners.dataset.flags = battle.flags.join();
+    const option = (value: string, text: string) => {
+      const label = el('label');
+      const input = Object.assign(el('input'), { type: 'radio', name: 'how-battle-winner', value, checked: value === winner });
+      input.addEventListener('change', () => void showHowBattle());
+      label.append(input, el('span', '', text));
+      return label;
+    };
+    winners.replaceChildren(option('', 'Let it play'), ...facts.flags.map((f) => option(f.code, f.name)));
+  }
+  captions['arena-clash'] = `${arena.describeBattle(cfg)}, ${video} s, muted`;
+  if (howGame === 'arena-clash') how.caption.textContent = captions['arena-clash'];
+}
+
+$('#how-roll-battle').addEventListener('click', () => {
+  const count = Number(checked('how-battle-count'));
+  void import('./arena.ts').then((arena) => {
+    battle = { flags: arena.dealFlags(count), seed: newSeed() };
+    void showHowBattle();
+  });
+});
+for (const input of document.querySelectorAll<HTMLInputElement>('input[name="how-battle-count"]')) {
+  input.addEventListener('change', () => $('#how-roll-battle').click());
+}
+lengthSlider(howLengths['arena-clash'], $('#how-battle-length-out'), () => void showHowBattle());
+
+/** The match the Goal Rush's steps set, in its phone, and in words. */
+async function showHowMatch(): Promise<void> {
+  await start();
+  const pitch = await import('./pitch.ts');
+  howPitch ??= new pitch.PitchDemo(howPitchCanvas, () => {});
+  share();
+  const video = Number(howLengths['goal-rush'].value);
+  const pick = checked('how-match-winner');
+  const winner = pick === 'home' ? match.home : pick === 'away' ? match.away : '';
+  const cfg = await howPitch.show(pitch.matchConfig(match.mode, match.home, match.away, match.seed, winner, video));
+  if (!cfg) {
+    $('#how-match-verdict').textContent = `This match does not fit a ${video} s video: roll again.`;
+    return;
+  }
+  const facts = pitch.matchFacts(cfg);
+  $('#how-sides').replaceChildren(
+    ...facts.sides.map((s) => {
+      const dot = el('i', 'ball');
+      dot.style.setProperty('--c', s.color);
+      return row(dot, s.name, s.from);
+    }),
+  );
+  $('#how-match-home').textContent = facts.sides[0].name;
+  $('#how-match-away').textContent = facts.sides[1].name;
+  $('#how-match-verdict').replaceChildren(...(facts.derby ? [el('strong', '', facts.derby), `: ${facts.verdict}`] : [facts.verdict]));
+  captions['goal-rush'] = `${pitch.describeMatch(cfg)}, ${video} s, muted`;
+  if (howGame === 'goal-rush') how.caption.textContent = captions['goal-rush'];
+}
+
+$('#how-roll-match').addEventListener('click', () => {
+  void import('./pitch.ts').then((pitch) => {
+    const others = pitch.SHOWCASES.filter((s) => s.home !== match.home || s.away !== match.away);
+    const next = others[Math.floor(Math.random() * others.length)];
+    match = { mode: next.mode, home: next.home, away: next.away, seed: newSeed() };
+    document.querySelector<HTMLInputElement>('input[name="how-match-winner"][value=""]')!.checked = true;
+    void showHowMatch();
+  });
+});
+for (const input of document.querySelectorAll<HTMLInputElement>('input[name="how-match-winner"]')) input.addEventListener('change', () => void showHowMatch());
+lengthSlider(howLengths['goal-rush'], $('#how-match-length-out'), () => void showHowMatch());
 
 // ── The cards on the stage ───────────────────────────────────────────────
 
@@ -443,67 +613,7 @@ function powerDemo(): void {
   });
 }
 
-/**
- * Workers Assets answer a Range request with the whole file (200), and Safari plays a video or a
- * sound only from range answers (206): served as they are, the gallery and the opening would not
- * play there at all. So the page fetches each file whole, once, when it is first wanted, and plays
- * it from a blob URL, which needs no ranges. The returned function resolves once `src` is set.
- */
-function wholeFile(media: HTMLMediaElement, url: string): () => Promise<void> {
-  let ready: Promise<void> | null = null;
-  return () =>
-    (ready ??= fetch(url)
-      .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(`${url}: ${r.status}`))))
-      .then((blob) => {
-        media.src = URL.createObjectURL(blob);
-      })
-      .catch((err: unknown) => {
-        ready = null;
-        throw err;
-      }));
-}
 
-/**
- * The gallery: real videos, each playing (muted, looping) only while it is half on screen, and
- * its button to pause it, after which the screen does not start it again. Without JS each keeps
- * the browser's own controls; under reduced motion nothing starts by itself, the button plays it.
- * Leaving the screen pauses a video either way. The button says what is wanted, so it answers
- * at once while the file is still on its way.
- */
-function gallery(): void {
-  for (const phone of document.querySelectorAll<HTMLElement>('.gallery-phone')) {
-    const video = phone.querySelector('video')!;
-    const press = phone.querySelector<HTMLButtonElement>('.gallery-play')!;
-    const load = wholeFile(video, video.src);
-    video.controls = false;
-    press.hidden = false;
-    let wanted = false;
-    let held = false;
-    const want = (on: boolean) => {
-      wanted = on;
-      press.setAttribute('aria-pressed', String(on));
-      if (!on) video.pause();
-      else
-        load()
-          .then(() => (wanted ? video.play() : undefined))
-          .catch(() => want(false));
-    };
-    press.addEventListener('click', () => {
-      held = wanted;
-      want(!wanted);
-    });
-    // A pause that is not the page's (the system's media controls) shows on the button too.
-    video.addEventListener('pause', () => wanted && want(false));
-    // The ratio, not isIntersecting: that is already true at the first pixel on screen.
-    new IntersectionObserver(
-      ([entry]) => {
-        if (entry.intersectionRatio < 0.5) want(false);
-        else if (!held && !reducedMotion) want(true);
-      },
-      { threshold: 0.5 },
-    ).observe(video);
-  }
-}
 
 /** The opening as Kokoro says it, a file made once (public/voice/), fetched on the first press. */
 function voicePlayer(): void {

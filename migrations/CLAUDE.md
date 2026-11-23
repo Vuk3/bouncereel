@@ -20,6 +20,7 @@ throttling, plans, subscriptions and the change log in
 | [0009_follow_button.sql](./0009_follow_button.sql) | `follow` on every plan's features: off on the default plan (Rookie), on on the others |
 | [0010_profiles.sql](./0010_profiles.sql) | `first_name`, `last_name`, `avatar_key` (a key in the R2 bucket) and `google_sub` (unique where set) on `users`; an account made with Google has `password_hash` '' |
 | [0011_flag_battle.sql](./0011_flag_battle.sql) | `battle` on `videos`: what an Arena Clash came to, as JSON; NULL for a race |
+| [0012_goal_rush.sql](./0012_goal_rush.sql) | `match_result` on `videos`: what a Goal Rush came to, as JSON; NULL for the other games |
 
 ## Rules
 

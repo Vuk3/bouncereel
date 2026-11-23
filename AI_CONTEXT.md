@@ -42,10 +42,19 @@ format known as the string circle: 2 to 12 balls, each a country's **flag**, in 
 rival's strings **cuts** every one it touches; a bounce off the ring ties a bundle of new ones;
 a ball with no strings is out, and the last flag standing wins. It steps by distance, so
 balancing picks a seed and then the speed that puts the last string on the video's length
-exactly ([arena-clash](docs/arena-clash.md)). The two are games of their own: each has its
-world, prediction, balancing, renderer and look. They share the studio around them (phases, the
-narrator, recording, the library, the plans) and, in the drawing, only
-[draw.ts](src/render/draw.ts) and [follow.ts](src/render/follow.ts).
+exactly ([arena-clash](docs/arena-clash.md)).
+
+Its third game is **Goal Rush** (`game: 'goal-rush'`, also with `allGames`): a football match of
+ninety minutes in a round pitch on the black stage, two balls, each a **club** or a **player** in
+its kit, and one **goal** that spins round the ring; a ball through its mouth scores, both kick
+off again, and at ninety minutes the side with more goals wins. Its length is its clock's, so
+balancing picks only the seed: no draw, goals spread over it, a comeback or a late winner
+([goal-rush](docs/goal-rush.md)). A superadmin's balls are the clubs' real crests and the
+players' photos, from the private bucket; everyone else's are kits drawn from colours.
+
+The three are games of their own: each has its world, prediction, balancing, renderer and look.
+They share the studio around them (phases, the narrator, recording, the library, the plans) and,
+in the drawing, only [draw.ts](src/render/draw.ts) and [follow.ts](src/render/follow.ts).
 
 ## Maintaining this document
 
@@ -65,6 +74,7 @@ enough to read whole before the real work starts.
 | accounts, sessions, roles, plans and features, subscriptions, the change log, the admin area, payments | [docs/accounts-and-billing.md](docs/accounts-and-billing.md) |
 | the public site: pages, shared parts, its look, the home page and hero, images, speed, SEO, legal pages | [docs/website.md](docs/website.md) |
 | Arena Clash: its rules, balancing, the flags and their figures, its look, sound and calls, its card in the studio, what the library keeps | [docs/arena-clash.md](docs/arena-clash.md) |
+| Goal Rush: its rules, balancing, the clubs, players and classics, the real pictures (`npm run pictures`), its look, sound and narrator, its card, what the library keeps | [docs/goal-rush.md](docs/goal-rush.md) |
 | a rule that cuts across areas | **here**, under [Conventions and gotchas](#conventions-and-gotchas) |
 
 **Describe only the present.** History lives in git and on each deep-dive's changelog.
@@ -92,13 +102,15 @@ enough to read whole before the real work starts.
 | [src/config.ts](src/config.ts) | the `Config` type, defaults, the seven built-in matchups, `mergeConfig` |
 | [src/pacing.ts](src/pacing.ts) | the frame around the race (hold, slow motion, winner card) and the race length it leaves |
 | [src/layout.ts](src/layout.ts) | frame geometry: the two cards, built from one template |
-| [src/sim/](src/sim/) | the deterministic simulation, prediction, balancing, random matchups, sequences; Arena Clash's world and balancing (`battle.ts`, `battle-balance.ts`) |
-| [public/games/](public/games/) | each game's icon (`<id>.svg`) and the frame its card on the site shows (`<id>.webp`); [games.html](games.html) is the page about the games ([website](docs/website.md#4-the-home-page)) |
-| [src/battle/](src/battle/) | Arena Clash's countries (names, figures, regions) and the flags' pictures and strings' colours; the SVGs are [public/flags/](public/flags/) |
-| [src/render/](src/render/) | Canvas drawing: the race's three looks and effects (`renderer.ts`, `effects.ts`), Arena Clash's black stage (`battle.ts`), and what both draw with (`draw.ts`, the follow button in `follow.ts`) |
+| [src/sim/](src/sim/) | the deterministic simulation, prediction, balancing, random matchups, sequences; Arena Clash's world and balancing (`battle.ts`, `battle-balance.ts`); Goal Rush's (`match.ts`, `match-balance.ts`) |
+| [public/games/](public/games/) | each game's icon (`<id>.svg`), the frame its card on the site shows (`<id>.webp`) and its page's moments (`<id>/`); [games.html](games.html) is the page about the games, [games/](games/) a page each game ([website](docs/website.md#4-the-home-page)) |
+| [src/battle/](src/battle/) | Arena Clash's countries (names, figures, regions, the search's other names) and the flags' pictures and strings' colours; the SVGs are [public/flags/](public/flags/) |
+| [src/football/](src/football/) | Goal Rush's clubs and players (`teams.ts`), its classic matches, how a kit is drawn, the superadmin's real crests and photos (`pictures.ts`) |
+| [scripts/pictures.ts](scripts/pictures.ts), [scripts/faces.swift](scripts/faces.swift) | `npm run pictures`: the crests and the players' best photos from Wikipedia into `pictures/` (never in git), and into the private bucket |
+| [src/render/](src/render/) | Canvas drawing: the race's three looks and effects (`renderer.ts`, `effects.ts`), Arena Clash's black stage (`battle.ts`), Goal Rush's pitch (`match.ts`), and what all draw with (`draw.ts`, the follow button in `follow.ts`) |
 | [src/audio/](src/audio/) | synth, melodies, the narrator's opening and winner line, Kokoro and its voices |
 | [src/record/recorder.ts](src/record/recorder.ts) | `MediaRecorder`: format choice, start, stop, download |
-| [src/ui/](src/ui/) | the panel's tabs, generated from [fields.ts](src/ui/fields.ts); the theme toggle every page shares; the plan's notes and the account's banner ([plan.ts](src/ui/plan.ts)) |
+| [src/ui/](src/ui/) | the panel's tabs, generated from [fields.ts](src/ui/fields.ts); the theme toggle every page shares; the plan's notes and the account's banner ([plan.ts](src/ui/plan.ts)); the select you type into ([picker.ts](src/ui/picker.ts)) |
 | [src/library.ts](src/library.ts), [src/api.ts](src/api.ts), [src/session.ts](src/session.ts) | saving a recording to the library (and the per-account retry queue); the pages' one way to `/api`; the signed-in account, signing out |
 | [app.html](app.html), [app/videos.html](app/videos.html), [src/dashboard.ts](src/dashboard.ts) | the studio's page; the Videos page |
 | [account.html](account.html), [src/account.ts](src/account.ts) | the account page |
@@ -149,9 +161,10 @@ enough to read whole before the real work starts.
 | **day** | the daily allowance's window: the UTC calendar day, so it comes back at midnight UTC; what it has used is kept on the account ([accounts-and-billing](docs/accounts-and-billing.md#6-plans-and-features)) |
 | **subscription** | an account's one row naming its plan, status (`active`, `canceled`), source (`manual` or a provider), optional end date; in force or not is worked out on every request, and an ended one falls back to the default plan |
 | **change log** | the append-only record of every subscription, plan and account-standing change: who, when, before, after |
-| **game** | `game` in the config and the library: `ball-race` or `arena-clash`; the panel's switch picks it, and the plan's `allGames` allows the second |
+| **game** | `game` in the config and the library: `ball-race`, `arena-clash` or `goal-rush`; the panel's switch picks it, and the plan's `allGames` allows the other two |
 | **flag**, **arena**, **string**, **cut** | Arena Clash's ball (a country, by code: `rs`, `gb-eng`), its round field, a tie from the ring to a ball (a hundred in a fan at the start, a bundle of ten from every bounce, no most), and a ball touching a rival's strings, which removes every one it touches: the only way strings go ([arena-clash](docs/arena-clash.md)) |
 | **pace** | how many times its starting speed (`battle.speed`) every ball flies at, up to twice by the end, so long duels play faster |
+| **side**, **match**, **goal**, **classic** | Goal Rush's ball (a club or a player, by id: `real-madrid`, `messi`), its ninety minutes (`match.seconds` of video), a ball through the spinning goal's mouth, and a pair the studio offers whole (El Clásico, Messi–Ronaldo) ([goal-rush](docs/goal-rush.md)) |
 
 ## Architecture
 
@@ -209,6 +222,11 @@ card saying "Balancing the battle…" while the run on screen goes on; then it l
 matchup. Every edit of the card (flags, how many, winner) balances a new battle the same way.
 Play and Record wait for the flags' pictures; the outs among the last flags play in slow motion,
 as the win does. On a plan without `allGames` the switch is off.
+
+**Goal Rush is picked.** The same: `switchGame`, then `searchMatch` between frames, a seed at a
+time, each tried at each side's length until one is won by that side and is the match wanted. A
+superadmin's studio loads the list of its real pictures (`GET /api/admin/sides`) and a match's two
+before its first frame; the card counts the account's matches by pair from its library.
 
 **Play is pressed.** Audio unlocks (a click is required), the run restarts, and, if the run
 has a narrator (the Sound set to Narrator and music, a plan that includes it), its two lines
@@ -325,6 +343,10 @@ takes effect when it passes, with nothing scheduled.
   [draw.ts](src/render/draw.ts), which draws it on canvases (the watermark, the share
   image). Change all three together, then make the PNG icons again from favicon.svg on the
   stills page ([website](docs/website.md#5-the-images)).
+- **Real crests and photos are the superadmin's alone**: Goal Rush's pictures live in the private
+  bucket under `sides/`, served only under `/api/admin`; nothing in `public/` or in git holds them
+  (`pictures/` is ignored). Everyone else's balls are kits drawn from colours. Do not ship them to
+  customers without the owner asking ([goal-rush](docs/goal-rush.md#3-the-sides-and-their-pictures)).
 - **The site's images are drawn by the renderer** ([scripts/stills.ts](scripts/stills.ts)):
   remake them after a change to the renderer, the layout or the first built-in matchup, or the
   hero's still frame no longer matches its first live frame ([website](docs/website.md#5-the-images)).

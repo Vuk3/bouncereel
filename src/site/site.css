@@ -394,8 +394,9 @@ input:focus-visible {
 /* Side by side, the specs go under the words; on a phone, under the race, so it comes sooner. */
 @media (min-width: 920px) {
   /* The words and the specs, centred as one block beside the phone (the empty rows take the rest). */
+  /* The phones' side a little wider than the words': three phones side by side need it. */
   .hero-stage {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     grid-template-areas: '. demo' 'copy demo' 'specs demo' '. demo';
     grid-template-rows: 1fr auto auto 1fr;
     column-gap: 56px;
@@ -502,15 +503,16 @@ input:focus-visible {
     font-size: 0.8125rem;
   }
 }
-/* The two balls' light behind the phone: violet above, sky below. */
+/* The games' light behind the phones: the race's violet, the pitch's green, the arena's sky. */
 .hero-demo::before {
   content: '';
   position: absolute;
   inset: -12% -20% 6%;
   z-index: 0;
   background:
-    radial-gradient(42% 34% at 34% 28%, rgb(124 77 255 / 0.32), transparent 70%),
-    radial-gradient(40% 32% at 66% 74%, rgb(14 165 233 / 0.26), transparent 70%);
+    radial-gradient(36% 34% at 22% 34%, rgb(124 77 255 / 0.3), transparent 70%),
+    radial-gradient(34% 30% at 50% 22%, rgb(19 161 87 / 0.26), transparent 70%),
+    radial-gradient(36% 32% at 78% 70%, rgb(14 165 233 / 0.24), transparent 70%);
   filter: blur(8px);
   pointer-events: none;
 }
@@ -547,9 +549,10 @@ input:focus-visible {
   opacity: 1;
 }
 /*
- * The hero's two phones, a game each, side by side at every width: smaller than one alone, the
- * arena's a little lower beside the race's from 920 px, so the pair reads as two and not as a
- * mirror. Under each, the game's icon and name and what it is playing.
+ * The hero's three phones, a game each, side by side: the newest, Goal Rush, in the middle and
+ * highest, the race's and the arena's a step lower either side, so the three read as a fan and not
+ * as a row of copies. Under 640 px they are a row to swipe, two and a half in view, each snapping
+ * to the middle. Under each, the game's icon and name and what it is playing.
  */
 .hero-phones {
   position: relative;
@@ -557,7 +560,25 @@ input:focus-visible {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: clamp(12px, 2.6vw, 26px);
+  gap: clamp(10px, 2vw, 22px);
+}
+@media (max-width: 639px) {
+  .hero-phones {
+    justify-content: flex-start;
+    width: calc(100% + 2 * clamp(20px, 5vw, 64px));
+    margin-inline: calc(-1 * clamp(20px, 5vw, 64px));
+    padding: 4px clamp(20px, 5vw, 64px) 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .hero-phones::-webkit-scrollbar {
+    display: none;
+  }
+  .hero-game {
+    flex: none;
+    scroll-snap-align: center;
+  }
 }
 .hero-game {
   display: grid;
@@ -567,24 +588,48 @@ input:focus-visible {
   text-align: center;
 }
 .hero-phones .phone {
-  width: min(calc(50vw - 56px), 232px, calc((100svh - 330px) * 9 / 16));
+  width: min(calc(33vw - 40px), 196px, calc((100svh - 330px) * 9 / 16));
   min-width: 124px;
   border-width: 8px;
   border-radius: 34px;
+}
+@media (max-width: 639px) {
+  .hero-phones .phone {
+    width: min(40vw, 196px);
+  }
+}
+/* Beside the words, three phones share a column a little over half the stage: each a sixth of the screen. */
+@media (min-width: 920px) {
+  .hero-phones .phone {
+    width: min(calc(16vw - 32px), 172px, calc((100svh - 330px) * 9 / 16));
+  }
+  .hero-game figcaption {
+    max-width: 172px;
+  }
+  /* Its column a little narrower beside three phones: the headline a little smaller, still two lines. */
+  .hero h1 {
+    font-size: clamp(2.5rem, 4.3vw, 4.25rem);
+  }
 }
 .hero-phones .phone img,
 .hero-phones .phone canvas {
   border-radius: 26px;
 }
-@media (min-width: 920px) {
-  .hero-game-arena {
-    margin-top: 56px;
+@media (min-width: 640px) {
+  .hero-game:not(.hero-game-goal) {
+    margin-top: 48px;
+  }
+  .hero-game-goal .phone {
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.1),
+      0 0 60px -10px rgb(19 161 87 / 0.45),
+      0 40px 80px -30px rgb(0 0 0 / 0.7);
   }
 }
 .hero-game figcaption {
   display: grid;
   gap: 2px;
-  max-width: 232px;
+  max-width: 196px;
 }
 .hero-game-name {
   display: inline-flex;
@@ -734,6 +779,37 @@ input:focus-visible {
   color: var(--muted);
   font-size: 0.8125rem;
   text-align: center;
+}
+/* Which game the steps show: the studio's segments, a game's icon beside its name. */
+.how-games {
+  max-width: 34rem;
+  margin-bottom: 16px;
+}
+.how-games .segments span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  font-size: 0.9375rem;
+}
+.how-games .game-icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+/* A flag in a step's row, round as the arena draws it. */
+.piece-row .flag {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--hairline);
+}
+/* Step 3 for the arena and the match: its first frame, as a still; the race's canvas is the race's own. */
+.post-phone:not([data-game='ball-race']) canvas {
+  display: none;
 }
 .steps {
   display: grid;
@@ -1253,6 +1329,17 @@ input:focus-visible {
   .game-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .game-list > .game-goal {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1080px) {
+  .game-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .game-list > .game-goal {
+    grid-column: auto;
+  }
 }
 .game-card {
   position: relative;
@@ -1282,6 +1369,35 @@ input:focus-visible {
   --game-tint: linear-gradient(90deg, #ef4444, #facc15, #22c55e, #38bdf8, #8b5cf6);
   --game-glow-a: rgb(239 68 68 / 0.22);
   --game-glow-b: rgb(56 189 248 / 0.24);
+}
+/* The pitch's: its green, the ring's white, the derby's gold. */
+.game-goal {
+  --game-tint: linear-gradient(90deg, #13a157, #ffffff 55%, #ffd23f);
+  --game-glow-a: rgb(19 161 87 / 0.28);
+  --game-glow-b: rgb(255 210 63 / 0.18);
+}
+/* What the game does not have, said plainly under its rules: here, that its balls are drawn, not crests or photos. */
+.game-note {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.game-note::before {
+  content: 'i';
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  font-style: italic;
+  translate: 0 2px;
 }
 .game-head {
   display: flex;
@@ -1403,7 +1519,7 @@ input:focus-visible {
 }
 @media (min-width: 680px) {
   .game-jump {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 .game-jump a {
@@ -1573,6 +1689,374 @@ input:focus-visible {
   grid-column: 1 / -1;
 }
 
+/* ── A game's own page (games/<game>.html) ─────────────────────────────── */
+
+/*
+ * The stage: the game's name, what it is, its numbers and the way in on the left, the game playing
+ * in a phone on the right, in its own light (--game-glow-a, --game-glow-b, set on the page's main).
+ * One column under 920 px, the phone under the words.
+ */
+.gp-stage {
+  position: relative;
+  display: grid;
+  gap: clamp(28px, 4vw, 48px);
+  align-items: center;
+  padding: clamp(28px, 5vw, 64px) clamp(20px, 5vw, 64px);
+  overflow: hidden;
+  isolation: isolate;
+}
+.gp-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(40% 60% at 84% 30%, var(--game-glow-a), transparent 70%),
+    radial-gradient(36% 50% at 70% 92%, var(--game-glow-b), transparent 70%);
+  pointer-events: none;
+}
+@media (min-width: 920px) {
+  .gp-stage {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  }
+}
+.gp-intro .eyebrow a {
+  color: inherit;
+  text-decoration: none;
+}
+.gp-intro .eyebrow a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.gp-name {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 20px);
+}
+.gp-name .game-icon {
+  flex: none;
+  width: clamp(52px, 6vw, 72px);
+  height: auto;
+  border-radius: 16px;
+}
+.gp-name h1 {
+  font-size: clamp(2.6rem, 6.4vw, 4.8rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.gp-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.gp-facts li {
+  padding: 8px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+.gp-facts b {
+  color: var(--ink);
+  font-weight: 700;
+}
+.gp-plans {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.gp-demo {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  margin: 0;
+}
+.gp-demo .phone {
+  width: min(calc(68vw - 20px), 300px, calc((100svh - 220px) * 9 / 16));
+}
+
+/*
+ * A video, moment by moment: its frames in a row, each in a small phone with the second it shows
+ * and what happens there. Under 1100 px a row to swipe, a frame and a half in view on a phone.
+ */
+.moments {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(64%, 230px);
+  gap: 18px;
+  margin: 0;
+  padding: 4px 4px 14px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+.moments li {
+  scroll-snap-align: start;
+}
+@media (min-width: 1100px) {
+  .moments {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    overflow: visible;
+  }
+}
+.moments figure {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  margin: 0;
+}
+.moment-phone {
+  aspect-ratio: 9 / 16;
+  border: 6px solid #1a1e2a;
+  border-radius: 28px;
+  background: #0c0e13;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    0 24px 48px -28px rgb(0 0 0 / 0.6);
+  overflow: clip;
+}
+.moment-phone img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.moments figcaption {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.moments figcaption b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.moments figcaption b span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* How it plays: the rules beside the game playing on its stage, the stage first on a phone's width. */
+.gp-split {
+  display: grid;
+  gap: clamp(24px, 4vw, 48px);
+  align-items: center;
+}
+@media (min-width: 920px) {
+  .gp-split {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  }
+}
+.gp-head {
+  grid-template-columns: 1fr !important;
+  align-items: start !important;
+}
+.gp-rules {
+  display: grid;
+  gap: 10px;
+}
+@media (min-width: 640px) {
+  .gp-rules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.gp-rules li {
+  align-content: start;
+  row-gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-inner);
+  background: var(--surface);
+  font-size: 0.9375rem;
+}
+.gp-rules li b {
+  font-size: 1rem;
+}
+.gp-split-demo {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  margin: 0;
+  padding: clamp(28px, 4vw, 44px) 16px;
+  overflow: clip;
+  isolation: isolate;
+}
+.gp-split-demo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(50% 36% at 30% 26%, var(--game-glow-a), transparent 70%),
+    radial-gradient(50% 36% at 70% 76%, var(--game-glow-b), transparent 70%);
+  pointer-events: none;
+}
+.gp-split-demo .phone {
+  width: min(calc(64vw - 20px), 260px, calc((100svh - 200px) * 9 / 16));
+}
+@media (max-width: 919px) {
+  .gp-split-demo {
+    order: -1;
+  }
+}
+
+/* What you choose: a tile each, one to three to a row. */
+.gp-choices {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .gp-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1000px) {
+  .gp-choices {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.gp-choice-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.gp-choice-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.gp-choices i {
+  color: var(--ink);
+  font-style: normal;
+  font-weight: 600;
+}
+.gp-wall {
+  margin-top: clamp(22px, 3vw, 32px);
+}
+.gp-note {
+  display: block;
+  margin-top: 14px;
+}
+/* The race's three looks, as the studio's look picker shows them. */
+.gp-looks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: clamp(22px, 3vw, 32px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.gp-looks li {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.gp-looks img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-inner);
+  box-shadow: 0 0 0 1px var(--hairline);
+}
+
+/* The other games: a card each, its frame in a small phone beside what it is. */
+.gp-others {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 760px) {
+  .gp-others {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.gp-other {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2.4vw, 24px);
+  height: 100%;
+  padding: 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+.gp-other:hover {
+  border-color: var(--hairline-strong);
+  transform: translateY(-2px);
+}
+.gp-other img {
+  flex: none;
+  width: clamp(96px, 14vw, 132px);
+  height: auto;
+  border: 5px solid #1a1e2a;
+  border-radius: 20px;
+  background: #0c0e13;
+}
+.gp-other-body {
+  display: grid;
+  gap: 8px;
+}
+.gp-other-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.gp-other-name .game-icon {
+  width: 30px;
+  height: auto;
+  border-radius: 8px;
+}
+.gp-other-text {
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+.gp-other-go {
+  color: var(--accent-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.gp-other-go::after {
+  content: ' →';
+}
+
 /*
  * Flags running past in two rows, the second the other way (a still pair under reduced motion):
  * each row holds its flags twice, so moving it half its width brings it back to where it began.
@@ -1600,7 +2084,8 @@ input:focus-visible {
   border-radius: 50%;
   box-shadow: 0 0 0 2px rgb(255 255 255 / 0.14);
 }
-.game-flags .flag-row img {
+.game-flags .flag-row img,
+.game-flags .kit-ball {
   box-shadow: 0 0 0 2px var(--hairline);
 }
 
@@ -1811,6 +2296,21 @@ input:focus-visible {
 .fgroup-head p {
   max-width: 34rem;
   color: var(--muted);
+}
+.fgroup-head p a,
+.gallery figcaption a {
+  color: var(--accent-text);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.fgroup-head p a::after {
+  content: ' →';
+}
+.fgroup-head p a:hover,
+.gallery figcaption a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .fbento {
   display: grid;
@@ -2349,6 +2849,201 @@ input:focus-visible {
   height: 4px;
   border-radius: 2px;
   background: var(--c);
+}
+
+/*
+ * Goal Rush's clubs as their balls are drawn (src/football/kits.ts), in CSS: the shirt's colour,
+ * its pattern in the other (`data-p`), and the letters on a roundel in its darker colour; running
+ * past in two rows as the flags do. A player is a country's shirt with a number.
+ */
+.viz-kits {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  justify-items: stretch;
+}
+.kit-wall .flag-row li {
+  display: grid;
+  justify-items: center;
+}
+.kit-ball {
+  --c1: #3a4152;
+  --c2: #5b6478;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--c1);
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.16);
+  overflow: hidden;
+}
+.kit-ball[data-p='stripes'] {
+  background: repeating-linear-gradient(90deg, var(--c1) 0 11.11%, var(--c2) 11.11% 22.22%);
+}
+.kit-ball[data-p='hoops'] {
+  background: repeating-linear-gradient(0deg, var(--c1) 0 14.28%, var(--c2) 14.28% 28.57%);
+}
+.kit-ball[data-p='halves'] {
+  background: linear-gradient(90deg, var(--c1) 50%, var(--c2) 50%);
+}
+.kit-ball[data-p='diagonal'] {
+  background: linear-gradient(225deg, var(--c2) 50%, var(--c1) 50%);
+}
+.kit-ball[data-p='sash'] {
+  background: linear-gradient(135deg, var(--c1) 39%, var(--c2) 39% 61%, var(--c1) 61%);
+}
+.kit-ball[data-p='band'] {
+  background: linear-gradient(90deg, var(--c1) 33%, var(--c2) 33% 67%, var(--c1) 67%);
+}
+.kit-ball[data-p='bar'] {
+  background: linear-gradient(0deg, var(--c1) 38%, var(--c2) 38% 62%, var(--c1) 62%);
+}
+.kit-ball[data-p='sleeves'] {
+  background: linear-gradient(90deg, var(--c2) 21%, var(--c1) 21% 79%, var(--c2) 79%);
+}
+.kit-ball[data-p='checks'] {
+  background: conic-gradient(var(--c2) 25%, var(--c1) 0 50%, var(--c2) 0 75%, var(--c1) 0) 0 0 / 33.4% 33.4%;
+}
+/* The shine every ball in the video has. */
+.kit-ball::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, rgb(255 255 255 / 0.3), transparent 45%, rgb(0 0 0 / 0.22));
+}
+.kit-ball > b {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 58%;
+  height: 58%;
+  border: 2.5px solid var(--light);
+  border-radius: 50%;
+  background: var(--dark);
+  color: var(--ink);
+  font-size: 0.6875rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.kit-ball > .kit-num {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: none;
+  font-size: 1.375rem;
+  -webkit-text-stroke: 4px color-mix(in srgb, var(--c1) 70%, #000);
+  paint-order: stroke fill;
+}
+/* Centred on its own: a card's paragraphs have a measure, and a stretched note would sit left. */
+.kit-note {
+  justify-self: center;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+/* The classics, as the studio's list names them. */
+.classic-chips {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.classic-chips li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.03);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.classic-chips b {
+  color: #ffd23f;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* A goal: GOAL! as the video writes it, leaning, edged in a scorer's colour, over a scoreboard, and some players' shirts. */
+.viz-goal {
+  position: relative;
+  gap: 14px;
+}
+/* Eight shirts: one row where a card is wide, else two of four, never six and two. */
+.player-balls {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 1280px) {
+  .player-balls {
+    grid-template-columns: repeat(8, auto);
+  }
+}
+.player-balls li {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+.player-balls small {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.player-balls .kit-ball {
+  width: 44px;
+  height: 44px;
+}
+.goal-word {
+  color: #ffffff;
+  font-size: 2.6rem;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  -webkit-text-stroke: 9px #13a157;
+  paint-order: stroke fill;
+  text-shadow: 0 0 28px rgb(19 161 87 / 0.6);
+}
+.mini-board {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 18px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 999px;
+  background: #12162a;
+  font-variant-numeric: tabular-nums;
+}
+.mini-board b {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+.mini-board i {
+  color: var(--muted);
+  font-style: normal;
+}
+.mini-board small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 /* A flag down to its last strings: its count red, beating as the video's does (battle.ts HEARTBEAT, 0.75 s), and the slow motion tag. */
@@ -3424,6 +4119,9 @@ input:focus-visible {
   .danger-count {
     animation: heartbeat 0.75s ease-out infinite;
   }
+  .goal-word {
+    animation: heartbeat 1.6s ease-out infinite;
+  }
   .follow-hand {
     animation: tap 2.4s ease-in-out infinite;
   }
@@ -3471,7 +4169,11 @@ input:focus-visible {
     }
     .fcard,
     .plans > .plan,
-    .faq details {
+    .faq details,
+    .moments figure,
+    .gp-choices > li,
+    .gp-rules li,
+    .gp-others > li {
       animation-name: rise-scale;
       animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
       animation-fill-mode: both;

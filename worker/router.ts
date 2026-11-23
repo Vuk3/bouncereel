@@ -25,6 +25,7 @@ import { forgot, googleCallback, googleStart, login, logout, reset, resetInfo, s
 import { checkout, portal, webhook } from './routes/billing.ts';
 import type { RouteHandler } from './routes/context.ts';
 import { listPlans } from './routes/plans.ts';
+import { getSide, listSides } from './routes/sides.ts';
 import { createVideo, getVideo, listVideos, putPost, putTexts, removePost, removeVideo } from './routes/videos.ts';
 
 interface Route {
@@ -89,6 +90,8 @@ const ROUTES: Route[] = [
   { method: 'POST', pattern: /^\/api\/admin\/plans\/(?<id>\d+)\/restore$/, handler: restorePlan },
   { method: 'GET', pattern: /^\/api\/admin\/log$/, handler: getLog },
   { method: 'PUT', pattern: /^\/api\/admin\/videos\/(?<id>\d+)\/texts$/, handler: putTexts },
+  { method: 'GET', pattern: /^\/api\/admin\/sides$/, handler: listSides },
+  { method: 'GET', pattern: /^\/api\/admin\/sides\/(?<file>[a-z0-9-]{1,60}\.[0-9a-f]{8}\.(?:png|jpg|webp))$/, handler: getSide },
 ];
 
 /**

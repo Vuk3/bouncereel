@@ -516,9 +516,10 @@ fieldset:disabled {
   line-height: 1.45;
 }
 
-/* One game's controls at a time: app.ts sets data-game on the body (syncTopBlock). */
+/* One game's controls at a time: app.ts sets data-game on the body (syncTopBlock); the race's until it has. */
 body:not([data-game='arena-clash']) .battle-only,
-body[data-game='arena-clash'] .race-only {
+body:not([data-game='goal-rush']) .match-only,
+body[data-game]:not([data-game='ball-race']) .race-only {
   display: none !important;
 }
 
@@ -560,6 +561,223 @@ body[data-game='arena-clash'] .race-only {
   padding-left: 10px;
   font-size: 13px;
   font-weight: 600;
+}
+/*
+ * Goal Rush's card, the battle's with a switch of clubs or players over it and two rows, home
+ * and away, each a picker and a die, with "vs" between.
+ */
+.goal-card .modes {
+  margin: 14px 16px 2px;
+}
+.side-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 16px 4px;
+  list-style: none;
+}
+.side-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+.side-list .side-vs {
+  display: block;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1;
+}
+
+/*
+ * The match as a fixture, over its pickers: each side's ball big (its crest or photo where the
+ * account has one) framed in its colour on the stage's black, its name under it, VS between, and
+ * under VS how many times this account has made the match and who won how many ("3× · 2–1").
+ */
+.fixture {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin: 12px 16px 0;
+  padding: 16px 10px 14px;
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(31 41 74 / 0.9), transparent 70%),
+    #07090f;
+  color: #ffffff;
+}
+.fixture-side {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.fixture-ball {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--line, #3a4152);
+  box-shadow: 0 0 24px -2px var(--line, transparent);
+}
+.fixture-ball img {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.fixture-ball img.contain {
+  object-fit: contain;
+  padding: 7px;
+  background: radial-gradient(circle at 50% 40%, #ffffff 55%, #e3e8f0);
+}
+.fixture-side b {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.fixture-mid {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.fixture-vs {
+  font-size: 20px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: #ffd23f;
+}
+.fixture-record {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #9aa3b5;
+  white-space: nowrap;
+}
+.classic-row {
+  padding: 10px 16px 0;
+}
+.classic-row select {
+  height: 36px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/*
+ * A select you can type into (src/ui/picker.ts): a text box with the picked one's picture at its
+ * start and a select's chevron at its end; the list it opens is fixed to the window (it places it),
+ * over the cards that would clip it.
+ */
+.picker {
+  position: relative;
+  min-width: 0;
+}
+.picker-input[type='text'] {
+  height: 36px;
+  padding: 0 34px 0 44px;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a93ab' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 16px;
+}
+.picker-input[type='text']:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a93ab' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E");
+}
+.picker-icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--line, var(--line-strong));
+  pointer-events: none;
+}
+.picker-list {
+  position: fixed;
+  z-index: 60;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.picker-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.picker-list li > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.picker-list li.active {
+  background: var(--sunken);
+}
+.picker-list li.picked > span {
+  color: var(--accent-text);
+}
+.picker-list img,
+.picker-icon {
+  object-fit: cover;
+}
+.picker-list img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+/* A crest whole on white, as the video draws it, where a photo fills its circle. */
+.picker-list img.contain,
+.picker-icon.contain {
+  object-fit: contain;
+  padding: 2px;
+  background: #ffffff;
+}
+.picker-list small {
+  max-width: 130px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.picker-list .picker-none {
+  display: block;
+  color: var(--muted);
+  font-weight: 500;
+  cursor: default;
 }
 .battle-fields {
   display: grid;
@@ -695,7 +913,8 @@ body[data-game='arena-clash'] .race-only {
 
 /* What Record puts in the sound: three segments, one picked. The radio stays for the keyboard. */
 .track,
-.games {
+.games,
+.modes {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2px;
@@ -704,32 +923,38 @@ body[data-game='arena-clash'] .race-only {
   background: var(--sunken);
   border: 1px solid var(--line);
 }
-/* The game switch: the sound's segments, two of them, under a name of its own (app.ts reads `.track` as the sound). */
-.games {
+/*
+ * The game switch (three games) and Goal Rush's clubs or players (two): the sound's segments under
+ * names of their own (app.ts reads `.track` as the sound).
+ */
+.modes {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-/* Each game's icon before its name, the paid tag under both. */
+/* Each game's icon before its name, the paid tag under both: three names fit the panel on a line each. */
 .games label > span {
   grid-template-columns: auto auto;
   justify-content: center;
-  column-gap: 7px;
+  column-gap: 6px;
   min-height: 40px;
+  padding-inline: 4px;
 }
 .games .game-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 6px;
 }
 .games b {
   font-weight: inherit;
 }
 .track label,
-.games label {
+.games label,
+.modes label {
   position: relative;
   cursor: pointer;
 }
 .track input,
-.games input {
+.games input,
+.modes input {
   position: absolute;
   opacity: 0;
   width: 1px;
@@ -737,7 +962,8 @@ body[data-game='arena-clash'] .race-only {
   pointer-events: none;
 }
 .track label > span,
-.games label > span {
+.games label > span,
+.modes label > span {
   display: grid;
   place-items: center;
   min-height: 34px;
@@ -750,11 +976,13 @@ body[data-game='arena-clash'] .race-only {
   text-align: center;
 }
 .track label:hover > span,
-.games label:hover > span {
+.games label:hover > span,
+.modes label:hover > span {
   color: var(--ink);
 }
 .track input:checked + span,
-.games input:checked + span {
+.games input:checked + span,
+.modes input:checked + span {
   background: var(--raised);
   color: var(--ink);
   box-shadow:
@@ -762,7 +990,8 @@ body[data-game='arena-clash'] .race-only {
     0 1px 3px light-dark(rgb(20 26 46 / 0.08), rgb(0 0 0 / 0.4));
 }
 .track input:focus-visible + span,
-.games input:focus-visible + span {
+.games input:focus-visible + span,
+.modes input:focus-visible + span {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }

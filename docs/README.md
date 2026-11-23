@@ -57,6 +57,11 @@ anything else.
   their figures, the strings' colours, its black stage and title, its sound, its card in the
   studio, and what the library keeps.
 
+- **[Goal Rush](./goal-rush.md)** - the third game: a football match of ninety minutes with a
+  spinning goal, clubs or players, balanced by seed to the video and to a story, the 621 sides,
+  the classics, the superadmin's real crests and photos, its pitch, scoreboard and goal's moment,
+  its sound and narrator, its card in the studio, and what the library keeps.
+
 - **[Website](./website.md)** - the public site: its pages and addresses, the parts they
   share, its look, the home page and its live hero, the images drawn by the renderer, speed
   and Lighthouse, search engines, the words, the legal pages.

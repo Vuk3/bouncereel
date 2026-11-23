@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <title>Clips · BounceReel</title>
+    <style>
+      /* The renderers draw in Rubik, as the studio and the site do (src/style.css, src/site/site.css). */
+      @font-face {
+        font-family: 'Rubik';
+        src: url('/fonts/rubik-latin.woff2') format('woff2');
+        font-weight: 400 900;
+      }
+      body { font: 14px/1.5 system-ui, sans-serif; margin: 24px; background: #ddd; }
+      canvas { width: 270px; height: 480px; border: 1px solid #999; }
+    </style>
+  </head>
+  <body>
+    <h1>Clips</h1>
+    <p>The site's recorded clips (public/gallery/), played and recorded as the site's phones play them (docs/website.md §5). Run <code>recordClip('match', 0)</code> in the console.</p>
+    <canvas id="stage" width="540" height="960"></canvas>
+    <script type="module" src="./clips.ts"></script>
+  </body>
+</html>
