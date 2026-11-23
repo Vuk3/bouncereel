@@ -211,6 +211,13 @@ migration. Missed once, `npm run db:migrate:remote` applies what is pending.
 
 It needs a GitHub remote named `origin` with `develop` and `main`.
 
+⚠️ **[.npmrc](../.npmrc) keeps `onnxruntime-node-install-cuda=skip`.** kokoro-js brings in
+onnxruntime-node, whose install script on Linux x64 (the build machine, never a Mac) downloads ONNX
+Runtime's GPU files from GitHub; when that download fails (a 404 for v1.21.0) `npm clean-install`
+fails, and the build stops before anything deploys. The app never runs it in Node. npm warns that
+the key is unknown to it and still passes it on; if a later npm stops, set
+`ONNXRUNTIME_NODE_INSTALL_CUDA=skip` among the build's variables instead.
+
 ## Limits
 
 Workers Free plan:
@@ -237,3 +244,4 @@ Workers Free plan:
 - 2026-10-24 - Workers Builds runs `npm run deploy` (build command empty), so a release applies its migrations before the code goes live.
 - 2026-11-07 - the site on `bouncereel.com`: `SITE_URL` and its custom domain, `bouncereel.vukcvetkovic.com` taken off the Worker (it was never used), `www` to the apex, mail from `hello@bouncereel.com` (Resend before the deploy, Email Routing for replies), the public pages indexed, the steps for a later change of address.
 - 2026-11-07 - the R2 bucket `bouncereel` (`FILES`, profile pictures) made before the deploy; `GOOGLE_CLIENT_ID` and the secret `GOOGLE_CLIENT_SECRET` for Google sign-in, unused while it is off.
+- 2026-11-24 - .npmrc skips onnxruntime-node's CUDA download: its 404 failed Workers Builds' `npm clean-install`, so release 1.2.8 never deployed.
