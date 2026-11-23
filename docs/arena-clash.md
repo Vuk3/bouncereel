@@ -221,8 +221,8 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
     `look.question`, which the narrator's opening ends on, in capitals without its full stop;
   - how many are left at y 508 ("2 LEFT"), centred and alone. For 1.7 s after a flag goes it is
     that flag and "CROATIA OUT" in its colour instead, popping in. Who went is said in the names
-    above: a flag out stays where it was, dimmed and struck through. Small flags of those gone
-    beside "2 LEFT" read as the two that are left, so there are none.
+    above, where a flag out stays dimmed and struck through, and in the row under the ring. Small
+    flags of those gone beside "2 LEFT" read as the two that are left, so there are none.
 - **The arena**: a thin white ring with a soft glow. Strings are 2.2 px at 60 % of the flag's
   colour, added to what is under them: one alone is a fine line on a phone, a hundred meeting at
   a ball a wedge of light, and where two fans cross both show. A dot of the colour where each is
@@ -231,11 +231,21 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
   count drawn over every ball, so one ball never hides another's. Down to its last bundle (10 or
   fewer, `inDanger`) a count is red and kicks up a quarter on every `HEARTBEAT` (0.75 s of the
   battle's clock), the beat the heart in the sound plays on.
-- **The arena is drawn at 92 % of its size** round its centre (`SCALE`): 892 px across, the ring
-  from y 589 to 1481, at least 94 px from the frame's sides. Full size, it came within 55 px of
-  them, and Instagram on an iPhone, filling the screen's height, crops about 38 px a side: the ring
-  touched the screen's edges and its right was cut under the side buttons. Balls, strings and
-  counts are smaller by as much; the drawing alone, as `DROP` is.
+- **The arena is drawn at 87 % of its size** round its centre (`SCALE`, centred at `CENTRE_Y`,
+  y 1000): 844 px across, the ring from y 578 to 1422, 118 px from the frame's sides. Full size, it
+  came within 55 px of them, and Instagram on an iPhone, filling the screen's height, crops about
+  38 px a side: the ring touched the screen's edges and its right was cut under the side buttons.
+  At 87 % the row of flags and the line for the follow button fit under it. Balls, strings and
+  counts are smaller by as much; the drawing alone.
+- **The row of flags** under the ring (`drawRoster`, centred at y 1472): every flag in the battle
+  in the order given, each as its ball is drawn (its flag in a ring of its colour, glowing), 56 px
+  across, 36 px apart or as close as twelve need to fit 920 px (22). From five flags the title says
+  only how many, so the row is where a viewer sees who is in. A flag that goes out turns grey and
+  dimmed a little (a `saturation` blend, which every browser's canvas has, unlike `filter`) and a
+  red cross pops over it, corner to corner of the flag; it keeps its place, so grey and crossed is
+  never read as one still in. No numbers: each ball's count is over it. Drawn before the arena, so
+  a count, a ripple or a burst at the ring's bottom is over it; it fades as the winner card comes
+  up, where the card's follow button goes.
 - **Effects**: cut strings linger 0.22 s as ghosts, white then their colour, with sparks off the
   rival; every bounce ripples on the ring where it ties, two balls meeting ripple white; a flag
   out bursts into pieces with a shake.
@@ -245,7 +255,7 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
   0.2 s of each other are one sweep) and then rising and fading; only from a bundle up, or the
   arena would be full of nicks of three. Against the top of the ring, where it would sit on
   "3 LEFT", it goes under the ball's count.
-- **Under the ring, in the middle of the frame** (`FOOTER_Y`, 1533, 52 px under the ring): a red dot and SLOW MOTION
+- **Under the row, in the middle of the frame** (`FOOTER_Y`, 1541): a red dot and SLOW MOTION
   while an out plays slowed, and once in the battle the **follow button** (`look.follow`), the
   race's own (follow.ts): it pops in red, a hand comes up and taps it, it turns to FOLLOWING and
   fades, 2.4 s in all. `battleFollowAt` picks the moment: near 45 % of the battle, clear of every
@@ -254,19 +264,19 @@ preview marks, the base `Overlay`) and [follow.ts](../src/render/follow.ts) (the
   screen's height: TikTok's search bar reaches y 247, Instagram's and YouTube's top buttons 210;
   the captions start at about y 1620 on TikTok (its pinned comment, while it shows, at 1460),
   1690 on Shorts and 1740 on Reels; and Instagram's profile grid shows only y 240–1680 of a reel
-  (3:4). So the title takes y 302 to 535, the ring 589 to 1481, the line under it 1533 and the
-  watermark 1582 (its bottom at 1603, under TikTok's caption at 1620), all inside the grid's
-  crop, and the black under the ring is the captions'. The
-  picture is drawn `DROP` (120 px) lower than the simulation's arena (`ARENA`, centre y 915),
-  which stays where every battle so far was worked out, so one recorded before still opens in
-  the studio as it played. ⚠️ The black below the line looks free in the studio and is not: it
+  (3:4). So the title takes y 302 to 538, the ring 578 to 1422, the row 1444 to 1500, the line
+  under it 1541 (the follow button's pill 1512 to 1570) and the watermark 1590 (its bottom at 1611,
+  over TikTok's caption at 1620), all inside the grid's crop, and the black under that is the
+  captions'. The arena is drawn 85 px lower and at 87 % of the simulation's (`ARENA`, centre
+  y 915), which stays where every battle so far was worked out, so one recorded before still
+  opens in the studio as it played. ⚠️ The black below the line looks free in the studio and is not: it
   is where the platforms put the caption, the account and the music (More → Video → *Show where
   TikTok, Reels and Shorts put their buttons* shows it). A button there is read by nobody.
 - **The winner card**: a dark card framed in the winner's colour, its flag big over it, WINNER,
   its name, "Last flag standing · 26.0 s", and the last line; confetti; with `look.follow` the
   follow button under it in the winner's colour, tapped 1.5 s in and left as FOLLOWING, and the
   card held 2.5 s at least (pacing.ts), as the race's.
-- **The watermark** (a plan with `watermark`) sits under the arena, centred at y 1582, above the
+- **The watermark** (a plan with `watermark`) sits under the arena, centred at y 1590, above the
   platforms' captions. The ring's right edge crosses the platforms' side
   buttons' column (x 940 on, from y 902): a circle this big cannot keep out of it. The preview
   marks across the frame are in the preview alone.
@@ -350,3 +360,4 @@ the thumbnail; Open in studio replays it exactly. The superadmin's text for post
 - 2026-11-12 - no winner line says the time ("wins it in 21.6 seconds" is gone); the winner line is said at the win, over the last slow motion, so the winner card holds only its end (2.5 s with the follow button, from 3–5 s) and the battle has those seconds.
 - 2026-11-12 - four battles in five are comebacks (`isBattleComeback`); "+10" at every bounce and "-34" over a ball sweeping a fan; a count down to its last bundle red and beating, with a heartbeat; the region over the names when every flag is from one (`sharedRegion`); the arena drawn at 92 % (`SCALE`), off the frame's sides, the line under it and the watermark moved up with it.
 - 2026-11-14 - the picture 40 px lower (`DROP` 120): a reel on an iPhone had the region just under the top buttons and some 250 px of black under the ring; the title's lines fitted to 920 px, not 960, where the question ran to the screen's edge.
+- 2026-11-23 - a row of every flag under the ring, one out grey with a red cross; the arena drawn at 87 % (from 92 %) and centred at y 1000, the line under it and the watermark 8 px lower, to fit the row; the site's Arena Clash card frame made again.

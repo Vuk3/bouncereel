@@ -22,6 +22,8 @@ import { END_HAND, FOLLOW_IN, FOLLOW_PAD, FOLLOW_RACE_TAP, FOLLOW_RED, FOLLOW_SH
 //               the flag's colour that add up to a lit wedge where they are many; the balls, each
 //               its flag in a ring of its colour, glowing, the strings it holds counted under it,
 //               red and beating once it is down to its last bundle
+//   the row     under the ring, every flag in the battle as its ball is drawn; one that goes out
+//               turns grey and a red cross pops over it
 //
 // A cut string lingers a moment as a ghost, with sparks where the rival is, and a sweep through a
 // bundle or more shows how many it took over the cutter ("-34"); a bounce ripples on the ring where
@@ -40,32 +42,31 @@ const PANEL = '#12162a';
 /** The words that are not the headline: how many are left, the result under the winner. */
 const MUTED = '#9aa3b5';
 /**
- * px the whole picture sits below the simulation's arena (layout.ts ARENA): the ring is drawn
- * centred at y 1035, not 915. Moved in the drawing alone, since a battle's every px is worked out
- * from where the arena is, and a battle recorded before must open again in the studio exactly as
- * it played. Measured on the three apps on a 6.1" phone, where the video fills the screen's
- * height: TikTok's search bar reaches y 247 and Instagram's profile grid shows only y 240–1680
- * (3:4), so the names at 244 were cut and the black under the ring was a third of the frame. At
- * 80 a reel on an iPhone still had the region just under the top buttons and some 250 px of black
- * under the ring; 120 is as low as TikTok's caption (from y 1620) leaves the watermark room.
- */
-const DROP = 120;
-/**
- * How big the arena is drawn, of the simulation's, round its centre: 892 px across, not 970. At
+ * How big the arena is drawn, of the simulation's, round its centre: 844 px across, not 970. At
  * full size the ring came within 55 px of the frame's sides, and Instagram on an iPhone, filling
  * the screen's height, crops about 38 px a side (measured on a screenshot): the ring touched the
- * screen's edges and its right was cut, under the side buttons. The balls, strings and counts
- * are smaller by as much. The drawing alone, as DROP is.
+ * screen's edges and its right was cut, under the side buttons. At 87 % the row of flags and the
+ * line for the follow button fit under it, over TikTok's caption. The balls, strings and counts
+ * are smaller by as much.
  */
-const SCALE = 0.92;
-/** Where the arena's centre is drawn on the frame, and its ring's lowest point (y 1481). */
-const CENTRE_Y = ARENA.y + DROP;
+const SCALE = 0.87;
+/**
+ * Where the arena's centre is drawn on the frame: the ring from y 578 to 1422. The simulation's
+ * arena (layout.ts ARENA, centre y 915) stays where every battle was worked out, and is moved and
+ * scaled in the drawing alone, so a battle recorded before opens again in the studio as it played.
+ */
+const CENTRE_Y = 1000;
 const RING_BOTTOM = CENTRE_Y + ARENA.r * SCALE;
-/** The title block, by the middle of each line: under TikTok's search bar (to y 247) and the profile grid's top (240), over the ring (from 589). */
-const REGION_Y = 196 + DROP;
-const KICKER_Y = 244 + DROP;
-const HEADLINE_Y = 308 + DROP;
-const STATUS_Y = 388 + DROP;
+/**
+ * The title, by the middle of each line. Measured on the three apps on a 6.1" phone, where the
+ * video fills the screen's height: TikTok's search bar reaches y 247 and Instagram's profile grid
+ * shows only y 240–1680 of a reel (3:4), so the region sits just under both, and the status line
+ * (with a flag's OUT, to y 538) over the ring's glow.
+ */
+const REGION_Y = 316;
+const KICKER_Y = 364;
+const HEADLINE_Y = 428;
+const STATUS_Y = 508;
 /**
  * The widest a line of the title may be: 80 px a side. Instagram on an iPhone crops a reel by up to
  * 55 px a side (measured on a screenshot), so a question fitted to 960 ran to the screen's edge.
@@ -98,20 +99,31 @@ const BIG_CUT = BUNDLE;
 /** Positions a ball's trail keeps: about a sixth of a second at 60 fps. */
 const TRAIL = 10;
 /**
- * The line under the ring, in the middle of the frame: the follow button and the slow motion
- * tag, never both at once (battleFollowAt). Between the ring (to y 1441, its glow a little
- * further) and the free plan's mark; the black below that is the platforms' caption, account
- * and music (from about y 1620 on TikTok, 1690 on Shorts, 1740 on Reels, measured), where a
- * button would be read by nobody.
+ * Under the ring, in the middle of the frame, top to bottom: the row of every flag (1472), the
+ * line for the follow button or the slow motion tag, never both at once (battleFollowAt; 1541,
+ * the button's pill 58 px tall), and the free plan's mark (1590, its bottom at 1611). The black
+ * below that is the platforms' caption, account and music (from about y 1620 on TikTok, 1690 on
+ * Shorts, 1740 on Reels, measured), where a button would be read by nobody. The row's top is
+ * 22 px under the ring, past the brightest of its glow; a ball's count against the ring's bottom
+ * reaches some 30 px under it, and is drawn over the row.
  */
-const FOOTER_Y = RING_BOTTOM + 52;
-/** Where the free plan's mark sits: under that line, above the platforms' captions. */
+const ROSTER_Y = RING_BOTTOM + 50;
+const FOOTER_Y = ROSTER_Y + 69;
 const WATERMARK_Y = FOOTER_Y + 49;
+/**
+ * A flag in the row: 56 px across with its ring, so twelve fit the title's width (TITLE_W) with
+ * 22 px between them; fewer are set ROSTER_GAP apart, close enough to read as one row.
+ */
+const ROSTER_R = 28;
+const ROSTER_GAP = 36;
+/** Seconds a flag out takes to turn grey in the row, and its cross to pop in over it. */
+const ROSTER_GREY = 0.2;
+const ROSTER_CROSS = 0.3;
 /** The follow button on the stage: framed in white, and white with dark type once followed. */
 const FOLLOW_STYLE: FollowStyle = { ink: WHITE, card: WHITE, text: STAGE, shadow: false };
 /** The winner card's middle, over the ring's, and its button under it, as the race's is. */
-const CARD_Y = 1000 + DROP;
-const FOLLOW_Y = 1330 + DROP;
+const CARD_Y = 1120;
+const FOLLOW_Y = 1450;
 
 /** What the page tells this renderer about a frame of a battle. */
 export interface BattleOverlay extends Overlay {
@@ -164,6 +176,8 @@ export class BattleRenderer {
   private tallies: Tally[] = [];
   /** The flag that last went out and the seconds since: its OUT in place of the count. */
   private out: { flag: number; age: number } | null = null;
+  /** Seconds since each flag went out, for its cross's pop in the row; a flag out with none (a battle opened past it) shows its cross whole. */
+  private gone = new Map<number, number>();
   /** Each ball's last positions, flattened x, y, oldest first: its trail. */
   private trails = new Map<number, number[]>();
   /** Where each ball is drawn this frame: its place, and the part of a step the frame is ahead of it. */
@@ -193,6 +207,7 @@ export class BattleRenderer {
     this.rings = [];
     this.tallies = [];
     this.out = null;
+    this.gone = new Map();
     this.trails = new Map();
     this.slow = 0;
     if (cfg.look.follow) this.follow.load();
@@ -236,6 +251,7 @@ export class BattleRenderer {
         this.effects.kick(8);
         this.rings.push({ x: e.x, y: e.y, age: 0, color: colors[e.flag], size: 2.6 * f.r });
         this.out = { flag: e.flag, age: 0 };
+        this.gone.set(e.flag, 0);
       }
     }
   }
@@ -262,7 +278,9 @@ export class BattleRenderer {
     ctx.save();
     ctx.translate(sx, sy);
     this.drawTitle(world, cfg, colors);
-    // The arena and all that happens in it, in the simulation's own px: SCALE of its size round its centre, DROP lower on the frame.
+    // Under the arena, so a count, a ripple or a burst at the ring's bottom is over it; gone as the winner card comes up, where its button goes.
+    this.drawRoster(world, colors, 1 - overlay.winner);
+    // The arena and all that happens in it, in the simulation's own px: SCALE of its size round its centre, drawn at CENTRE_Y.
     ctx.save();
     ctx.translate(ARENA.x, CENTRE_Y);
     ctx.scale(SCALE, SCALE);
@@ -317,6 +335,7 @@ export class BattleRenderer {
     }
     this.tallies = this.tallies.filter((t) => t.idle < TALLY_JOIN + TALLY_FADE);
     if (this.out) this.out.age += dt;
+    for (const [flag, since] of this.gone) this.gone.set(flag, since + dt);
     this.slow = slow ? this.slow + dt : 0;
   }
 
@@ -410,8 +429,8 @@ export class BattleRenderer {
 
   /**
    * How many flags are left, centred; for OUT_SHOW after a flag goes, its flag and "CROATIA OUT"
-   * in its colour instead, popping in. Who went is said by the names above, struck through: small
-   * flags of those gone beside "2 LEFT" read as the two that are left.
+   * in its colour instead, popping in. Who went is said by the names above, struck through, and by
+   * the row under the ring: small flags of those gone beside "2 LEFT" read as the two that are left.
    */
   private drawStatus(world: BattleWorld, colors: string[]): void {
     const ctx = this.ctx;
@@ -443,6 +462,75 @@ export class BattleRenderer {
     // Centred on the letters, not on the trailing letter spacing.
     ctx.fillText(`${world.alive} LEFT`, W / 2 + 1.5, STATUS_Y + 2);
     ctx.letterSpacing = '0px';
+  }
+
+  // ── The row ──────────────────────────────────────────────────────────────
+
+  /**
+   * Every flag in the battle in a row under the ring, in the order given, each as its ball is
+   * drawn, so the row reads as the balls: from five flags the title says only how many, and this
+   * is where a viewer sees who is in. A flag that goes out turns grey and a red cross pops over
+   * it, and it keeps its place: grey and crossed is not read as one still in, as small flags beside
+   * "2 LEFT" were. No numbers: each ball's count is over it. `alpha` fades it for the winner card.
+   */
+  private drawRoster(world: BattleWorld, colors: string[], alpha: number): void {
+    if (alpha <= 0) return;
+    const ctx = this.ctx;
+    const n = world.flags.length;
+    const step = 2 * ROSTER_R + Math.min(ROSTER_GAP, (TITLE_W - 2 * ROSTER_R * n) / (n - 1));
+    const ring = 4;
+    const y = ROSTER_Y;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    for (const f of world.flags) {
+      const x = W / 2 + (f.id - (n - 1) / 2) * step;
+      const color = colors[f.id];
+      if (f.alive) {
+        const glow = ctx.createRadialGradient(x, y, ROSTER_R * 0.9, x, y, ROSTER_R * 1.5);
+        glow.addColorStop(0, rgba(color, 0.45));
+        glow.addColorStop(1, rgba(color, 0));
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, ROSTER_R * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      this.flagDisc(f.code, x, y, ROSTER_R - ring, color, ring);
+      if (f.alive) continue;
+      const since = this.gone.get(f.id) ?? Infinity;
+      // Grey: the disc's colour taken out (a blend every browser's canvas has, unlike `filter`), and
+      // dimmed a little toward the stage. At half a dark grey flag under the cross was no flag at all.
+      const grey = Math.min(1, since / ROSTER_GREY);
+      const box = ROSTER_R + 1;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, box, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.globalCompositeOperation = 'saturation';
+      ctx.globalAlpha = alpha * grey;
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(x - box, y - box, 2 * box, 2 * box);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = alpha * grey * 0.15;
+      ctx.fillStyle = STAGE;
+      ctx.fillRect(x - box, y - box, 2 * box, 2 * box);
+      ctx.restore();
+      // The cross corner to corner of the flag, red in a dark outline so it reads over any flag, popping in.
+      const arm = ROSTER_R * 0.62 * easeOutBack(Math.min(1, since / ROSTER_CROSS));
+      if (arm <= 0) continue;
+      ctx.beginPath();
+      ctx.moveTo(x - arm, y - arm);
+      ctx.lineTo(x + arm, y + arm);
+      ctx.moveTo(x + arm, y - arm);
+      ctx.lineTo(x - arm, y + arm);
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = STAGE;
+      ctx.stroke();
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = FOLLOW_RED;
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // ── The arena ────────────────────────────────────────────────────────────
@@ -697,7 +785,7 @@ export class BattleRenderer {
   private drawFollow(age: number, sx: number, sy: number): void {
     if (age < 0 || age > FOLLOW_SHOW) return;
     const ctx = this.ctx;
-    // 34 px type: a pill 58 px tall, which the ring's glow above and the free plan's mark below leave room for.
+    // 34 px type: a pill 58 px tall, which the row of flags above and the free plan's mark below leave room for.
     const size = 34;
     const pop = easeOutBack(Math.min(1, age / 0.25));
     ctx.save();
