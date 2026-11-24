@@ -58,7 +58,7 @@ narration ─────────────────▶ voice ───
 
 - **Mixing**: the glue compressor (−18 dB, 4:1) evens out piles of notes; the limiter
   (−2 dB, 20:1) stops clipping. At most 48 sounds ring at once; past that new ones are
-  skipped. While the narrator speaks, the effects drop to 40 % and come back after.
+  skipped. While the narrator speaks, the effects drop to 30 % and come back after, and a stadium's roar still sounding fades out at once (`roars`): it is noise across the voice's own range, and a goal in the last second roared over "Barcelona wins 4 to 2".
 
 ## 2. What sounds when
 
@@ -251,3 +251,4 @@ end. Then:
 - 2026-11-12 - Arena Clash: strings being cut are plucked up the pentatonic scale as a flag's strings run out (`Sonifier.battle`); no calls as flags go out (`battleCalls` is gone), so its narrator says two lines as a race's does, with "Follow for more!" after the winner line when asked.
 - 2026-11-12 - Arena Clash: a heartbeat (`AudioEngine.heartbeat`) while a flag is down to its last bundle, on the beats its red count pulses on.
 - 2026-11-24 - a Goal Rush's referee and stadium are recordings, CC0 from freesound (public/sounds/, `loadSounds`, `MATCH_SOUNDS`): the whistle and a crowd's roar at a goal, 2 s; the synthesised ones only when they fail to load.
+- 2026-11-24 - the narrator's line fades out a stadium's roar still sounding and ducks the effects to 30 % (was 40 %): a last-second goal's roar drowned the winner line.

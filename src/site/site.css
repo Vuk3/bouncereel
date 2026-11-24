@@ -3288,13 +3288,152 @@ input:focus-visible {
   font-weight: 600;
   letter-spacing: -0.02em;
 }
+/* By the year, the month's price struck through before the year's: what the year takes off, seen. */
+.plan-was {
+  align-self: center;
+  margin-right: 4px;
+  color: var(--muted);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-decoration-thickness: 2px;
+}
 /* What the price is billed and saves, or that it is free: one line on every card, so the buttons line up. */
 .plan-billed {
-  min-height: 1.4em;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-height: 1.6em;
   margin-top: -4px;
   color: var(--muted);
   font-size: 0.875rem;
   font-weight: 500;
+}
+/* What the year saves, in money: a pill in the accent, white on the violet card. */
+.plan-save {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.plan.tone-bold .plan-save {
+  background: #ffffff;
+  color: #5a35f5;
+}
+.plan.tone-dark .plan-save {
+  background: rgb(124 77 255 / 0.28);
+  color: #d4c8ff;
+}
+/* The list and, over it, the plan it builds on: "Everything in Pro, plus". */
+.plan-lists {
+  display: grid;
+  align-content: start;
+}
+.plan-plus {
+  margin-top: 10px;
+  padding-top: 22px;
+  border-top: 1px solid var(--hairline);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.plan-plus + ul {
+  margin-top: 12px;
+  padding-top: 0;
+  border-top: 0;
+}
+.plans-more {
+  margin-top: 22px;
+  text-align: center;
+}
+.plans-more a {
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.plans-more a::after {
+  content: ' →';
+}
+.plans-more a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/*
+ * Compare the plans: a table, a row a feature and a column a plan, its first column fixed while a
+ * phone scrolls the plans sideways. A tick or a dash where a feature is one or the other.
+ */
+.compare-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+}
+.compare {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.compare th,
+.compare td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--hairline);
+  text-align: center;
+}
+.compare tbody tr:last-child th,
+.compare tbody tr:last-child td {
+  border-bottom: 0;
+}
+.compare thead th {
+  vertical-align: bottom;
+}
+.compare thead b {
+  display: block;
+  font-size: 1.0625rem;
+}
+.compare thead span {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.compare tbody th {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+.compare td {
+  color: var(--ink);
+}
+.compare-yes,
+.compare-no {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  border-radius: 50%;
+}
+.compare-yes {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m6 10.2 2.7 2.7L14.2 7.4' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    var(--accent);
+}
+.compare-no {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.5 10h7' stroke='%23878e9c' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    var(--inset);
 }
 .plan-desc {
   color: var(--muted);

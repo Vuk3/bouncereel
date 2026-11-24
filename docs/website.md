@@ -412,11 +412,17 @@ kits drawn in colours, never crests or photos. Check a claim against [recording 
 page always says what the studio and the server enforce. **By the year first**: over the cards, on
 /pricing and on the home page, a switch (`#plans-period`, the studio's segments) of Yearly, with
 what it saves at most ("Save up to 22%"), and Monthly, shown once a plan is sold by the year. By
-the year a card says the year's price as a month and under it what is billed and saved ("$7 /
-month", "$84 billed yearly, save 22%"; `priceLines`, `yearSaving`); by the month, the month's
-price and what the year would make it ("$9 / month", "or $7 a month, billed yearly"); the free
-plan "$0" and "Free, no card needed". The line is on every card, so the buttons line up. Nothing
-can be bought yet: sign-ups and payments stay off, every button says Coming soon. **Each card has its plan's tone**
+the year a card strikes the month's price through beside the year's as a month, and says under it
+what is billed once a year and what that saves in money ("~~$9~~ $7 / month", "$84 billed once a
+year" and a "Save $24" pill; `priceLines`, `yearSaving`); by the month, the month's price and what
+the year would make it ("$9 / month", "or $7 a month, billed yearly"); the free plan "$0" and
+"Free, no card needed". The line is on every card, so the buttons line up. **A card lists what
+its plan adds**: the free plan what it makes (its games, its limits, its watermark), each plan
+above it "Everything in Free, plus" and only what it does better than the one under it
+(`planGains`). **Compare the plans** (on /pricing, `#compare`, `compareTable`) is every plan
+side by side, a row a thing a plan decides, ticks and dashes for what is one or the other, its
+first column fixed while a phone scrolls; the home page links to it under its cards. Nothing can
+be bought yet: sign-ups and payments stay off, every button says Coming soon. **Each card has its plan's tone**
 (set in the admin area, [accounts and billing](./accounts-and-billing.md#6-plans-and-features)),
 and the tone brings the card's drawing (`planEmblem` in
 [src/site/pricing.ts](../src/site/pricing.ts)), so the plans climb as a race does:
@@ -634,3 +640,4 @@ used for.
 - 2026-11-23 - the Goal Rush phone plays and deals only the big rivalries (thirteen `SHOWCASES`); its match livelier, on green turf with a crowd (goal-rush.md); the frames made again; 453 players and 201 classics on the card, /games and the home page.
 - 2026-11-24 - a page for each game (games/ball-race.html, arena-clash.html, goal-rush.html, game-page.ts): the stage, a video moment by moment, the rules beside the game playing, three clips, the choices, questions, the other games; linked from the home page, the footer and the sitemap. How it works shows each game (a choice over the steps, `data-how`; `show()`, `matchFacts`, `battleFacts`, `dealFlags`), the gallery a clip of each game, the stage's groups Goal Rush first, each linking to its page. The hero's Arena Clash dice deals only known countries (`KNOWN`). Six new clips recorded by scripts/clips.ts; the game pages' moments by stills.ts.
 - 2026-11-24 - the plans in dollars, by the year first: the Yearly | Monthly switch over the cards (`#plans-period`), the year as a month with what it is billed and saves, the month with what the year would make it; the games' plan lines say from what a month; the pricing page's questions on Pro against Champion, the year, and every new game first; the site's words on the narrator, the follow button and picking the winner say Champion.
+- 2026-11-24 - the plan cards strike the month's price through by the year and say what the year saves in money; each lists what it adds to the plan under it ("Everything in Free, plus"); Compare the plans, a table of every plan, on /pricing and linked from the home page.

@@ -28,6 +28,11 @@ export class AudioEngine {
   private narration: AudioBufferSourceNode | null = null;
   /** Recorded sounds (public/sounds/), decoded once: a Goal Rush's referee and stadium (loadSounds). */
   private readonly samples = new Map<string, AudioBuffer>();
+  /**
+   * The stadium's roars still sounding: the narrator's line fades them out (speak). A roar is noise
+   * across the voice's own range, and a goal in the last second roared over "Barcelona wins 4 to 2".
+   */
+  private roars = new Set<GainNode>();
 
   constructor() {
     const ctx = new AudioContext({ latencyHint: 'interactive' });
@@ -97,9 +102,9 @@ export class AudioEngine {
    * A recorded sound, or `length` seconds of it from its start, at `level`, ending in a short fade
    * so a cut blast never clicks. False when it is not loaded.
    */
-  private sample(name: string, t: number, level: number, pan: number, length?: number): boolean {
+  private sample(name: string, t: number, level: number, pan: number, length?: number): GainNode | null {
     const buffer = this.samples.get(name);
-    if (!buffer) return false;
+    if (!buffer) return null;
     const src = this.ctx.createBufferSource();
     src.buffer = buffer;
     const gain = this.ctx.createGain();
@@ -110,7 +115,7 @@ export class AudioEngine {
     src.connect(gain).connect(this.channel(pan));
     src.start(t, 0, end - t);
     this.track(src);
-    return true;
+    return gain;
   }
 
   /**
@@ -350,7 +355,11 @@ export class AudioEngine {
     boom.connect(envelope(centre, t, 0.7, 0.003, 0.55));
     this.start(t, 0.6, boom);
     this.burst(t, 'lowpass', 300, 0.45, 0.12, centre);
-    if (this.sample('crowd-goal', t, 0.9, pan * 0.3)) return;
+    const roar = this.sample('crowd-goal', t, 0.9, pan * 0.3);
+    if (roar) {
+      this.roar(roar);
+      return;
+    }
     const side = this.channel(pan * 0.4);
     const crowd = ctx.createBufferSource();
     crowd.buffer = this.noise;
@@ -360,6 +369,7 @@ export class AudioEngine {
     level.gain.exponentialRampToValueAtTime(0.4, t + 0.25);
     level.gain.setValueAtTime(0.4, t + 0.6);
     level.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+    this.roar(level);
     const top = ctx.createBiquadFilter();
     top.type = 'lowpass';
     top.frequency.value = 1200;
@@ -441,7 +451,16 @@ export class AudioEngine {
     this.track(src);
   }
 
-  /** Plays a narration clip over everything, ducking the bounces under it. Returns its length in seconds. */
+  /** A stadium's roar, to be faded out under the narrator (`roars`); only the last few are kept, the older long over. */
+  private roar(gain: GainNode): void {
+    if (this.roars.size > 4) this.roars = new Set([...this.roars].slice(-4));
+    this.roars.add(gain);
+  }
+
+  /**
+   * Plays a narration clip over everything, ducking the effects under it to 30 %, and fading out a
+   * stadium's roar still sounding: the words must be heard. Returns its length in seconds.
+   */
   speak(buffer: AudioBuffer): number {
     this.silence();
     const ctx = this.ctx;
@@ -450,7 +469,12 @@ export class AudioEngine {
     src.connect(this.voice);
     const now = ctx.currentTime;
     src.start(now + 0.02);
-    this.sfx.gain.setTargetAtTime(0.4, now, 0.05);
+    for (const gain of this.roars) {
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setTargetAtTime(0, now, 0.08);
+    }
+    this.roars.clear();
+    this.sfx.gain.setTargetAtTime(0.3, now, 0.05);
     this.sfx.gain.setTargetAtTime(1, now + buffer.duration, 0.25);
     src.onended = () => {
       if (this.narration === src) this.narration = null;
