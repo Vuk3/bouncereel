@@ -13,6 +13,7 @@ interface PlanRow {
   price_amount: number | null;
   price_currency: string | null;
   price_interval: 'month' | 'year' | null;
+  price_year_amount: number | null;
   sort_order: number;
   visible: number;
   is_default: number;
@@ -33,7 +34,7 @@ interface SubscriptionRow {
   updated_at: string;
 }
 
-const PLAN_COLUMNS = 'id, name, description, price_amount, price_currency, price_interval, sort_order, visible, is_default, archived_at, features, tone, badge, updated_at';
+const PLAN_COLUMNS = 'id, name, description, price_amount, price_currency, price_interval, price_year_amount, sort_order, visible, is_default, archived_at, features, tone, badge, updated_at';
 
 /**
  * A subscription in force at ?1, over `subscriptions s`: active until its end date if it has one;
@@ -50,7 +51,7 @@ function parseFeatures(json: string): Features {
 }
 
 function toPrice(row: PlanRow): Price | null {
-  return row.price_amount === null || !row.price_currency ? null : { amount: row.price_amount, currency: row.price_currency, interval: row.price_interval };
+  return row.price_amount === null || !row.price_currency ? null : { amount: row.price_amount, currency: row.price_currency, interval: row.price_interval, yearly: row.price_year_amount };
 }
 
 function toPublicPlan(row: PlanRow): PublicPlan {
@@ -116,10 +117,10 @@ export async function defaultPlan(db: D1Database): Promise<{ id: number; name: s
 export async function insertPlan(db: D1Database, plan: PlanBody, now: string): Promise<number> {
   const id = await db
     .prepare(
-      `INSERT INTO plans (name, description, price_amount, price_currency, price_interval, sort_order, visible, features, tone, badge, created_at, updated_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM plans), ?6, ?7, ?9, ?10, ?8, ?8) RETURNING id`,
+      `INSERT INTO plans (name, description, price_amount, price_currency, price_interval, price_year_amount, sort_order, visible, features, tone, badge, created_at, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?11, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM plans), ?6, ?7, ?9, ?10, ?8, ?8) RETURNING id`,
     )
-    .bind(plan.name, plan.description, plan.price?.amount ?? null, plan.price?.currency ?? null, plan.price?.interval ?? null, plan.visible ? 1 : 0, JSON.stringify(plan.features), now, plan.tone, plan.badge)
+    .bind(plan.name, plan.description, plan.price?.amount ?? null, plan.price?.currency ?? null, plan.price?.interval ?? null, plan.visible ? 1 : 0, JSON.stringify(plan.features), now, plan.tone, plan.badge, plan.price?.yearly ?? null)
     .first<number>('id');
   if (id === null) throw new Error('INSERT … RETURNING id returned no plan');
   return id;
@@ -129,10 +130,10 @@ export function updatePlan(db: D1Database, id: number, plan: PlanBody, now: stri
   return db
     .prepare(
       `UPDATE plans SET name = ?2, description = ?3, price_amount = ?4, price_currency = ?5, price_interval = ?6, visible = ?7, features = ?8, updated_at = ?9,
-              tone = ?10, badge = ?11
+              tone = ?10, badge = ?11, price_year_amount = ?12
         WHERE id = ?1`,
     )
-    .bind(id, plan.name, plan.description, plan.price?.amount ?? null, plan.price?.currency ?? null, plan.price?.interval ?? null, plan.visible ? 1 : 0, JSON.stringify(plan.features), now, plan.tone, plan.badge);
+    .bind(id, plan.name, plan.description, plan.price?.amount ?? null, plan.price?.currency ?? null, plan.price?.interval ?? null, plan.visible ? 1 : 0, JSON.stringify(plan.features), now, plan.tone, plan.badge, plan.price?.yearly ?? null);
 }
 
 export function setPlanArchived(db: D1Database, id: number, archivedAt: string | null, now: string): D1PreparedStatement {

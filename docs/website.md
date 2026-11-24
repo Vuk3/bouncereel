@@ -224,8 +224,9 @@ needs no request and scales with its box; the Videos page and anything else that
 markup in a script shows the same file in an `<img>`. Which plans make a game is written in the
 page ("Every plan", "Paid plans") and filled in from `GET /api/plans` once it answers
 (`fillGamePlans` in [pricing.ts](../src/site/pricing.ts), `gamePlans` in
-[shared/features.ts](../shared/features.ts)): "With Champion", so it follows what the admin area
-sets. A new game is a card on the home page, a section on /games, a phone in the hero, its icon,
+[shared/features.ts](../shared/features.ts)): "Every plan", or the plans and the least they cost
+a month paid by the year ("Pro and Champion, from $7 a month"), so it follows what the admin
+area sets. A new game is a card on the home page, a section on /games, a phone in the hero, its icon,
 its frame (§5) and its line in `GAMES`.
 
 **A feature card** (`.fcard` in [site.css](../src/site/site.css)) sits on the stage in the balls'
@@ -408,7 +409,14 @@ kits drawn in colours, never crests or photos. Check a claim against [recording 
 [matchups and balancing](./matchups-and-balancing.md) before changing it.
 
 **The plans** come from `GET /api/plans` ([src/site/pricing.ts](../src/site/pricing.ts)), so the
-page always says what the studio and the server enforce. **Each card has its plan's tone**
+page always says what the studio and the server enforce. **By the year first**: over the cards, on
+/pricing and on the home page, a switch (`#plans-period`, the studio's segments) of Yearly, with
+what it saves at most ("Save up to 22%"), and Monthly, shown once a plan is sold by the year. By
+the year a card says the year's price as a month and under it what is billed and saved ("$7 /
+month", "$84 billed yearly, save 22%"; `priceLines`, `yearSaving`); by the month, the month's
+price and what the year would make it ("$9 / month", "or $7 a month, billed yearly"); the free
+plan "$0" and "Free, no card needed". The line is on every card, so the buttons line up. Nothing
+can be bought yet: sign-ups and payments stay off, every button says Coming soon. **Each card has its plan's tone**
 (set in the admin area, [accounts and billing](./accounts-and-billing.md#6-plans-and-features)),
 and the tone brings the card's drawing (`planEmblem` in
 [src/site/pricing.ts](../src/site/pricing.ts)), so the plans climb as a race does:
@@ -625,3 +633,4 @@ used for.
 - 2026-11-23 - Goal Rush on the site: a third phone in the hero (pitch.ts, El Clásico first, fanned with the other two), its card (two to a row, three from 1080 px) and its section on /games with its kits running past, a Goal Rush group on the home page's stage, "In every game", a question on crests and photos; everywhere the clubs and players are drawn in their colours, with no crests or photos. Its frames are public/games/goal-rush.webp and -270.webp; the Terms say what the studio makes and that it is not affiliated with any club, league or player.
 - 2026-11-23 - the Goal Rush phone plays and deals only the big rivalries (thirteen `SHOWCASES`); its match livelier, on green turf with a crowd (goal-rush.md); the frames made again; 453 players and 201 classics on the card, /games and the home page.
 - 2026-11-24 - a page for each game (games/ball-race.html, arena-clash.html, goal-rush.html, game-page.ts): the stage, a video moment by moment, the rules beside the game playing, three clips, the choices, questions, the other games; linked from the home page, the footer and the sitemap. How it works shows each game (a choice over the steps, `data-how`; `show()`, `matchFacts`, `battleFacts`, `dealFlags`), the gallery a clip of each game, the stage's groups Goal Rush first, each linking to its page. The hero's Arena Clash dice deals only known countries (`KNOWN`). Six new clips recorded by scripts/clips.ts; the game pages' moments by stills.ts.
+- 2026-11-24 - the plans in dollars, by the year first: the Yearly | Monthly switch over the cards (`#plans-period`), the year as a month with what it is billed and saves, the month with what the year would make it; the games' plan lines say from what a month; the pricing page's questions on Pro against Champion, the year, and every new game first; the site's words on the narrator, the follow button and picking the winner say Champion.

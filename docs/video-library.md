@@ -97,7 +97,7 @@ does not exist (404 `video_not_found`), never 403, so nothing tells them apart. 
 | `invalid_texts` (400) | texts missing a field or past a platform's limit ([shared/texts.ts](../shared/texts.ts)); the message says which |
 | `video_not_found`, `post_not_found`, `not_found` (404) | no such video, link, platform or route |
 | `post_taken` (409) | that post is already linked to another of the account's videos |
-| `not_in_plan` (403) | the video is a game the plan does not make (Arena Clash without `allGames`), longer than the plan's longest, or made with a sound, a look, a power or the follow button the plan does not include |
+| `not_in_plan` (403) | the video is a game the plan does not make (Arena Clash or Goal Rush on a plan that does not make it, `gameAllowed`), with a winner picked or the narrator's opening written without `chooseWinner` or `customText`, longer than the plan's longest, or made with a sound, a look, a power or the follow button the plan does not include |
 | `library_full` (403) | the account's library holds as many videos as its plan keeps |
 | `unauthenticated` (401) | no session ([accounts-and-billing](./accounts-and-billing.md#5-the-session-check)) |
 | `method_not_allowed` (405), `cross_origin` (403), `unsupported_media_type` (415) | as named |

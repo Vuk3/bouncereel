@@ -1,5 +1,5 @@
 import type { AccountResponse, DayResponse, MatchSummary, NewVideo, PublicPlan, VideoResponse, VideosResponse } from '../shared/api.ts';
-import { gameAllowed, LOOK_LABELS, soundAllowed, SOUND_LABELS, type Features, type Game, type Sound } from '../shared/features.ts';
+import { GAME_LABELS, gameAllowed, LOOK_LABELS, soundAllowed, SOUND_LABELS, type Features, type Game, type Sound } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
 import { AudioEngine, MATCH_SOUNDS } from './audio/engine.ts';
 import { Music } from './audio/music.ts';
@@ -7,7 +7,29 @@ import { VOICES, VoiceCache, introLine, plannedLines, previewLine, voiceOf, winn
 import { Sonifier } from './audio/sonify.ts';
 import { ALSO_CALLED, COUNTRIES, DICE_REGIONS, flagName, type DiceRegion } from './battle/countries.ts';
 import { flagSrc, lineColors, loadFlags } from './battle/flags.ts';
-import { DEFAULT_CONFIG, MODES, PRESETS, SKINS, asksToFollow, mergeConfig, savedConfig, switchGame, type Battle, type Config, type Contestant, type Mode, type Skin, type Special } from './config.ts';
+import {
+  BATTLE_LAST_LINES,
+  BATTLE_WINNER_LINES,
+  DEFAULT_CONFIG,
+  LAST_LINES,
+  MATCH_LAST_LINES,
+  MATCH_WINNER_LINES,
+  MODES,
+  PRESETS,
+  SKINS,
+  WINNER_LINES,
+  asksToFollow,
+  mergeConfig,
+  savedConfig,
+  switchGame,
+  type Battle,
+  type Config,
+  type Contestant,
+  type Mode,
+  type Skin,
+  type Special,
+} from './config.ts';
+import { BATTLE_QUESTIONS, MATCH_QUESTIONS, QUESTIONS } from './audio/opening.ts';
 import { classicsOf, pairKey } from './football/classics.ts';
 import { kitIcon, sideColors } from './football/kits.ts';
 import { loadSideIndex, loadSidePictures, sideKind, sideSrc } from './football/pictures.ts';
@@ -97,6 +119,25 @@ function setText(el: HTMLElement, text: string): void {
 /** The same for a two-state button's `data-state`, which picks its icon (style.css). */
 function setState(el: HTMLElement, state: string): void {
   if (el.dataset.state !== state) el.dataset.state = state;
+}
+
+/** The dice's questions and lines: words a plan without words of its own may still have. */
+const DEALT = new Set<string>([
+  ...QUESTIONS,
+  ...BATTLE_QUESTIONS,
+  ...MATCH_QUESTIONS,
+  ...LAST_LINES,
+  ...WINNER_LINES,
+  ...BATTLE_WINNER_LINES,
+  ...BATTLE_LAST_LINES,
+  ...MATCH_WINNER_LINES,
+  ...MATCH_LAST_LINES,
+]);
+
+/** Whether a config has words of its own (`customText`): a typed opening, or a question or a last line the dice never deals. An empty line is none, not words. */
+function ownWords(cfg: Config): boolean {
+  const typed = (text: string) => text.trim() !== '' && !DEALT.has(text);
+  return cfg.voice.script.trim() !== '' || typed(cfg.look.question) || typed(cfg.look.cta) || typed(cfg.voice.outro);
 }
 
 export class App {
@@ -1231,6 +1272,21 @@ export class App {
       cfg.timing.video = f.maxSeconds;
       retime = true;
     }
+    if (!f.chooseWinner && (cfg.battle.winner || cfg.match.winner)) {
+      cfg.battle.winner = '';
+      cfg.match.winner = '';
+      retime = true;
+    }
+    if (!f.customText && ownWords(cfg)) {
+      // The automatic opening and question, and the dice's first lines in place of words typed.
+      const [last, win] = cfg.game === 'arena-clash' ? [BATTLE_LAST_LINES, BATTLE_WINNER_LINES] : cfg.game === 'goal-rush' ? [MATCH_LAST_LINES, MATCH_WINNER_LINES] : [LAST_LINES, WINNER_LINES];
+      cfg.voice.script = '';
+      if (!DEALT.has(cfg.look.question)) cfg.look.question = '';
+      if (cfg.look.cta.trim() && !DEALT.has(cfg.look.cta)) cfg.look.cta = last[0];
+      if (cfg.voice.outro.trim() && !DEALT.has(cfg.voice.outro)) cfg.voice.outro = win[0];
+      // The winner line's length sets the winner card's (pacing.ts).
+      retime = true;
+    }
     return retime ? ((cfg.game === 'arena-clash' ? balanceBattle(cfg) : cfg.game === 'goal-rush' ? balanceMatch(cfg) : balance(cfg)) ?? cfg) : cfg;
   }
 
@@ -1245,6 +1301,9 @@ export class App {
     if (c.game === 'ball-race' && !f.powers && [c.a, c.b].some((ball) => ball.special !== 'none' && ball.amount > 0)) {
       return 'A ball in this matchup has a power, which your plan does not include: roll a new matchup.';
     }
+    const winner = c.game === 'arena-clash' ? c.battle.winner : c.game === 'goal-rush' ? c.match.winner : '';
+    if (!f.chooseWinner && winner) return 'Picking who wins is not in your plan: set Winner to Random.';
+    if (!f.customText && ownWords(c)) return 'Words of your own are not in your plan: empty the Opening, and let the dice deal the question and the last lines.';
     return null;
   }
 
@@ -1261,22 +1320,57 @@ export class App {
     const onPaid = (has: (plan: Features) => boolean) => paid.length > 0 && paid.every((p) => has(p.features));
     const gate = (after: Element, has: (plan: Features) => boolean, invite: string, plain: string) => after.after(planInvite(invite, onPaid(has), plain));
 
-    if (!gameAllowed(f, 'arena-clash')) {
-      for (const game of ['arena-clash', 'goal-rush']) {
-        const input = $<HTMLInputElement>(`.games input[value="${game}"]`);
-        input.disabled = true;
-        const label = input.closest('label');
-        label?.classList.add('locked');
-        label?.querySelector('span')?.append(paidTag(onPaid((plan) => plan.allGames)));
+    // The plans that have something, by name ("Champion", "Pro and Champion"): for what only some paid plans have.
+    const having = (has: (plan: Features) => boolean) => paid.filter((p) => has(p.features)).map((p) => p.name).join(' and ');
+    const tag = (has: (plan: Features) => boolean) => paidTag(onPaid(has), having(has));
+
+    const lockedGames = (['arena-clash', 'goal-rush'] as Game[]).filter((game) => !gameAllowed(f, game));
+    for (const game of lockedGames) {
+      const input = $<HTMLInputElement>(`.games input[value="${game}"]`);
+      input.disabled = true;
+      const label = input.closest('label');
+      label?.classList.add('locked');
+      label?.querySelector('span')?.append(tag((plan) => gameAllowed(plan, game)));
+    }
+    if (lockedGames.length) {
+      const hasThem = (plan: Features) => lockedGames.every((game) => gameAllowed(plan, game));
+      const names = lockedGames.map((game) => GAME_LABELS[game]).join(' and ');
+      const one = lockedGames.length === 1;
+      const which = having(hasThem) ? `${names} ${one ? 'comes' : 'come'} with ${having(hasThem)}.` : `${names} ${one ? 'is' : 'are'} not in your plan.`;
+      gate($('.games'), hasThem, which, which);
+    }
+
+    if (!f.chooseWinner) {
+      const picks = (plan: Features) => plan.chooseWinner;
+      const words = having(picks) ? `Picking who wins comes with ${having(picks)}; on yours the battle or the match decides.` : 'Picking who wins is not in your plan.';
+      for (const id of ['#battle-winner', '#match-winner']) {
+        const select = $<HTMLSelectElement>(id);
+        select.disabled = true;
+        const field = select.closest<HTMLElement>('.field')!;
+        field.classList.add('locked');
+        field.querySelector('label span')?.append(' ', tag(picks));
+        gate(field, picks, words, words);
       }
-      // Which plans have them, by what they are called: only some of the paid ones do.
-      const having = paid.filter((p) => p.features.allGames).map((p) => p.name);
-      const which = having.length ? `Arena Clash and Goal Rush come with ${having.join(' and ')}.` : 'Arena Clash and Goal Rush are not in your plan.';
-      gate($('.games'), (plan) => plan.allGames, which, which);
+    }
+
+    if (!f.customText) {
+      // The question and the last lines stay as the dice deals them; the narrator's lines, on a plan
+      // with the narrator, as the automatic opening and the dice's winner lines.
+      const writes = (plan: Features) => plan.customText;
+      const words = having(writes) ? `Words of your own come with ${having(writes)}: on yours the dice deals these.` : 'Words of your own are not in your plan: the dice deals these.';
+      for (const path of ['look.question', 'look.cta', 'voice.script', 'voice.outro']) {
+        const field = document.querySelector(`[name="${path}"]`)?.closest<HTMLElement>('.field');
+        if (!field) continue;
+        field.inert = true;
+        field.classList.add('locked');
+        if (path === 'look.cta' || (path === 'voice.outro' && f.narrator)) gate(field, writes, words, words);
+      }
     }
     if (f.maxSeconds < Number($<HTMLInputElement>('#video').max)) {
       const longest = Math.min(...paid.map((p) => p.features.maxSeconds));
-      gate($('#video'), (plan) => plan.maxSeconds > f.maxSeconds, `Up to ${longest} s on the paid plans.`, `Your plan makes videos up to ${f.maxSeconds} s.`);
+      const longer = paid.filter((p) => p.features.maxSeconds > f.maxSeconds).sort((a, b) => b.features.maxSeconds - a.features.maxSeconds)[0];
+      const plain = longer ? `Your plan makes videos up to ${f.maxSeconds} s; ${longer.name}, up to ${longer.features.maxSeconds} s.` : `Your plan makes videos up to ${f.maxSeconds} s.`;
+      gate($('#video'), (plan) => plan.maxSeconds > f.maxSeconds, `Up to ${longest} s on the paid plans.`, plain);
     }
 
     const looks = [...document.querySelectorAll<HTMLInputElement>('.look input')].filter((input) => !f.looks.includes(input.value as Skin));
@@ -1312,11 +1406,11 @@ export class App {
       input.disabled = true;
       const label = input.closest('label');
       label?.classList.add('locked');
-      label?.querySelector('span')?.append(paidTag(onPaid(soundsOnPaid)));
+      label?.querySelector('span')?.append(tag(soundsOnPaid));
     }
     if (sounds.length) {
       const names = sounds.map((i) => SOUND_LABELS[i.value as Sound]).join(' and ');
-      gate($('#track-hint'), soundsOnPaid, `${names} on the paid plans.`, `${names}: not in your plan.`);
+      gate($('#track-hint'), soundsOnPaid, `${names} on the paid plans.`, having(soundsOnPaid) ? `${names} with ${having(soundsOnPaid)}.` : `${names}: not in your plan.`);
     }
 
     if (!f.powers) {
@@ -1349,9 +1443,9 @@ export class App {
       const followOnPaid = (plan: Features) => plan.follow;
       const toggle = follow.closest('.switch')!;
       toggle.classList.add('locked');
-      toggle.querySelector('span')?.append(' ', paidTag(onPaid(followOnPaid)));
+      toggle.querySelector('span')?.append(' ', tag(followOnPaid));
       $('#follow-hint').hidden = true;
-      gate(toggle, followOnPaid, 'The follow button on the paid plans.', 'The follow button is not in your plan.');
+      gate(toggle, followOnPaid, 'The follow button on the paid plans.', having(followOnPaid) ? `The follow button comes with ${having(followOnPaid)}.` : 'The follow button is not in your plan.');
     }
 
     if (!f.narrator) {
@@ -1362,11 +1456,14 @@ export class App {
         field.inert = true;
         field.classList.add('locked');
       }
+      const speaks = having((plan) => plan.narrator);
       voice.prepend(
         planInvite(
           'The narrator comes with the paid plans; you can hear each voice here.',
           onPaid((plan) => plan.narrator),
-          'The narrator is not in your plan: videos have music, or no sound. You can still hear each voice.',
+          speaks
+            ? `The narrator comes with ${speaks}: on your plan videos have music, or no sound. You can still hear each voice.`
+            : 'The narrator is not in your plan: videos have music, or no sound. You can still hear each voice.',
         ),
       );
     }

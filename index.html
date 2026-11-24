@@ -329,7 +329,7 @@
                     <label><input type="radio" name="how-battle-winner" value="" checked /><span>Let it play</span></label>
                   </div>
                 </fieldset>
-                <p class="piece-note">Arena Clash is made on the paid plans, with the narrator, the music alone or silence.</p>
+                <p class="piece-note">Arena Clash is made on Pro and Champion; picking the winner and the narrator come with Champion.</p>
               </div>
               <div class="step-text" data-how="goal-rush" hidden>
                 <span class="step-num">2</span>
@@ -349,7 +349,7 @@
                     <label><input type="radio" name="how-match-winner" value="away" /><span id="how-match-away">Barcelona</span></label>
                   </div>
                 </fieldset>
-                <p class="piece-note">Goal Rush is made on the paid plans, with the narrator, the whistles and the crowd alone, or silence. Clubs and players are drawn in their colours, with no crests or photos.</p>
+                <p class="piece-note">Goal Rush is made on Pro and Champion; picking the winner and the narrator come with Champion. Clubs and players are drawn in their colours, with no crests or photos.</p>
               </div>
             </li>
           </ol>
@@ -673,7 +673,7 @@
             <div class="fbento">
               <article class="fcard fcard-big">
                 <h4>A narrator who asks for a pick</h4>
-                <p>It names the players, says in a line what each does or what the rule is, and ends by asking viewers to pick: the answer goes in the comments. The narrator comes with the paid plans; every plan records music only or silence.</p>
+                <p>It names the players, says in a line what each does or what the rule is, and ends by asking viewers to pick: the answer goes in the comments. The narrator comes with Champion; every plan records music only or silence.</p>
                 <!-- The classic's real opening (src/audio/narration.ts autoScript), and Kokoro saying it in Heart, loaded only on a press. -->
                 <div class="fviz viz-voice" id="voice">
                   <p class="quote">“Fibonacci Ball versus Slow Factorial Ball! Fibonacci adds up its last two hits. Slow Factorial multiplies by the next number. By its twentieth hit, Factorial deals over two quintillion. Which one are you betting on?”</p>
@@ -690,7 +690,7 @@
               </article>
               <article class="fcard">
                 <h4>A follow button in the video</h4>
-                <p>It pops up once while the game plays and again under the winner card, a hand taps it, and the narrator says “Follow for more!” On the paid plans.</p>
+                <p>It pops up once while the game plays and again under the winner card, a hand taps it, and the narrator says “Follow for more!” On Champion.</p>
                 <div class="fviz viz-follow" aria-hidden="true">
                   <span class="follow-pill"><b>+</b>FOLLOW</span>
                   <img class="follow-hand" src="/hand/pointing-up.png" width="72" height="72" loading="lazy" alt="" />
@@ -718,8 +718,16 @@
       <section class="shell section" id="pricing" aria-labelledby="pricing-title">
         <header class="section-head">
           <h2 id="pricing-title">Plans</h2>
-          <p>Start free, no card needed. The paid plans make more videos a day, longer, in every look, with the narrator and powers, and no watermark.</p>
+          <p>Start free with Ball Race, no card needed. Pro makes all three games without the watermark; Champion makes everything: the narrator, the winner you pick, no limit, and every new game first.</p>
         </header>
+        <!-- By the year or by the month (src/site/pricing.ts): shown once a plan is sold by the year; the year first. -->
+        <fieldset class="choice plans-period" id="plans-period" hidden>
+          <legend class="sr-only">Pay</legend>
+          <div class="choice-options segments">
+            <label><input type="radio" name="plans-period" value="year" checked /><span>Yearly <b class="plans-save">Save up to 22%</b></span></label>
+            <label><input type="radio" name="plans-period" value="month" /><span>Monthly</span></label>
+          </div>
+        </fieldset>
         <ul class="plans plans-loading" id="plans" aria-busy="true"></ul>
         <p class="plans-note" id="plans-note" hidden></p>
         <noscript><p class="plans-note">The plans load with JavaScript, which is off in this browser. Turn it on to see them; the studio needs it too.</p></noscript>
@@ -746,7 +754,7 @@
             </details>
             <details>
               <summary>Can I choose who wins an Arena Clash or a Goal Rush?</summary>
-              <p>Yes: pick the winner in the game's card, or leave it to the arena or the match. Either way the game is balanced to end at the length you set: a battle's flags go out along the way rather than all at once, and a match has its goals through the ninety minutes.</p>
+              <p>On Champion, yes: pick the winner in the game's card, or leave it to the arena or the match. Either way the game is balanced to end at the length you set: a battle's flags go out along the way rather than all at once, and a match has its goals through the ninety minutes.</p>
             </details>
             <details>
               <summary>Do Goal Rush videos show club crests or player photos?</summary>
@@ -760,7 +768,7 @@
             </details>
             <details>
               <summary>What does the narrator cost?</summary>
-              <p>It comes with the paid plans, at no extra cost: the narrator is Kokoro, a free voice that runs in your browser, so what it says is made on your computer. The first time, your browser downloads the voice once. Or record with music only or silent, and add a sound when you post.</p>
+              <p>It comes with Champion, at no extra cost: the narrator is Kokoro, a free voice that runs in your browser, so what it says is made on your computer. The first time, your browser downloads the voice once. Or record with music only or silent, and add a sound when you post.</p>
             </details>
             <details>
               <summary>Can I make the same video again?</summary>

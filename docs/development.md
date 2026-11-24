@@ -195,7 +195,7 @@ The panel's header holds the **Videos** page (a play sign in a box,
 superadmin), the **account** page and the theme. Under it, until the address is confirmed, a
 banner asks for it with a button that sends the mail again.
 
-**The plan card**, under the header on a plan that holds anything back: "Your plan: Rookie",
+**The plan card**, under the header on a plan that holds anything back: "Your plan: Free",
 a tick for each thing it makes and a dash for each it leaves out, and Compare plans.
 
 **What the plan does not include reads as an invitation, not an error** (`applyPlan`): it stays

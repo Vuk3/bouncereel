@@ -3,7 +3,7 @@
   <head>
     <!-- site:head /pricing -->
     <title>Pricing · BounceReel</title>
-    <meta name="description" content="BounceReel plans: start free with one ball race video a day, no card needed. Paid plans add the narrator, every look, longer videos and no watermark." />
+    <meta name="description" content="BounceReel plans: Free with one Ball Race a day; Pro, all three games without the watermark, from $7 a month; Champion, everything and every new game first, from $15 a month." />
   </head>
   <body>
     <!-- site:header -->
@@ -14,6 +14,14 @@
           <h1 id="pricing-title" class="page-title">Plans</h1>
           <p>Start free, no card needed. What a plan includes is what the studio lets you record.</p>
         </header>
+        <!-- By the year or by the month (src/site/pricing.ts): shown once a plan is sold by the year; the year first. -->
+        <fieldset class="choice plans-period" id="plans-period" hidden>
+          <legend class="sr-only">Pay</legend>
+          <div class="choice-options segments">
+            <label><input type="radio" name="plans-period" value="year" checked /><span>Yearly <b class="plans-save">Save up to 22%</b></span></label>
+            <label><input type="radio" name="plans-period" value="month" /><span>Monthly</span></label>
+          </div>
+        </fieldset>
         <ul class="plans plans-loading" id="plans" data-heading="h2" aria-busy="true"></ul>
         <p class="plans-note" id="plans-note" hidden></p>
         <noscript><p class="plans-note">The plans load with JavaScript, which is off in this browser. Turn it on to see them; the studio needs it too.</p></noscript>
@@ -25,6 +33,14 @@
         </header>
         <div class="faq">
           <div class="faq-col">
+            <details>
+              <summary>What is the difference between Pro and Champion?</summary>
+              <p>Pro makes all three games, without the watermark: five videos a day up to a minute, with music or silent. Champion makes everything: no daily limit, videos up to 90 seconds, the narrator, the follow button, the winner you pick, your own words on screen and in the narrator's mouth, and every new game the day it comes out.</p>
+            </details>
+            <details>
+              <summary>Is paying by the year cheaper?</summary>
+              <p>Yes: Pro is $7 a month paid by the year ($84) instead of $9 a month, and Champion $15 a month ($180) instead of $19. Over 20% off either way.</p>
+            </details>
             <details>
               <summary>What happens to my videos if I change plans?</summary>
               <p>They stay in your library. On a plan that keeps fewer videos, nothing is deleted: new recordings are just not added until there is room.</p>
@@ -38,6 +54,10 @@
             <details>
               <summary>Can I get a refund?</summary>
               <p>See the <a href="/refunds">refund policy</a>.</p>
+            </details>
+            <details>
+              <summary>What does every new game first mean?</summary>
+              <p>A new game comes to Champion the day it is out. The other plans get it later, if at all: Free makes Ball Race, Pro the three games there are today.</p>
             </details>
           </div>
         </div>

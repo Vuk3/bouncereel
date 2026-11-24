@@ -252,7 +252,13 @@ function priceValue(value: unknown): Price | null {
   if (typeof p.currency !== 'string' || !/^[A-Za-z]{3}$/.test(p.currency)) throw invalid('price', 'price.currency must be a three-letter code: EUR, USD.');
   const interval = p.interval ?? null;
   if (interval !== null && !PRICE_INTERVALS.some((i) => i === interval)) throw invalid('price', 'price.interval must be month, year or null.');
-  return { amount: p.amount, currency: p.currency.toUpperCase(), interval: interval as Price['interval'] };
+  const yearly = p.yearly ?? null;
+  if (yearly !== null && (typeof yearly !== 'number' || !Number.isInteger(yearly) || yearly < 0 || yearly > 100_000_000)) {
+    throw invalid('price', 'price.yearly must be a whole number of cents, or null.');
+  }
+  // A price for a year beside one for a month: a yearly plan's own price is its year already.
+  if (yearly !== null && interval !== 'month') throw invalid('price', 'A yearly price goes with a monthly one: set the interval to month.');
+  return { amount: p.amount, currency: p.currency.toUpperCase(), interval: interval as Price['interval'], yearly };
 }
 
 function planBody(body: Record<string, unknown>): PlanBody {

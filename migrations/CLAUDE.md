@@ -21,6 +21,7 @@ throttling, plans, subscriptions and the change log in
 | [0010_profiles.sql](./0010_profiles.sql) | `first_name`, `last_name`, `avatar_key` (a key in the R2 bucket) and `google_sub` (unique where set) on `users`; an account made with Google has `password_hash` '' |
 | [0011_flag_battle.sql](./0011_flag_battle.sql) | `battle` on `videos`: what an Arena Clash came to, as JSON; NULL for a race |
 | [0012_goal_rush.sql](./0012_goal_rush.sql) | `match_result` on `videos`: what a Goal Rush came to, as JSON; NULL for the other games |
+| [0013_plan_prices.sql](./0013_plan_prices.sql) | `price_year_amount` on `plans` (a monthly plan's price for a year); `games`, `chooseWinner` and `customText` on every plan's features; the plans set as the owner decided: Free (Rookie renamed), Pro at $9 or $84 a year, Champion at $19 or $180 a year |
 
 ## Rules
 

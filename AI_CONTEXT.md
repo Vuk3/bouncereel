@@ -36,7 +36,7 @@ served by Cloudflare Workers Assets; a small Worker answers `/api/*` and checks 
 before serving the pages behind the sign-in. The only runtime dependency is `kokoro-js`,
 loaded the first time the narrator speaks.
 
-Its second game is **Arena Clash** (`game: 'arena-clash'`, on plans with `allGames`), the
+Its second game is **Arena Clash** (`game: 'arena-clash'`, on plans that make it: Pro and Champion), the
 format known as the string circle: 2 to 12 balls, each a country's **flag**, in one round
 **arena** on a black stage, each tied to the ring by a fan of **strings**. A ball touching a
 rival's strings **cuts** every one it touches; a bounce off the ring ties a bundle of new ones;
@@ -44,7 +44,7 @@ a ball with no strings is out, and the last flag standing wins. It steps by dist
 balancing picks a seed and then the speed that puts the last string on the video's length
 exactly ([arena-clash](docs/arena-clash.md)).
 
-Its third game is **Goal Rush** (`game: 'goal-rush'`, also with `allGames`): a football match of
+Its third game is **Goal Rush** (`game: 'goal-rush'`, on Pro and Champion too): a football match of
 ninety minutes in a round pitch on the black stage, two balls, each a **club** or a **player** in
 its kit, and one **goal** that spins round the ring; a ball through its mouth scores, both kick
 off again, and at ninety minutes the side with more goals wins. Its length is its clock's, so
@@ -156,12 +156,12 @@ enough to read whole before the real work starts.
 | **post** | a video's link on one platform (`youtube`, `tiktok`, `instagram`), at most one each |
 | **account** | a user who signed up: email, password hash, role, confirmed or not, suspended or not; signed in by a session cookie ([accounts-and-billing](docs/accounts-and-billing.md)) |
 | **superadmin** | the role with every feature and the admin area; made only by `npm run admin` from the terminal, never over HTTP. Everyone else is `user` |
-| **plan** | a set of feature values with a name, an optional price, an order, visibility and a card on the pricing page (a tone and a badge), stored in D1 and edited in the admin area; Rookie (the free, default plan), Pro and Champion are seeded |
+| **plan** | a set of feature values with a name, an optional price, an order, visibility and a card on the pricing page (a tone and a badge), stored in D1 and edited in the admin area; Free (the default plan), Pro and Champion, priced in dollars by the month and by the year |
 | **feature** | one thing a plan can unlock, defined in [shared/features.ts](shared/features.ts): the sounds, the narrator, the longest video, the looks, powers, videos a day, the library size, no watermark, the follow button, every game |
 | **day** | the daily allowance's window: the UTC calendar day, so it comes back at midnight UTC; what it has used is kept on the account ([accounts-and-billing](docs/accounts-and-billing.md#6-plans-and-features)) |
 | **subscription** | an account's one row naming its plan, status (`active`, `canceled`), source (`manual` or a provider), optional end date; in force or not is worked out on every request, and an ended one falls back to the default plan |
 | **change log** | the append-only record of every subscription, plan and account-standing change: who, when, before, after |
-| **game** | `game` in the config and the library: `ball-race`, `arena-clash` or `goal-rush`; the panel's switch picks it, and the plan's `allGames` allows the other two |
+| **game** | `game` in the config and the library: `ball-race`, `arena-clash` or `goal-rush`; the panel's switch picks it, and the plan's `games` or `allGames` allows the other two (`gameAllowed`) |
 | **flag**, **arena**, **string**, **cut** | Arena Clash's ball (a country, by code: `rs`, `gb-eng`), its round field, a tie from the ring to a ball (a hundred in a fan at the start, a bundle of ten from every bounce, no most), and a ball touching a rival's strings, which removes every one it touches: the only way strings go ([arena-clash](docs/arena-clash.md)) |
 | **pace** | how many times its starting speed (`battle.speed`) every ball flies at, up to twice by the end, so long duels play faster |
 | **side**, **match**, **goal**, **classic** | Goal Rush's ball (a club or a player, by id: `real-madrid`, `messi`), its ninety minutes (`match.seconds` of video), a ball through the spinning goal's mouth, and a pair the studio offers whole (El Clásico, Messi–Ronaldo) ([goal-rush](docs/goal-rush.md)) |
@@ -197,7 +197,7 @@ enough to read whole before the real work starts.
 ## End-to-end flows
 
 **Someone signs up.** `/signup` posts the address and password; the Worker (throttled per IP)
-hashes the password, creates a `user` account with a subscription to the default plan (Rookie)
+hashes the password, creates a `user` account with a subscription to the default plan (Free)
 and a `created` line in the change log, stores a confirmation link and mails it after the
 answer, and starts a session: the page goes on to `/app`. The studio loads the account
 (`GET /api/account`: plan in force, features, library count; the plans from `GET /api/plans`

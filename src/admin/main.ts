@@ -18,10 +18,10 @@ import {
   type UserSort,
   type UserStatus,
 } from '../../shared/api.ts';
-import { LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, MIN_VIDEO_SECONDS, SOUND_LABELS, SOUNDS, describeFeatures, type Features } from '../../shared/features.ts';
+import { GAME_LABELS, GAMES, LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, MIN_VIDEO_SECONDS, SOUND_LABELS, SOUNDS, describeFeatures, type Features } from '../../shared/features.ts';
 import { api } from '../api.ts';
 import { loadAccount } from '../session.ts';
-import { formatPrice, planEmblem } from '../site/pricing.ts';
+import { formatPrice, planEmblem, priceLines } from '../site/pricing.ts';
 import { avatar, displayName, type Person } from '../ui/avatar.ts';
 import { bindThemeToggle } from '../ui/theme.ts';
 
@@ -568,12 +568,15 @@ function toneClass(tone: PlanTone): string {
   return tone === 'plain' ? '' : ` tone-${tone}`;
 }
 
-/** A plan as src/site/pricing.ts draws it: the same drawing, price, list, tone and badge. */
+/** A plan as src/site/pricing.ts draws it: the same drawing, price (by the year, the page's default), list, tone and badge. */
 function planFace(plan: Face, heading: 'h2' | 'h3', tags: Child[] = []): HTMLElement[] {
   const price = el('p', 'plan-price');
+  let billed: string | null = null;
   if (plan.price) {
-    price.append(formatPrice(plan.price));
-    if (plan.price.interval) price.append(el('small', '', `/ ${plan.price.interval}`));
+    const lines = priceLines(plan.price, 'year');
+    price.append(lines.amount);
+    if (lines.per) price.append(el('small', '', lines.per));
+    billed = lines.note && `${lines.note}; ${formatPrice(plan.price)} by the month`;
   } else {
     price.classList.add('soon');
     price.textContent = 'Coming soon';
@@ -581,7 +584,14 @@ function planFace(plan: Face, heading: 'h2' | 'h3', tags: Child[] = []): HTMLEle
   const list = el('ul', 'ticks', ...describeFeatures(plan.features).map((f) => el('li', f.included ? '' : 'no', f.text)));
   list.setAttribute('aria-label', `What ${plan.name || 'the plan'} includes`);
   const badge = plan.badge ? el('span', 'plan-badge', plan.badge) : null;
-  return [el('div', 'plan-top', planEmblem(plan.tone), el(heading, '', plan.name || 'Untitled plan'), badge, ...tags), price, el('p', 'plan-desc', plan.description || '\u00a0'), list];
+  // The billed line always, a space when there is none, so the tiles' rows line up as the pricing page's cards do.
+  return [
+    el('div', 'plan-top', planEmblem(plan.tone), el(heading, '', plan.name || 'Untitled plan'), badge, ...tags),
+    price,
+    el('p', 'plan-billed', billed ?? '\u00a0'),
+    el('p', 'plan-desc', plan.description || '\u00a0'),
+    list,
+  ];
 }
 
 /** The editor's checkbox and the line beside it. */
@@ -596,7 +606,21 @@ function toggle(name: string, label: string, note: string, checked: boolean): HT
 }
 
 /** A new plan starts as the free plan does: the smallest that still makes a video, with the watermark. */
-const NEW_PLAN: Features = { sounds: ['music', 'silent'], narrator: false, maxSeconds: 30, looks: ['paper'], powers: false, perDay: 1, library: 5, watermark: true, follow: false, allGames: false };
+const NEW_PLAN: Features = {
+  sounds: ['music', 'silent'],
+  narrator: false,
+  maxSeconds: 30,
+  looks: ['paper'],
+  powers: false,
+  perDay: 1,
+  library: 5,
+  watermark: true,
+  follow: false,
+  allGames: false,
+  games: [],
+  chooseWinner: false,
+  customText: false,
+};
 
 /** The editor's fields for one plan (or a new one), prices in the currency's major unit. */
 function planForm(plan: AdminPlan | null): { form: HTMLFormElement; read: () => PlanBody } {
@@ -647,8 +671,13 @@ function planForm(plan: AdminPlan | null): { form: HTMLFormElement; read: () => 
         'div',
         'form-row',
         field('Amount', input('amount', plan?.price ? (plan.price.amount / 100).toFixed(2) : '', { inputMode: 'decimal', placeholder: '9.00' }), 'Empty: “Coming soon”'),
-        field('Currency', input('currency', plan?.price?.currency ?? 'EUR', { maxLength: 3 })),
+        field('Currency', input('currency', plan?.price?.currency ?? 'USD', { maxLength: 3 })),
         field('Billed', interval),
+      ),
+      field(
+        'A year at once',
+        input('yearly', plan?.price?.yearly != null ? (plan.price.yearly / 100).toFixed(2) : '', { inputMode: 'decimal', placeholder: '84.00' }),
+        'With a monthly price: the price for a year paid at once, which the pricing page shows first, as a month. Empty: by the month alone.',
       ),
     ),
     el(
@@ -676,7 +705,15 @@ function planForm(plan: AdminPlan | null): { form: HTMLFormElement; read: () => 
         toggle('powers', 'Powers', 'Balls that speed up, slow down, grow or split.', f.powers),
         toggle('watermark', 'Watermark', 'A small BounceReel watermark between the two cards of every video.', f.watermark),
         toggle('follow', 'Follow button', 'The studio’s Ask viewers to follow switch: a follow button in the race and under the winner card, and “Follow for more!” from the narrator.', f.follow),
-        toggle('allGames', 'Every game', 'Arena Clash, and each game BounceReel adds as it comes out. Ball races are in every plan.', f.allGames),
+        toggle('allGames', 'Every game', 'Every game BounceReel makes, and each new one the day it comes out. Ball races are in every plan.', f.allGames),
+        toggle('chooseWinner', 'Pick who wins', 'The winner of an Arena Clash or a Goal Rush, picked in the studio.', f.chooseWinner),
+        toggle('customText', 'Words of your own', 'The question on the first frame, the narrator’s opening and winner line, the winner card’s last line. Without it, the automatic ones and the dice’s.', f.customText),
+      ),
+      el(
+        'div',
+        'field',
+        el('span', '', 'Games besides Ball Race, without Every game'),
+        el('div', 'choices', ...GAMES.filter((g) => g !== 'ball-race').map((g) => choice(`game-${g}`, GAME_LABELS[g], f.games.includes(g)))),
       ),
     ),
   );
@@ -689,7 +726,14 @@ function planForm(plan: AdminPlan | null): { form: HTMLFormElement; read: () => 
     return {
       name: text('name'),
       description: text('description'),
-      price: amount ? { amount: Math.round(Number(amount.replace(',', '.')) * 100), currency: text('currency').toUpperCase(), interval: (text('interval') || null) as PriceInterval | null } : null,
+      price: amount
+        ? {
+            amount: Math.round(Number(amount.replace(',', '.')) * 100),
+            currency: text('currency').toUpperCase(),
+            interval: (text('interval') || null) as PriceInterval | null,
+            yearly: text('yearly') ? Math.round(Number(text('yearly').replace(',', '.')) * 100) : null,
+          }
+        : null,
       visible: data.has('visible'),
       tone: text('tone') as PlanTone,
       badge: text('badge') || null,
@@ -704,6 +748,9 @@ function planForm(plan: AdminPlan | null): { form: HTMLFormElement; read: () => 
         watermark: data.has('watermark'),
         follow: data.has('follow'),
         allGames: data.has('allGames'),
+        games: GAMES.filter((g) => g !== 'ball-race' && data.has(`game-${g}`)),
+        chooseWinner: data.has('chooseWinner'),
+        customText: data.has('customText'),
       },
     };
   };

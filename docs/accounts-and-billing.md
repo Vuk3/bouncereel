@@ -51,7 +51,7 @@ made from the terminal (below).
 | the footer | "Start free" under Product | nothing |
 | `/login` | "New here? Start free" | "New here? Sign-ups open soon." |
 | `/signup` | the form, titled "Start free", with src/site/auth.ts | "Coming soon", a link to sign in, titled "Coming soon", with only src/site/chrome.ts |
-| the plan cards, to a guest ([src/site/pricing.ts](../src/site/pricing.ts)) | Rookie "Start free"; Pro and Champion "Upgrades open soon" (or "Choose …" once `BILLING` is on) | "Coming soon" on all three, and under them "BounceReel opens soon. These are the plans it will open with." |
+| the plan cards, to a guest ([src/site/pricing.ts](../src/site/pricing.ts)) | Free "Start free"; Pro and Champion "Upgrades open soon" (or "Choose …" once `BILLING` is on) | "Coming soon" on all three, and under them "BounceReel opens soon. These are the plans it will open with." |
 
 Each place in the HTML is written twice, once marked `data-signups="open"` and once
 `"closed"`, and the build keeps the side the flag names (`signups()` in
@@ -314,16 +314,20 @@ again on every request, which is what protects the data.
 | `perDay` | videos a day, 1 or more; null is no limit. A day is the UTC calendar day: a new one starts at midnight UTC | the server as Record starts (`POST /api/account/day`, `claimDay`); the studio's Record button shows it |
 | `library` | videos kept; null is no limit | the server on save (inside the INSERT) |
 | `watermark` | a small BounceReel watermark (the mark and the site's host) between the two cards of every video ([look and layout](./look-and-layout.md#10-the-power-tag-and-the-watermark)) | the studio: it draws the video, in the preview as in the file, and the preview alone has the preview marks across it. The server cannot see the pixels; the [terms](../terms.html#licence) ask that it stays on |
-| `follow` | the follow button: the studio's Ask viewers to follow switch (`look.follow`), a follow button once in the race and under the winner card, and "Follow for more!" after the winner line ([look and layout](./look-and-layout.md#14-the-follow-button)). On every plan but Rookie (0009_follow_button.sql) | the studio (the switch is locked; a config made with it, from the library or a file, loads with it off); the server on save (`look.follow`) |
-| `allGames` | every game BounceReel makes, each new one as it comes out: Arena Clash and Goal Rush today. Ball races are in every plan (`gameAllowed`) | the studio's game switch (off, with a paid tag, without it; a saved battle opens as a race); Record; the server on save (`game`) |
+| `follow` | the follow button: the studio's Ask viewers to follow switch (`look.follow`), a follow button once in the race and under the winner card, and "Follow for more!" after the winner line ([look and layout](./look-and-layout.md#14-the-follow-button)) | the studio (the switch is locked; a config made with it, from the library or a file, loads with it off); the server on save (`look.follow`) |
+| `allGames` | every game BounceReel makes, each new one the day it comes out. Ball races are in every plan (`gameAllowed`) | the studio's game switch (off, with a tag, without it; a saved battle or match opens as a race); Record; the server on save (`game`) |
+| `games` | the games besides ball races a plan without `allGames` makes, by name (`arena-clash`, `goal-rush`): a new game reaches such a plan when the owner adds it here | as `allGames` |
+| `chooseWinner` | picking the side that wins: an Arena Clash's flag (`battle.winner`), a Goal Rush's side (`match.winner`) | the studio (the Winner selects are locked at Random, tagged with the plans that have it; a saved config loads with none, balanced again); Record; the server on save (the played game's winner) |
+| `customText` | words of your own: the question on the first frame (`look.question`), the narrator's opening (`voice.script`) and winner line (`voice.outro`), the winner card's last line (`look.cta`). Without it each is the automatic one or one the dice deals (`DEALT` in [src/app.ts](../src/app.ts)) | the studio (the four fields are locked; a saved config loads with the automatic question and opening and the dice's first lines in place of words typed, `ownWords`); Record; the server on save checks the opening alone, the dice's lists living in the studio |
 
 **The studio says what the plan makes, and shows what it lacks instead of hiding it.** At the
-top of the panel, a plan that holds anything back gets a card: "Your plan: Rookie" and a few
+top of the panel, a plan that holds anything back gets a card: "Your plan: Pro" and a few
 words for each feature, a tick for what it makes and a dash for what it leaves out ("1 video a
 day", "Up to 30 s", "Paper look", "5 videos kept"; "No narrator", "No powers", "With
-watermark", "No follow button"), with Compare plans (`buildPlanCard`, `planChips`). A plan with nothing held back
-has none. What the plan lacks stays in view, disabled, with a line saying so and an **Upgrade**
-link to `/pricing` (`applyPlan` in [src/app.ts](../src/app.ts), `planNote` in
+watermark", "No follow button", "No picking who wins", "No words of your own"), with Compare
+plans (`buildPlanCard`, `planChips`). A plan with nothing held back has none. What the plan
+lacks stays in view, disabled, tagged "Paid plans" when every paid plan has it and else with
+the plans that do ("Champion"), with a line saying which plan has it and an **Upgrade** link to `/pricing` (`applyPlan` in [src/app.ts](../src/app.ts), `planNote` in
 [src/ui/plan.ts](../src/ui/plan.ts)). A saved config is fitted on load where that
 changes nothing about the matchup (`fitPlan`: the look and sound fall back to ones the plan
 has; a longer video is balanced again to the plan's longest); a ball with a power stays, and
@@ -371,7 +375,8 @@ A stored plan missing a key, or with one that no longer reads, gets **the least*
 The admin's form is checked strictly (`featuresProblem`).
 
 **Plan fields**: name, short description, price (amount in minor units, currency, interval
-`month`/`year`/one-off; all optional: no price shows "Coming soon"), sort order, visible on the
+`month`/`year`/one-off; all optional: no price shows "Coming soon"; and, with a monthly price,
+`yearly`, the price for a year paid at once, `price_year_amount`), sort order, visible on the
 pricing page, archived, the features, and how its card looks on the pricing page: **`tone`**
 (`plain`, white, for the free plan; `bold`, violet, the plan the page points at; `dark`, the
 ink stage, for the top plan) and an optional **`badge`** on the card's corner (up to 24
@@ -381,21 +386,21 @@ hidden, archived or deleted. **A plan with subscribers can only be archived**: o
 page and out of reach for new subscriptions, kept by those who have it. Only a plan nobody has
 can be deleted (409 `plan_has_subscribers` otherwise).
 
-Seeded by [0003_plans.sql](../migrations/0003_plans.sql), with the free plan's day set by
-[0004_daily_videos.sql](../migrations/0004_daily_videos.sql) and the three plans, their cards
-and the two newest features by [0005_three_plans.sql](../migrations/0005_three_plans.sql), and
-Pro's five a day and the one-line descriptions by
-[0006_pro_five_a_day.sql](../migrations/0006_pro_five_a_day.sql).
-Names, words, badges and prices are placeholders (`TODO(owner)`):
+The three plans as the owner set them on 2026-11-24
+([0013_plan_prices.sql](../migrations/0013_plan_prices.sql); seeded before by 0003, 0004, 0005
+and 0006), in dollars:
 
-| Plan | Card | Price | A day | Sounds | Narrator | Longest | Looks | Powers | Library | Watermark | Every game |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Rookie** (default) | plain | €0 | 1 video | music, silent | no | 30 s | paper | no | 5 | yes | no |
-| **Pro** | bold, "Recommended" | none ("Coming soon") | 5 videos | all three | yes | 90 s | all three | yes | no limit | no | no |
-| **Champion** | dark, "Every game" | none ("Coming soon") | no limit | all three | yes | 90 s | all three | yes | no limit | no | yes |
+| Plan | Card | By the month | By the year | Games | A day | Longest | Looks | Powers | Sounds | Narrator | Follow | Pick who wins | Own words | Library | Watermark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **Free** (default) | plain | $0 | | Ball Race | 1 | 30 s | paper | no | music, silent | no | no | no | no | 5 | yes |
+| **Pro** | bold | $9 | $84 ($7 a month, 22% off) | Ball Race, Arena Clash, Goal Rush | 5 | 60 s | all three | yes | music, silent | no | no | no | no | 100 | no |
+| **Champion** | dark, "Everything" | $19 | $180 ($15 a month, 21% off) | every game, and each new one the day it comes out (`allGames`) | no limit | 90 s | all three | yes | all three | yes | yes | yes | yes | no limit | no |
 
-The plans climb in three steps: Rookie makes one video a day, Pro five, Champion as many as
-you like, and only Champion has every game: Arena Clash.
+The yearly prices are whole dollars a month (the owner's ask: $90 a year read as $7.50). The
+pricing page shows them by the year first, with a switch to the month (§ in
+[website](./website.md#4-the-home-page)). Free tries the format; Pro makes the three games
+without the watermark; Champion makes everything, and gets every new game first: a new game is
+on Champion the day it ships, and on Pro when the owner adds it to Pro's `games`.
 
 ## 7. Subscriptions
 
@@ -602,3 +607,4 @@ places ([worker/routes/billing.ts](../worker/routes/billing.ts)):
 - 2026-11-07 - profiles (names and a picture cut in the browser, kept in R2; 0010_profiles.sql) on the account page, in the top bars and the admin area; Google sign-in built and switched off (`GOOGLE_LOGIN`), with how to turn it on; an account with no password confirms its deletion with its address.
 - 2026-11-11 - `allGames` gates Arena Clash: the studio's game switch, Record and the server on save (`gameAllowed`); the plans' lists say "Every game: ball races, Arena Clash and each new one" or "Ball races; no Arena Clash", the studio's plan card "Arena Clash" or "No Arena Clash".
 - 2026-11-23 - `allGames` gates Goal Rush too: the studio's switch, Record and the server on save; the plans' lists say "Every game: ball races, Arena Clash, Goal Rush and each new one" or "Ball races; no Arena Clash or Goal Rush". Goal Rush's real crests and photos are the superadmin's alone, served under `/api/admin/sides` (docs/goal-rush.md §3).
+- 2026-11-24 - the plans as the owner set them (0013_plan_prices.sql): Free (Rookie renamed), Pro ($9, or $84 a year) and Champion ($19, or $180 a year), in dollars; a yearly price beside the monthly one (`Price.yearly`, `price_year_amount`); games per plan (`games`), picking the winner (`chooseWinner`) and words of your own (`customText`) as features, locked in the studio and checked on save; tags and notes that name the plan that has a feature.

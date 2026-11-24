@@ -262,12 +262,18 @@ export const PRICE_INTERVALS = ['month', 'year'] as const;
 export type PriceInterval = (typeof PRICE_INTERVALS)[number];
 
 export interface Price {
-  /** In the currency's minor unit: 900 is €9.00. */
+  /** In the currency's minor unit: 900 is $9.00. */
   amount: number;
-  /** ISO 4217, upper case: EUR, USD. */
+  /** ISO 4217, upper case: USD, EUR. */
   currency: string;
   /** null for a one-off price. */
   interval: PriceInterval | null;
+  /**
+   * A monthly plan's price for a year paid at once, in the same unit and currency (8400: $84, $7 a
+   * month against $9); null when it is sold by the month alone. The pricing page shows the year by
+   * default.
+   */
+  yearly: number | null;
 }
 
 /**

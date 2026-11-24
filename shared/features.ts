@@ -18,7 +18,8 @@ export type Look = (typeof LOOKS)[number];
 
 /**
  * The games the studio makes, `game` in the config and in the library. Ball races are in every
- * plan; any other game needs the plan's `allGames`.
+ * plan; another game needs the plan's `games` to list it, or `allGames` (every game, each new one
+ * included as it comes out).
  */
 export const GAMES = ['ball-race', 'arena-clash', 'goal-rush'] as const;
 export type Game = (typeof GAMES)[number];
@@ -37,9 +38,9 @@ export function gamePlans(game: Game, plans: { name: string; features: Features 
   return having.length === 1 ? having[0] : `${having.slice(0, -1).join(', ')} and ${having[having.length - 1]}`;
 }
 
-/** Whether the plan makes `game`: ball races always, the others with `allGames`. */
+/** Whether the plan makes `game`: ball races always, another when the plan lists it or has every game. */
 export function gameAllowed(features: Features, game: Game): boolean {
-  return game === 'ball-race' || features.allGames;
+  return game === 'ball-race' || features.allGames || features.games.includes(game);
 }
 
 /** The studio's Length slider runs 20–90 s in steps of 5 (app.html). */
@@ -76,10 +77,20 @@ export interface Features {
    */
   follow: boolean;
   /**
-   * Every game BounceReel makes, each new one included as it comes out: Arena Clash and Goal Rush today. Ball
-   * races are in every plan whatever this says (gameAllowed).
+   * Every game BounceReel makes, each new one included as it comes out: a new game reaches these
+   * plans the day it ships, and the others when the owner adds it to their `games`. Ball races are
+   * in every plan whatever this says (gameAllowed).
    */
   allGames: boolean;
+  /** The games besides ball races the plan makes, by name, when it has not every game. */
+  games: Game[];
+  /** Picking the side that wins: an Arena Clash's flag (`battle.winner`), a Goal Rush's side (`match.winner`). */
+  chooseWinner: boolean;
+  /**
+   * Your own words: the question on the first frame, the narrator's opening and winner line, the
+   * last line on the winner card. Without it each is the automatic one or one the dice deals.
+   */
+  customText: boolean;
 }
 
 /** A superadmin's features, whatever plan their subscription names: the owner's account has everything. */
@@ -94,6 +105,9 @@ export const EVERYTHING: Features = {
   watermark: false,
   follow: true,
   allGames: true,
+  games: [...GAMES],
+  chooseWinner: true,
+  customText: true,
 };
 
 /**
@@ -112,6 +126,9 @@ const LEAST: Features = {
   watermark: true,
   follow: false,
   allGames: false,
+  games: [],
+  chooseWinner: false,
+  customText: false,
 };
 
 /** The admin's form takes up to this many videos a day, and as many kept in the library: a typo, not a plan, beyond. */
@@ -145,6 +162,9 @@ export function readFeatures(value: unknown): Features {
     watermark: typeof raw.watermark === 'boolean' ? raw.watermark : LEAST.watermark,
     follow: typeof raw.follow === 'boolean' ? raw.follow : LEAST.follow,
     allGames: typeof raw.allGames === 'boolean' ? raw.allGames : LEAST.allGames,
+    games: pickList(raw.games, GAMES) ?? LEAST.games,
+    chooseWinner: typeof raw.chooseWinner === 'boolean' ? raw.chooseWinner : LEAST.chooseWinner,
+    customText: typeof raw.customText === 'boolean' ? raw.customText : LEAST.customText,
   };
 }
 
@@ -159,7 +179,9 @@ export function featuresProblem(value: unknown): string | null {
     Array.isArray(raw[key]) && (raw[key] as unknown[]).every((v) => allowed.includes(v as string)) && (raw[key] as unknown[]).length > 0;
   if (!list('sounds', SOUNDS)) return `sounds must list at least one of ${SOUNDS.join(', ')}`;
   if (!list('looks', LOOKS)) return `looks must list at least one of ${LOOKS.join(', ')}`;
-  for (const key of ['narrator', 'powers', 'watermark', 'follow', 'allGames']) if (typeof raw[key] !== 'boolean') return `${key} must be true or false`;
+  for (const key of ['narrator', 'powers', 'watermark', 'follow', 'allGames', 'chooseWinner', 'customText']) if (typeof raw[key] !== 'boolean') return `${key} must be true or false`;
+  // May be empty: ball races are in every plan.
+  if (!Array.isArray(raw.games) || !(raw.games as unknown[]).every((g) => GAMES.includes(g as Game))) return `games must list any of ${GAMES.join(', ')}`;
   const seconds = raw.maxSeconds;
   if (typeof seconds !== 'number' || !Number.isInteger(seconds) || seconds < MIN_VIDEO_SECONDS || seconds > MAX_VIDEO_SECONDS) {
     return `maxSeconds must be a whole number from ${MIN_VIDEO_SECONDS} to ${MAX_VIDEO_SECONDS}`;
@@ -188,8 +210,12 @@ export function describeFeatures(f: Features): { text: string; included: boolean
   const looks = f.looks.map((l) => LOOK_LABELS[l]);
   const sounds = f.sounds.filter((s) => soundAllowed(f, s));
   const narrator = f.narrator && sounds.includes('narrator');
+  const games = GAMES.filter((g) => gameAllowed(f, g)).map((g) => GAME_LABELS[g]);
   return [
-    { text: f.allGames ? 'Every game: ball races, Arena Clash, Goal Rush and each new one' : 'Ball races; no Arena Clash or Goal Rush', included: f.allGames },
+    {
+      text: f.allGames ? `Every game: ${joinWords(games)}, and each new one` : games.length === 1 ? `${games[0]} only` : `${joinWords(games)}`,
+      included: games.length > 1,
+    },
     { text: f.perDay === null ? 'Unlimited videos' : `${f.perDay} video${f.perDay === 1 ? '' : 's'} a day`, included: f.perDay !== 0 },
     { text: `Videos up to ${f.maxSeconds} seconds`, included: true },
     { text: looks.length === LOOKS.length ? 'All three looks' : `The ${joinWords(looks.map((l) => l.toLowerCase()))} look${looks.length === 1 ? '' : 's'}`, included: true },
@@ -201,6 +227,8 @@ export function describeFeatures(f: Features): { text: string; included: boolean
     { text: f.powers ? 'Powers: balls that speed up, grow or split' : 'No powers', included: f.powers },
     { text: f.watermark ? 'A small BounceReel watermark' : 'No watermark', included: !f.watermark },
     { text: f.follow ? 'A follow button that asks viewers to follow you' : 'No follow button', included: f.follow },
+    { text: f.chooseWinner ? 'Pick who wins' : 'No picking who wins', included: f.chooseWinner },
+    { text: f.customText ? 'Your own words: the question, the narrator, the last line' : 'No words of your own', included: f.customText },
     { text: f.library === null ? 'Every video kept in your library' : `${f.library} video${f.library === 1 ? '' : 's'} kept in your library`, included: f.library !== 0 },
   ];
 }

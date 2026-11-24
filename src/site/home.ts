@@ -644,19 +644,21 @@ function voicePlayer(): void {
 
 /**
  * What the free plan makes, written from its features, so the steps never promise it more than
- * the studio gives; the clause about the paid plans only when one of them makes everything here.
+ * the studio gives; then the plans that make everything here, by name ("Champion makes all of
+ * this"), when one does.
  */
 function freeLine(plans: PublicPlan[]): string | null {
   const free = plans.find((p) => p.isDefault)?.features;
   if (!free) return null;
   const looks = free.looks.map((look) => LOOK_LABELS[look].toLowerCase());
   const sound = soundAllowed(free, 'narrator') ? 'a narrator, music or silence' : soundAllowed(free, 'music') ? 'music or silence' : 'no sound';
-  const everything = plans.some(
-    (p) => !p.isDefault && p.features.maxSeconds >= MAX_VIDEO_SECONDS && p.features.looks.length === LOOKS.length && soundAllowed(p.features, 'narrator'),
-  );
+  const everything = plans
+    .filter((p) => !p.isDefault && p.features.maxSeconds >= MAX_VIDEO_SECONDS && p.features.looks.length === LOOKS.length && soundAllowed(p.features, 'narrator'))
+    .map((p) => p.name);
+  const paid = plans.filter((p) => !p.isDefault).length;
   return (
     `The free plan makes up to ${free.maxSeconds} s in the ${looks.join(' and ')} look${looks.length === 1 ? '' : 's'}, with ${sound}` +
-    (everything ? '; the paid plans make all of this.' : '.')
+    (!everything.length ? '.' : everything.length === paid ? '; the paid plans make all of this.' : `; ${everything.join(' and ')} ${everything.length === 1 ? 'makes' : 'make'} all of this.`)
   );
 }
 

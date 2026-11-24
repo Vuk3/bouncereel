@@ -1,5 +1,5 @@
 import type { AccountResponse, Day } from '../../shared/api.ts';
-import { LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, soundAllowed, type Features } from '../../shared/features.ts';
+import { GAME_LABELS, GAMES, gameAllowed, LOOK_LABELS, LOOKS, MAX_VIDEO_SECONDS, soundAllowed, type Features } from '../../shared/features.ts';
 import { api } from '../api.ts';
 import { avatar } from './avatar.ts';
 
@@ -37,16 +37,36 @@ export function planChips(f: Features): { text: string; included: boolean }[] {
     { text: looks, included: true },
     { text: narrator ? 'Narrator' : 'No narrator', included: narrator },
     { text: f.powers ? 'Powers' : 'No powers', included: f.powers },
-    { text: f.allGames ? 'Arena Clash and Goal Rush' : 'No Arena Clash or Goal Rush', included: f.allGames },
+    { text: f.allGames ? 'Every game' : games(f), included: f.allGames || f.games.length > 0 },
     { text: f.watermark ? 'With watermark' : 'No watermark', included: !f.watermark },
     { text: f.follow ? 'Follow button' : 'No follow button', included: f.follow },
+    { text: f.chooseWinner ? 'Pick who wins' : 'No picking who wins', included: f.chooseWinner },
+    { text: f.customText ? 'Your own words' : 'No words of your own', included: f.customText },
     { text: f.library === null ? 'Every video kept' : `${f.library} video${f.library === 1 ? '' : 's'} kept`, included: true },
   ];
 }
 
+/** The games a plan without every game makes, for its chip: "Ball Race only", "Ball Race, Arena Clash and Goal Rush". */
+function games(f: Features): string {
+  const names = GAMES.filter((g) => gameAllowed(f, g)).map((g) => GAME_LABELS[g]);
+  return names.length === 1 ? `${names[0]} only` : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
 /** Whether a plan holds anything back: one that holds nothing back needs no plan card. */
 export function planHoldsBack(f: Features): boolean {
-  return f.perDay !== null || f.maxSeconds < MAX_VIDEO_SECONDS || f.looks.length < LOOKS.length || !soundAllowed(f, 'narrator') || !f.powers || !f.allGames || f.watermark || !f.follow || f.library !== null;
+  return (
+    f.perDay !== null ||
+    f.maxSeconds < MAX_VIDEO_SECONDS ||
+    f.looks.length < LOOKS.length ||
+    !soundAllowed(f, 'narrator') ||
+    !f.powers ||
+    !f.allGames ||
+    f.watermark ||
+    !f.follow ||
+    f.library !== null ||
+    !f.chooseWinner ||
+    !f.customText
+  );
 }
 
 /** A link to the pricing page, where the plans are compared: an invitation to look, not a demand. */
@@ -73,9 +93,9 @@ export function planInvite(invite: string, paid: boolean, plain: string): HTMLPa
   return note;
 }
 
-/** The small tag on a control the plan holds back, which stays at full contrast. */
-export function paidTag(paid: boolean): HTMLSpanElement {
-  return Object.assign(document.createElement('span'), { className: 'paid-tag', textContent: paid ? 'Paid plans' : 'Not in your plan' });
+/** The small tag on a control the plan holds back, which stays at full contrast: "Paid plans", the plans that have it ("Champion"), or "Not in your plan". */
+export function paidTag(paid: boolean, plans = ''): HTMLSpanElement {
+  return Object.assign(document.createElement('span'), { className: 'paid-tag', textContent: paid ? 'Paid plans' : plans || 'Not in your plan' });
 }
 
 /**

@@ -6,7 +6,7 @@ each tied to the ring by a fan of strings. A ball that touches a rival's strings
 it touches; a bounce off the ring ties new ones; a ball with no strings left is out; the last
 flag in wins. It is the short-video format known as the "string circle". It is made in the same
 studio as Ball Race (the switch at the top of the panel), recorded the same way and kept in the
-same library, and only on a plan with `allGames` (Champion). This page is the whole game.
+same library, on a plan that makes it (`gameAllowed`: Pro and Champion). This page is the whole game.
 
 **The name** is the game's, not its flags': the contestants are countries today and may be
 something else one day, so nothing in its name says flag. Its id is `arena-clash` (the config,

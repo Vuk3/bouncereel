@@ -35,7 +35,15 @@ function soundOf(video: NewVideo): Sound {
  * is for a hand-made request or a stale page.
  */
 function checkPlan(video: NewVideo, features: Features): void {
-  const config = video.config as { timing?: { video?: unknown }; look?: { skin?: unknown; follow?: unknown }; a?: Ball; b?: Ball };
+  const config = video.config as {
+    timing?: { video?: unknown };
+    look?: { skin?: unknown; follow?: unknown };
+    a?: Ball;
+    b?: Ball;
+    battle?: { winner?: unknown };
+    match?: { winner?: unknown };
+    voice?: { script?: unknown };
+  };
   if (!gameAllowed(features, video.game)) throw notInPlan(`Your plan does not include ${GAME_LABELS[video.game]}.`);
   const length = config.timing?.video;
   if (video.videoLength > features.maxSeconds || (typeof length === 'number' && length > features.maxSeconds)) {
@@ -48,6 +56,14 @@ function checkPlan(video: NewVideo, features: Features): void {
     throw notInPlan('Your plan does not include powers.');
   }
   if (!features.follow && config.look?.follow === true) throw notInPlan('Your plan does not include the follow button.');
+  // A winner picked for the game played: the other game's winner may linger in a config, unused.
+  const winner = video.game === 'arena-clash' ? config.battle?.winner : video.game === 'goal-rush' ? config.match?.winner : '';
+  if (!features.chooseWinner && typeof winner === 'string' && winner !== '') throw notInPlan('Your plan does not include picking who wins.');
+  // The narrator's opening written by hand. The question and the last lines a plan without words of
+  // its own may still take from the dice's lists, which live in the studio: it checks those.
+  if (!features.customText && typeof config.voice?.script === 'string' && config.voice.script.trim() !== '') {
+    throw notInPlan('Your plan does not include your own words for the narrator.');
+  }
 }
 
 /** A ball as the config has it, as far as its power goes. */

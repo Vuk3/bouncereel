@@ -5,7 +5,7 @@ pitch on the black stage, two balls, each a club or a player, and one goal that 
 ring. A ball that flies through the goal's mouth scores, both kick off again from the middle, and
 at ninety minutes the side with more goals wins. It is made in the same studio as the other two
 (the switch at the top of the panel), recorded the same way and kept in the same library, and only
-on a plan with `allGames` (Champion). This page is the whole game.
+on a plan that makes it (`gameAllowed`: Pro and Champion). This page is the whole game.
 
 Its id is `goal-rush` (the config, the library, `GAMES` in [shared/features.ts](../shared/features.ts)).
 **Its icon** is [public/games/goal-rush.svg](../public/games/goal-rush.svg): a ring with a goal and

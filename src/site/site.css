@@ -3119,6 +3119,29 @@ input:focus-visible {
 
 /* ── Pricing ─────────────────────────────────────────────────────────── */
 
+/* By the year or by the month, centred over the cards; what the year saves in a pill on its side. */
+.plans-period {
+  justify-self: center;
+  width: min(100%, 22rem);
+  margin: 0 auto clamp(22px, 3vw, 34px);
+}
+.plans-period .segments span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  font-size: 0.9375rem;
+}
+.plans-save {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .plans {
   display: grid;
   gap: 16px;
@@ -3136,7 +3159,8 @@ input:focus-visible {
 .plan {
   --plan-pad: clamp(24px, 3vw, 32px);
   display: grid;
-  grid-template-rows: auto auto auto auto 1fr;
+  /* The top, the price, what it is billed, the line, the button, and the list taking the rest. */
+  grid-template-rows: auto auto auto auto auto 1fr;
   gap: 12px;
   padding: var(--plan-pad);
   border: 1px solid var(--hairline);
@@ -3263,6 +3287,14 @@ input:focus-visible {
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
+}
+/* What the price is billed and saves, or that it is free: one line on every card, so the buttons line up. */
+.plan-billed {
+  min-height: 1.4em;
+  margin-top: -4px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 .plan-desc {
   color: var(--muted);
