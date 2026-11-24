@@ -188,9 +188,12 @@ One look, the Arena Clash's black stage with a pitch on it ([render/match.ts](..
 
 ## 5. Sound and narrator
 
-**Sound**: a bounce off the ring plays the melody, the two balls meeting thud, a post clangs, a goal
-is the crowd rising and the net's swish, every kick-off one short whistle, half time two, full time
-three (the last long) and the fanfare; golden goal stings.
+**Sound**: a bounce off the ring plays the melody, the two balls meeting thud, a post clangs. A goal
+is a real referee's whistle, a long blast, with a thud as the net takes the ball and a real stadium
+going up, two seconds of it ([sound and narration](./sound-and-narration.md#1-the-engine): CC0
+recordings in public/sounds/, loaded before a match plays); the crowd on screen jumps as long
+(`CHEER`, 1.6 s). The match's first kick-off is a short blast (after a goal its long blast has
+said it), half time two, full time three (the last long) and the fanfare; golden goal stings.
 
 **The narrator** says two lines, as in the other games: the opening (`matchScript`): the two sides,
 and the derby when they make one ("It's the Eternal Derby: Red Star Belgrade against Partizan!"),
@@ -233,3 +236,4 @@ and won). The superadmin's text for posts starts `BounceReel goal rush:` ([libra
 - 2026-11-23 - every player photo looked over on contact sheets: statues, a mural, a fan's painting, a billboard and namesakes replaced through `PHOTOS` (a file chosen by hand is now the one rated) and `PAGES`; the picks still poor taken out, those players keep their kits.
 - 2026-11-23 - a livelier match, at the owner's asking: the balls faster (`SPEED` 780), the goal turning faster (`SPIN` 1.35) and a little narrower (`MOUTH` 0.32, so the goals stay about six a 40 s video), a goal stopping it for 0.7 s (`CELEBRATE`), GOAL! fading into the play; a green, mown, floodlit turf; the goal with its end of the pitch (goal area, spot, lit mouth), a dark net and white posts; the crowd, half each side's, the scorer's half jumping; the site's phone dealing only the big rivalries; eleven little-known Serbia players taken out (453 players, 201 classics); every player's photo found, Maradona's in Argentina's shirt.
 - 2026-11-24 - room under the pitch, at the owner's asking (the crowd, the timeline's goals and HALF TIME touched): the pitch at 82 % round y 985, the goals as balls on the timeline, the chip and the mark lower; the crowd as people in a stand (terraces and stairs, shoulders and heads from above, hands, scarves and flags on a goal); Goal Rush's own page on the site (website.md).
+- 2026-11-24 - a goal sounds like one, at the owner's asking (synthesised, the crowd was a hiss and the whistle a toy): a real referee's whistle and a real stadium's roar (CC0 recordings), 2 s, with a thud; the crowd on screen jumps 1.6 s; no second whistle at the kick-off after a goal.

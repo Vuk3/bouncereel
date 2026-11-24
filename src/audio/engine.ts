@@ -14,6 +14,9 @@ import { midiToHz } from './music.ts';
 /** A run with eight balls can bounce hundreds of times a second; past this many ringing notes, new ones are skipped. */
 const MAX_VOICES = 48;
 
+/** The recorded sounds a Goal Rush plays (public/sounds/): the referee's whistle and the stadium going up at a goal. */
+export const MATCH_SOUNDS = ['whistle', 'crowd-goal'] as const;
+
 export class AudioEngine {
   readonly ctx: AudioContext;
   readonly stream: MediaStream;
@@ -23,6 +26,8 @@ export class AudioEngine {
   private readonly noise: AudioBuffer;
   private active = 0;
   private narration: AudioBufferSourceNode | null = null;
+  /** Recorded sounds (public/sounds/), decoded once: a Goal Rush's referee and stadium (loadSounds). */
+  private readonly samples = new Map<string, AudioBuffer>();
 
   constructor() {
     const ctx = new AudioContext({ latencyHint: 'interactive' });
@@ -65,6 +70,47 @@ export class AudioEngine {
 
   resume(): Promise<void> {
     return this.ctx.resume();
+  }
+
+  /**
+   * Fetches and decodes recorded sounds from public/sounds/ (`<name>.m4a`), once each, before a
+   * game that uses them plays: a recording must not start without them. One that fails to come is
+   * left out, and its sound falls back to the synthesised one.
+   */
+  async loadSounds(names: readonly string[]): Promise<void> {
+    await Promise.all(
+      names
+        .filter((name) => !this.samples.has(name))
+        .map(async (name) => {
+          try {
+            const res = await fetch(`/sounds/${name}.m4a`);
+            if (!res.ok) return;
+            this.samples.set(name, await this.ctx.decodeAudioData(await res.arrayBuffer()));
+          } catch {
+            // The synthesised sound plays instead.
+          }
+        }),
+    );
+  }
+
+  /**
+   * A recorded sound, or `length` seconds of it from its start, at `level`, ending in a short fade
+   * so a cut blast never clicks. False when it is not loaded.
+   */
+  private sample(name: string, t: number, level: number, pan: number, length?: number): boolean {
+    const buffer = this.samples.get(name);
+    if (!buffer) return false;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    const gain = this.ctx.createGain();
+    const end = t + Math.min(length ?? buffer.duration, buffer.duration);
+    gain.gain.setValueAtTime(level, t);
+    gain.gain.setValueAtTime(level, Math.max(t, end - 0.05));
+    gain.gain.linearRampToValueAtTime(0, end);
+    src.connect(gain).connect(this.channel(pan));
+    src.start(t, 0, end - t);
+    this.track(src);
+    return true;
   }
 
   /**
@@ -239,6 +285,15 @@ export class AudioEngine {
   whistle(blasts: number[]): void {
     const ctx = this.ctx;
     let t = ctx.currentTime + 0.01;
+    // A real referee's pea whistle when it is loaded (public/sounds/whistle.m4a): each blast its
+    // first `length` seconds. The synthesised one below read as a toy to the owner.
+    if (this.samples.has('whistle')) {
+      for (const length of blasts) {
+        this.sample('whistle', t, 0.55, 0, length);
+        t += length + 0.12;
+      }
+      return;
+    }
     for (const length of blasts) {
       const out = this.channel(0);
       const level = ctx.createGain();
@@ -275,49 +330,63 @@ export class AudioEngine {
   }
 
   /**
-   * A crowd rising at a goal (Goal Rush): noise through a band that opens from 500 Hz to 2 kHz as it
-   * swells, held a moment and dying over a second and a half, with a low rumble under it. It never
-   * waits for the voice cap: the picture celebrates either way.
+   * A goal (Goal Rush), as a stadium sounds one. The referee's blast is the whistle's, played with
+   * it (sonify.ts). Here, as the ball hits the net: a thud, a sine falling from 150 Hz to 38 over
+   * half a second on a burst of low noise, and the stadium going up: a recording of a real crowd's
+   * reaction to a goal (public/sounds/crowd-goal.m4a: its burst in the first half second, full for
+   * about a second and gone by two; longer read as a stall to the owner).
+   * Synthesised stadiums (filtered noise, horns, flares) read as rustling and as fake to the owner;
+   * one is left only for when the recording has not loaded: noise through the bands where voices
+   * shout (350, 700, 1000 Hz), nothing above 1.2 kHz. It never waits for the voice cap: the picture
+   * celebrates either way.
    */
-  roar(pan: number): void {
+  goal(pan: number): void {
     const ctx = this.ctx;
     const t = ctx.currentTime + 0.01;
-    const out = this.channel(pan * 0.4);
-    const src = ctx.createBufferSource();
-    src.buffer = this.noise;
-    src.loop = true;
-    const band = ctx.createBiquadFilter();
-    band.type = 'bandpass';
-    band.Q.value = 0.8;
-    band.frequency.setValueAtTime(500, t);
-    band.frequency.exponentialRampToValueAtTime(2000, t + 0.35);
-    band.frequency.exponentialRampToValueAtTime(900, t + 1.8);
+    const centre = this.channel(0);
+    const boom = ctx.createOscillator();
+    boom.frequency.setValueAtTime(150, t);
+    boom.frequency.exponentialRampToValueAtTime(38, t + 0.5);
+    boom.connect(envelope(centre, t, 0.7, 0.003, 0.55));
+    this.start(t, 0.6, boom);
+    this.burst(t, 'lowpass', 300, 0.45, 0.12, centre);
+    if (this.sample('crowd-goal', t, 0.9, pan * 0.3)) return;
+    const side = this.channel(pan * 0.4);
+    const crowd = ctx.createBufferSource();
+    crowd.buffer = this.noise;
+    crowd.loop = true;
     const level = ctx.createGain();
     level.gain.setValueAtTime(0.0001, t);
-    level.gain.exponentialRampToValueAtTime(0.5, t + 0.18);
-    level.gain.setValueAtTime(0.5, t + 0.45);
-    level.gain.exponentialRampToValueAtTime(0.0001, t + 1.9);
-    src.connect(band).connect(level).connect(out);
-    const low = ctx.createBiquadFilter();
-    low.type = 'lowpass';
-    low.frequency.value = 260;
-    const rumble = ctx.createGain();
-    rumble.gain.setValueAtTime(0.0001, t);
-    rumble.gain.exponentialRampToValueAtTime(0.35, t + 0.2);
-    rumble.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
-    src.connect(low).connect(rumble).connect(out);
-    src.start(t, (t * 3.1) % 0.5);
-    src.stop(t + 2);
+    level.gain.exponentialRampToValueAtTime(0.4, t + 0.25);
+    level.gain.setValueAtTime(0.4, t + 0.6);
+    level.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+    const top = ctx.createBiquadFilter();
+    top.type = 'lowpass';
+    top.frequency.value = 1200;
+    top.connect(level).connect(side);
+    for (const f of [350, 700, 1000]) {
+      const band = ctx.createBiquadFilter();
+      band.type = 'bandpass';
+      band.frequency.setValueAtTime(f * 0.8, t);
+      band.frequency.exponentialRampToValueAtTime(f, t + 0.3);
+      band.Q.value = 2.5;
+      crowd.connect(band).connect(top);
+    }
+    crowd.start(t, (t * 3.1) % 0.5);
+    crowd.stop(t + 1.9);
+    this.track(crowd);
+  }
+
+  /** A burst of noise through one filter, shaped attack-then-decay: a thud's body. */
+  private burst(t: number, type: BiquadFilterType, frequency: number, peak: number, decay: number, out: AudioNode): void {
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noise;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = type;
+    filter.frequency.value = frequency;
+    src.connect(filter).connect(envelope(out, t, peak, 0.001, decay));
+    src.start(t, (t * 7.3) % 0.5, decay + 0.05);
     this.track(src);
-    // The net: a short swish of high noise as the ball hits it.
-    const swish = ctx.createBufferSource();
-    swish.buffer = this.noise;
-    const high = ctx.createBiquadFilter();
-    high.type = 'highpass';
-    high.frequency.value = 3500;
-    swish.connect(high).connect(envelope(this.channel(pan), t, 0.3, 0.005, 0.22));
-    swish.start(t, (t * 5.7) % 0.5, 0.3);
-    this.track(swish);
   }
 
   /** Ball against ball in a match: a kick's thud, 110 Hz falling to 45, with a click on top for phone speakers. */

@@ -20,9 +20,9 @@ the timing that keeps the narrator from talking over itself.
 
 ## 1. The engine
 
-Every sound is made on the spot with Web Audio; nothing is a sample. All of it ends in
-one master that feeds both the speakers and a `MediaStream` the recorder takes, so what
-you hear is what the video gets.
+Every sound is made on the spot with Web Audio but two: a Goal Rush's referee and stadium
+are recordings (below). All of it ends in one master that feeds both the speakers and a
+`MediaStream` the recorder takes, so what you hear is what the video gets.
 
 ```
 notes, ticks   ─┐
@@ -42,6 +42,20 @@ narration ─────────────────▶ voice ───
   theirs slides or rings like that, in any instrument, so it stands apart from the tune. Like
   the fanfare it is never skipped for the voice cap below: a box of split balls holds the cap
   for long stretches, and the picture flashes either way.
+- **Recorded sounds** ([public/sounds/](../public/sounds/), `MATCH_SOUNDS`): a Goal Rush's
+  referee's whistle and its stadium going up at a goal, which synthesised (a pea whistle from a
+  tone and a flutter, a crowd from filtered noise) read as a toy and as rustling to the owner.
+  `loadSounds` fetches and decodes them once, before a match plays or records (`play` in
+  [app.ts](../src/app.ts)); each plays through the same `sfx` path, so the file has it. One that
+  did not load falls back to the synthesised sound. Every one is CC0 (public domain: no credit
+  owed, nothing for a platform to claim), cut, faded and encoded with ffmpeg (AAC, peaking near
+  full scale; no loudness levelling, which flattened the crowd's burst):
+
+  | File | What | Source |
+  | --- | --- | --- |
+  | `whistle.m4a` | a pea whistle's blast, 1.46 s, mono; a short blast plays its start | "Coach whistle" by Chaos-Kid, [freesound 817398](https://freesound.org/people/Chaos-Kid/sounds/817398/), CC0, from 0.04 s |
+  | `crowd-goal.m4a` | a stadium's roar at a goal, 2 s: its burst in the first half second, faded from 0.9 s (longer read as a stall) | "Goal.wav" by Sandermotions, [freesound 494352](https://freesound.org/people/Sandermotions/sounds/494352/), CC0, from 5.45 s |
+
 - **Mixing**: the glue compressor (−18 dB, 4:1) evens out piles of notes; the limiter
   (−2 dB, 20:1) stops clipping. At most 48 sounds ring at once; past that new ones are
   skipped. While the narrator speaks, the effects drop to 40 % and come back after.
@@ -57,6 +71,7 @@ they came from (every frame, events or not):
 | layer broken | crack |
 | wall | a quiet tick, at most 2 per frame |
 | first finish, timeout | fanfare |
+| a goal (Goal Rush) | the referee's whistle, a long blast, with a thud (a sine falling from 150 Hz to 38) and the stadium's roar (`goal`); a match's first kick-off is a short blast, half time two, full time three, the last long |
 | a lead change the video marks | the sting, on the frame the race reaches it: the prediction's `leads` (handed to `Sonifier` with each run), the same ones the picture shows as LEAD CHANGE ([look and layout](./look-and-layout.md) §12) |
 
 **Melodies** (`sound.melody`), public domain only so a video is never claimed: Ode to Joy,
@@ -235,3 +250,4 @@ end. Then:
 - 2026-11-11 - Arena Clash: its sounds (`Sonifier.battle`), its opening with the rule in one sentence and a fact from the countries' figures, a call as a flag goes out where there is silence for it (`battleCalls`); `plannedLines` includes the calls.
 - 2026-11-12 - Arena Clash: strings being cut are plucked up the pentatonic scale as a flag's strings run out (`Sonifier.battle`); no calls as flags go out (`battleCalls` is gone), so its narrator says two lines as a race's does, with "Follow for more!" after the winner line when asked.
 - 2026-11-12 - Arena Clash: a heartbeat (`AudioEngine.heartbeat`) while a flag is down to its last bundle, on the beats its red count pulses on.
+- 2026-11-24 - a Goal Rush's referee and stadium are recordings, CC0 from freesound (public/sounds/, `loadSounds`, `MATCH_SOUNDS`): the whistle and a crowd's roar at a goal, 2 s; the synthesised ones only when they fail to load.

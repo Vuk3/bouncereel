@@ -1,7 +1,7 @@
 import type { AccountResponse, DayResponse, MatchSummary, NewVideo, PublicPlan, VideoResponse, VideosResponse } from '../shared/api.ts';
 import { gameAllowed, LOOK_LABELS, soundAllowed, SOUND_LABELS, type Features, type Game, type Sound } from '../shared/features.ts';
 import { api, ApiError } from './api.ts';
-import { AudioEngine } from './audio/engine.ts';
+import { AudioEngine, MATCH_SOUNDS } from './audio/engine.ts';
 import { Music } from './audio/music.ts';
 import { VOICES, VoiceCache, introLine, plannedLines, previewLine, voiceOf, winnerLine } from './audio/narration.ts';
 import { Sonifier } from './audio/sonify.ts';
@@ -606,7 +606,8 @@ export class App {
       if (fromStart) this.restart();
       // A battle starts with every flag drawn, a match with its pictures: a recording must never open on a blank ball.
       if (this.cfg.game === 'arena-clash') await loadFlags(this.cfg.battle.flags);
-      if (this.cfg.game === 'goal-rush') await loadSidePictures([this.cfg.match.home, this.cfg.match.away]);
+      // And its referee and stadium: recorded sounds, loaded once (AudioEngine.loadSounds).
+      if (this.cfg.game === 'goal-rush') await Promise.all([loadSidePictures([this.cfg.match.home, this.cfg.match.away]), this.audio!.loadSounds(MATCH_SOUNDS)]);
       if (this.narrating()) await this.prepareVoice();
       if (ready && !(await ready())) return false;
       this.paused = false;

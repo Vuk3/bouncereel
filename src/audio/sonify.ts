@@ -143,8 +143,9 @@ export class Sonifier {
 
 /**
  * A Goal Rush frame's events: a bounce off the ring plays the melody (the match's music is its
- * bounces, as the battle's is), the two balls meeting thud, a post clangs, a goal is the crowd
- * rising and the net, a kick-off one short whistle, half time two, full time three, the last long,
+ * bounces, as the battle's is), the two balls meeting thud, a post clangs, a goal is the referee's
+ * long blast as the stadium goes off (AudioEngine.goal: a boom, bangs, the horn, the crowd), the
+ * kick-off one short whistle, half time two, full time three, the last long,
  * and the win's fanfare after it. At most three notes and two thuds a frame.
  */
 function sonifyMatch(audio: AudioEngine, music: Music, events: MatchEvent[], cfg: Config, world: MatchWorld): void {
@@ -163,10 +164,13 @@ function sonifyMatch(audio: AudioEngine, music: Music, events: MatchEvent[], cfg
         audio.clang(pan(e.x));
         break;
       case 'goal':
-        audio.roar(pan(e.x));
+        // The referee's long blast as it goes in, then the stadium (AudioEngine.goal).
+        audio.whistle([0.45]);
+        audio.goal(pan(e.x));
         break;
       case 'kickoff':
-        audio.whistle([0.22]);
+        // The match's own start only: after a goal, its long blast 0.7 s before says it already.
+        if (e.first) audio.whistle([0.22]);
         break;
       case 'half':
         audio.whistle([0.2, 0.32]);

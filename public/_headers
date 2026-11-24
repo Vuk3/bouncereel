@@ -52,5 +52,7 @@
   Cache-Control: public, max-age=604800
 /voice/*
   Cache-Control: public, max-age=604800
+/sounds/*
+  Cache-Control: public, max-age=604800
 /gallery/*
   Cache-Control: public, max-age=604800

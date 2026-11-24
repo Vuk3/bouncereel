@@ -9,6 +9,7 @@ words and the voices that say them. Deep-dive:
 | Kind | Place |
 | --- | --- |
 | an instrument, a sound effect, mixing, ducking under the narrator | [engine.ts](./engine.ts) |
+| a recorded sound (a Goal Rush's whistle and stadium): the file, loading it, playing it | [public/sounds/](../../public/sounds/); `MATCH_SOUNDS`, `loadSounds`, `sample` in [engine.ts](./engine.ts); where each came from in [sound and narration](../../docs/sound-and-narration.md#1-the-engine) |
 | which note a floor hit plays, a new melody | [music.ts](./music.ts) |
 | which event makes which sound | [sonify.ts](./sonify.ts) |
 | the opening, the winner line, the voices, loading Kokoro, the clip cache; an Arena Clash's opening, a Goal Rush's (`matchScript`) and its winner line with the score (`winnerLine`) | [narration.ts](./narration.ts) (`battleScript`, `matchScript`) |
@@ -35,3 +36,6 @@ words and the voices that say them. Deep-dive:
   the file) without asking. Its ONNX Runtime is served from this site (`ORT`), not from
   jsDelivr.
 - **Melodies are public domain only**, so a video is never claimed.
+- **Recorded sounds are CC0 only**, for the same reason, each with its source in
+  [sound and narration](../../docs/sound-and-narration.md#1-the-engine). Every sound still goes
+  through `AudioEngine`, and a recording that fails to load falls back to a synthesised one.

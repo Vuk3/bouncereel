@@ -108,8 +108,11 @@ const STAND_IN = 7;
 const STAND_OUT = 52;
 /** A fan at rest, dim, so the crowd frames the pitch without taking the eye from it. */
 const FAN_IDLE = 0.55;
-/** Seconds a goal's half of the crowd jumps for, dying down; at the whistle the winner's never stops. */
-const CHEER = 2.4;
+/**
+ * Seconds a goal's half of the crowd jumps for, dying down, as long as the stadium's roar lasts
+ * (public/sounds/crowd-goal.m4a, 2 s): the owner found longer a stall. At the whistle the winner's never stops.
+ */
+const CHEER = 1.6;
 /** A half of the crowd's painted canvas: its reach out from the centre, and past the halfway line. */
 const CROWD_R = PITCH.r + NET + 6;
 const CROWD_EDGE = 10;
